@@ -1,0 +1,53 @@
+html {
+  overflow-y: auto;
+  background-color: #f1f5f8;
+}
+
+.full-width {
+  width: 100%; /* Cambiado de 100vw a 100% */
+  margin: 0 auto; /* Centrado */
+  position: relative;
+  margin-top: calc((100% - 100vw) / 2);
+}
+
+.background-image {
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  // background: rgba(0, 0, 0, 0.4);
+}
+
+.bg-img-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.extension-bar .v-btn--variant-text .v-btn__overlay {
+  background: rgba(
+    255,
+    251,
+    0,
+    0.877
+  ); /* Cambia el color y la opacidad según lo que necesites */
+}
+
+.extension-bar .v-btn.v-btn--density-default {
+  height: calc(var(--v-btn-height) + 4px);
+}
+
+.extension-bar .v-btn__overlay {
+  background-color: currentColor;
+  border-radius: initial;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
