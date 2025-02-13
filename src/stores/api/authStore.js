@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert"
 import { useGenerationsStore } from "@/stores/api/generationStore"
+import { campusArray } from "@/constants";
 
 export const useAuthStore = defineStore("authStore", () => {
     const router = useRouter();
@@ -103,6 +104,11 @@ export const useAuthStore = defineStore("authStore", () => {
 
     const userInitials = computed(() => `${userProfile?.value?.first_name.charAt(0) || ""}${userProfile?.value?.last_name.charAt(0) || ""}`)
     const fullName = computed(() => `${userProfile?.value?.first_name || ""} ${userProfile?.value?.last_name || ""}`)
+    const filteredCampus = computed(() => {
+        return userProfile.value?.campus === "MERIDA"
+            ? campusArray
+            : campusArray.filter((c) => c.value === userProfile.value?.campus);
+    });
 
     return {
         login,
@@ -115,6 +121,7 @@ export const useAuthStore = defineStore("authStore", () => {
         loggedUser,
         userProfile,
         userInitials,
+        filteredCampus,
         openUserProfileDialog,
     };
 });

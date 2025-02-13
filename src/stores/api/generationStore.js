@@ -21,8 +21,33 @@ export const useGenerationsStore = defineStore("generationsStore", () => {
         }
     };
 
+    const createGeneration = async (form) => {
+        try {
+            const param = await axios.post("api/admin/generations", form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información guardada exitosamente.",
+                    status: "success",
+                });
+
+                resGenerations.value.set(param.data.createGeneration.id, param.data.createGeneration)
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
+
     return {
         resGenerations,
         fetchGenerations,
+        createGeneration,
     };
 });

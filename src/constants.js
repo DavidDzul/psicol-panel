@@ -3,12 +3,45 @@ export const API_URL = "http://127.0.0.1:8000/";
 export const FILE_URL = import.meta.env.VITE_FILES_URL
 
 
-export const sedeArray = [
+export const campusArray = [
     { value: 'MERIDA', text: "Mérida" },
     { value: 'VALLADOLID', text: "Valladolid" },
     { value: 'TIZIMIN', text: "Tizimín" },
     { value: 'OXKUTZCAB', text: "Oxkutzcab" },
 ]
+
+export const campusMap = new Map([
+    [
+        'MERIDA',
+        {
+            value: 'MERIDA',
+            text: "Mérida",
+        },
+    ],
+    [
+        'VALLADOLID',
+        {
+            value: 'VALLADOLID',
+            text: "Valladolid",
+        },
+    ],
+    [
+        'TIZIMIN',
+        {
+            value: 'TIZIMIN',
+            text: "Tizimín",
+        },
+    ],
+    [
+        'OXKUTZCAB',
+        {
+            value: 'OXKUTZCAB',
+            text: "Oxkutzcab",
+        },
+    ],
+])
+
+// *******************************************************************
 
 export const typeKnowledge = [
     { value: "SOFTWARE", text: "Software" },
