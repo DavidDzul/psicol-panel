@@ -41,7 +41,16 @@ const routes = [
         name: "GenerationView",
         component: () => import("@/views/generations/GenerationView.vue"),
       },
-
+      {
+        path: "/becarios",
+        name: "UsersView",
+        component: () => import("@/views/users/UsersView.vue"),
+      },
+      {
+        path: "/becarios/:id",
+        name: "UserDetailsView",
+        component: () => import("@/views/users/UserDetailsView.vue"),
+      },
     ],
   },
   {

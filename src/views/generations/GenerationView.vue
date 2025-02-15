@@ -1,18 +1,10 @@
 <template>
   <BreadCrumbs :items="links" />
-  <v-container>
-    <v-row>
-      <!-- <v-col cols="12">
-        <h3>Listado de Generaciones</h3>
-      </v-col> -->
-      <v-col cols="12">
-        <GenerationsTable
-          :generations="generations"
-          @create="openCreateDialog"
-        />
-      </v-col>
-    </v-row>
-  </v-container>
+  <v-row>
+    <v-col cols="12">
+      <GenerationsTable :generations="generations" @create="openCreateDialog" />
+    </v-col>
+  </v-row>
 
   <GenerationCreateDialog
     v-model="createDialog"

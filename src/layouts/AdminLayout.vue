@@ -24,15 +24,26 @@
         <router-view />
       </v-container>
     </v-main>
-    <!-- <v-snackbar v-model="show" :timeout="7000" :location="'right top'" :close-on-content-click="true" :color="config.status" :vertical="true">
-        <div class="d-flex">
-          <v-icon class="mt-1 mr-2" v-if="config?.icon" :icon="config.icon"></v-icon>
-          <div>
-            <div class="text-subtitle-1 font-weight-bold">{{ config.title }}</div>
-            <p>{{ config?.body }}</p>
-          </div>
+    <v-snackbar
+      v-model="show"
+      :timeout="7000"
+      :location="'right top'"
+      :close-on-content-click="true"
+      :color="config.status"
+      :vertical="true"
+    >
+      <div class="d-flex">
+        <v-icon
+          class="mt-1 mr-2"
+          v-if="config?.icon"
+          :icon="config.icon"
+        ></v-icon>
+        <div>
+          <div class="text-subtitle-1 font-weight-bold">{{ config.title }}</div>
+          <p>{{ config?.body }}</p>
         </div>
-      </v-snackbar> -->
+      </div>
+    </v-snackbar>
   </v-layout>
 </template>
 
@@ -43,12 +54,14 @@ import { useRoute, useRouter } from "vue-router";
 import { useDisplay } from "vuetify";
 
 import { useAuthStore } from "@/stores/api/authStore";
+import { useAlertStore } from "@/stores/alert";
 
 import ProfileMenu from "@/layouts/ProfileMenu.vue";
 import NavMenu from "@/layouts/NavMenu.vue";
 
 const { userProfile, userInitials, fullName } = storeToRefs(useAuthStore());
 const { logout } = useAuthStore();
+const { show, config } = storeToRefs(useAlertStore());
 
 const { mobile } = useDisplay();
 const drawer = ref(!mobile.value);

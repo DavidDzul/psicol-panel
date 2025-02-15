@@ -39,7 +39,6 @@ export const useGenerationsPageStore = defineStore("generationsPage", () => {
 
     const onSaveGeneration = async (form) => {
         loadingCreate.value = true
-        console.log(form)
         if (form) {
             try {
                 const res = await createGeneration(form);

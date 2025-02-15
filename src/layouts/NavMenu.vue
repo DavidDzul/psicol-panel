@@ -64,10 +64,10 @@ const links = ref([
         text: "Empresas",
         link: "/empresas",
       },
-      {
-        text: "Administradores",
-        link: "/administradores",
-      },
+      // {
+      //   text: "Administradores",
+      //   link: "/administradores",
+      // },
     ],
   },
   {
