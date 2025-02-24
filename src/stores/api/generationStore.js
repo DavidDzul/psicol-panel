@@ -17,7 +17,7 @@ export const useGenerationsStore = defineStore("generationsStore", () => {
             resGenerations.value = new Map(res.data.generations.map((m) => [m.id, m]))
             return res.data
         } catch (error) {
-            console.error("Error en vacantes:", error);
+            console.error("Error:", error);
         }
     };
 

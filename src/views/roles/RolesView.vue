@@ -2,7 +2,8 @@
   <BreadCrumbs :items="links" />
   <v-row>
     <v-col cols="12">
-      {{ business }}
+      <!-- <GenerationsTable :generations="generations" @create="openCreateDialog" /> -->
+      {{ roles }}
     </v-col>
   </v-row>
 
@@ -12,12 +13,12 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useBusinessPageStore } from "@/stores/views/businessPage";
+import { useRolesPageStore } from "@/stores/views/rolesPage";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
+import GenerationsTable from "@/components/generations/GenerationsTable.vue";
 
-const { links, business } = storeToRefs(useBusinessPageStore());
-const {} = useBusinessPageStore();
+const { roles, links } = storeToRefs(useRolesPageStore());
 
 const confirmationDialog = ref();
 </script>

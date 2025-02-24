@@ -8,10 +8,11 @@
   >
     <template v-slot:activator="{ props }">
       <v-text-field
-        :label="inputText"
-        readonly
-        :model-value="textDate"
         v-bind="props"
+        :label="inputText"
+        :model-value="modelValue"
+        prepend-icon="mdi-calendar"
+        readonly
         @update:model-value="$emit('update:modelValue', $event)"
       ></v-text-field>
     </template>
@@ -28,7 +29,7 @@
 import { ref, watch, computed } from "vue";
 import dayjs from "dayjs";
 
-const props = defineProps({
+defineProps({
   modelValue: { type: String },
   inputText: { type: String },
   textDate: { type: String, default: () => "" },
@@ -37,7 +38,7 @@ const props = defineProps({
 const formMenuStart = ref(false);
 const fromDate = ref(null);
 
-const getFormatDate = (date) => {
+const getFormatDate = (date: string) => {
   fromDate.value = date;
   formMenuStart.value = false;
   emit("update:modelValue", dayjs(fromDate.value).format("DD/MM/YYYY"));

@@ -42,6 +42,11 @@ const routes = [
         component: () => import("@/views/generations/GenerationView.vue"),
       },
       {
+        path: "/roles",
+        name: "RolesView",
+        component: () => import("@/views/roles/RolesView.vue"),
+      },
+      {
         path: "/becarios",
         name: "UsersView",
         component: () => import("@/views/users/UsersView.vue"),

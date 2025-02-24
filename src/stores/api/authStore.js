@@ -4,12 +4,14 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert"
 import { useGenerationsStore } from "@/stores/api/generationStore"
+import { useRolesStore } from "@/stores/api/rolesStore"
 import { campusArray } from "@/constants";
 
 export const useAuthStore = defineStore("authStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
     const { fetchGenerations } = useGenerationsStore()
+    const { fetchRoles } = useRolesStore()
 
     const token = ref("");
     const loggedUser = ref(false);
@@ -34,6 +36,7 @@ export const useAuthStore = defineStore("authStore", () => {
             // 🔹 ESTABLECER EL TOKEN EN AXIOS PARA PETICIONES FUTURAS
             axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
 
+            await fetchRoles()
             await fetchGenerations();
             await router.push({ path: "/" });
 
@@ -71,6 +74,7 @@ export const useAuthStore = defineStore("authStore", () => {
                 loggedUser.value = true;
                 userProfile.value = res.data;
                 token.value = authToken;
+                await fetchRoles()
                 await fetchGenerations()
             })
             .catch((error) => {

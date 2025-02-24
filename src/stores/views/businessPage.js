@@ -10,7 +10,7 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
 
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resBusiness } = storeToRefs(useBusinessStore())
-    const { fetchBusiness } = useBusinessStore()
+    const { fetchBusiness, createBusiness } = useBusinessStore()
 
     const router = useRouter()
     const createDialog = ref(false)
@@ -54,11 +54,11 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         router.push("becarios/" + id)
     }
 
-    const onSaveUser = async (form) => {
+    const onSaveBusiness = async (form) => {
         loadingCreate.value = true
         if (form) {
             try {
-                const res = await createUser(form);
+                const res = await createBusiness(form);
                 if (res) {
                     createDialog.value = false
                 }
@@ -69,21 +69,21 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         loadingCreate.value = false
     };
 
-    const onUpdateUser = async (form) => {
-        if (!editUser.value) return
-        loadingUpdate.value = true
-        if (form) {
-            try {
-                const res = await updateUser(form, editUser.value.id);
-                if (res) {
-                    updateDialog.value = false
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        loadingUpdate.value = false
-    };
+    // const onUpdateUser = async (form) => {
+    //     if (!editUser.value) return
+    //     loadingUpdate.value = true
+    //     if (form) {
+    //         try {
+    //             const res = await updateUser(form, editUser.value.id);
+    //             if (res) {
+    //                 updateDialog.value = false
+    //             }
+    //         } catch (error) {
+    //             console.error(error);
+    //         }
+    //     }
+    //     loadingUpdate.value = false
+    // };
 
     return {
         links,
@@ -91,14 +91,14 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         // editUser,
         // generations,
         // updateDialog,
-        // createDialog,
-        // loadingCreate,
-        // filteredCampus,
+        createDialog,
+        loadingCreate,
+        filteredCampus,
         // loadingUpdate,
         // openUserDetail,
         // openUpdateDialog,
-        // openCreateDialog,
-        // onSaveUser,
+        openCreateDialog,
+        onSaveBusiness,
         // onUpdateUser,
     };
 });

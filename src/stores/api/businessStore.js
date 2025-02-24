@@ -34,9 +34,9 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         }
     };
 
-    const createUser = async (form) => {
+    const createBusiness = async (form) => {
         try {
-            const param = await axios.post("api/admin/users", form, {
+            const param = await axios.post("api/admin/business", form, {
                 headers: { 'accept': 'application/json' }
             });
 
@@ -46,7 +46,7 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
                     status: "success",
                 });
 
-                resUsers.value.set(param.data.createUser.id, param.data.createUser);
+                resBusiness.value.set(param.data.createBusiness.id, param.data.createBusiness);
                 return param.data.res;
             }
         } catch (error) {
@@ -111,7 +111,7 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         fetchBusiness,
         // resUserDetails,
         // showUser,
-        // createUser,
+        createBusiness,
         // updateUser,
     };
 });

@@ -2,7 +2,6 @@ export const API_URL = "http://127.0.0.1:8000/";
 // export const API_URL = "https://api.develop.iu.org.mx/";
 export const FILE_URL = import.meta.env.VITE_FILES_URL
 
-
 export const campusArray = [
     { value: 'MERIDA', text: "Mérida" },
     { value: 'VALLADOLID', text: "Valladolid" },
@@ -41,19 +40,59 @@ export const campusMap = new Map([
     ],
 ])
 
-// *******************************************************************
-
-export const typeKnowledge = [
-    { value: "SOFTWARE", text: "Software" },
-    { value: "LANGUAGE", text: "Lenguaje" },
-    { value: "OTHER", text: "Otro" },
+export const roleArray = [
+    { value: "BASIC", text: "Básico" },
+    { value: "BRONZE", text: "Bronce" },
+    { value: "SILVER", text: "Plata" },
+    { value: "GOLD", text: "Oro" },
+    { value: "PLATINUM", text: "Platino" },
+    { value: "DIAMOND", text: "Diamante" },
 ]
 
-export const levelKnowledge = [
-    { value: "BEGINNER", text: "Principiante" },
-    { value: "INTERMEDIATE", text: "Intermedio" },
-    { value: "ADVANCED", text: "Avanzado" },
-]
+export const roleMap = new Map([
+    [
+        'BASIC',
+        {
+            value: 'BASIC',
+            text: "Básico",
+        },
+    ],
+    [
+        'BRONZE',
+        {
+            value: 'BRONZE',
+            text: "Bronce",
+        },
+    ],
+    [
+        'SILVER',
+        {
+            value: 'SILVER',
+            text: "Plata",
+        },
+    ],
+    [
+        'GOLD',
+        {
+            value: 'GOLD',
+            text: "Oro",
+        },
+    ],
+    [
+        'PLATINUM',
+        {
+            value: 'PLATINUM',
+            text: "Platino",
+        },
+    ],
+    [
+        'DIAMOND',
+        {
+            value: 'DIAMOND',
+            text: "Diamante",
+        },
+    ],
+])
 
 export const lineBusiness = [
     { value: "EDUCATIONAL", text: "Educativo" },
@@ -67,6 +106,20 @@ export const lineBusiness = [
     { value: "ADMINISTRATION", text: "Administración" },
     { value: "MANUFACTURE", text: "Manufactura" },
     { value: "OTHER", text: "Otro" },
+]
+
+// *******************************************************************
+
+export const typeKnowledge = [
+    { value: "SOFTWARE", text: "Software" },
+    { value: "LANGUAGE", text: "Lenguaje" },
+    { value: "OTHER", text: "Otro" },
+]
+
+export const levelKnowledge = [
+    { value: "BEGINNER", text: "Principiante" },
+    { value: "INTERMEDIATE", text: "Intermedio" },
+    { value: "ADVANCED", text: "Avanzado" },
 ]
 
 export const typeKnowledgeMap = new Map([
