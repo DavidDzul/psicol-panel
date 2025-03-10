@@ -2,13 +2,18 @@
   <BreadCrumbs :items="links" />
   <v-row>
     <v-col cols="12">
-      <BusinessTable :business="business" @create="openCreateDialog" />
+      <BusinessTable
+        :business="business"
+        @create="openCreateDialog"
+        @show="openBusinessDetail"
+      />
     </v-col>
   </v-row>
 
   <BusinessCreateDialog
     v-model="createDialog"
     :user-campus="filteredCampus"
+    :loading="loadingCreate"
     @submit="onSaveBusiness"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
@@ -23,10 +28,10 @@ import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import BusinessTable from "@/components/users/BusinessTable.vue";
 import BusinessCreateDialog from "@/components/users/BusinessCreateDialog.vue";
 
-const { links, business, createDialog, filteredCampus } = storeToRefs(
-  useBusinessPageStore()
-);
-const { openCreateDialog, onSaveBusiness } = useBusinessPageStore();
+const { links, business, createDialog, loadingCreate, filteredCampus } =
+  storeToRefs(useBusinessPageStore());
+const { openCreateDialog, onSaveBusiness, openBusinessDetail } =
+  useBusinessPageStore();
 
 const confirmationDialog = ref();
 </script>

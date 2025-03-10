@@ -104,7 +104,12 @@
                 <v-col class="my-5" cols="12" md="12">
                   <v-row justify="space-between">
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" @click="next">Siguiente</v-btn>
+                    <v-btn
+                      color="primary"
+                      :disabled="validateStep1"
+                      @click="next"
+                      >Siguiente</v-btn
+                    >
                   </v-row>
                 </v-col>
               </v-stepper-window-item>
@@ -209,7 +214,12 @@
                 <v-col class="my-5" cols="12" md="12">
                   <v-row justify="space-between">
                     <v-btn color="grey" @click="back">Atrás</v-btn>
-                    <v-btn color="primary" @click="next">Siguiente</v-btn>
+                    <v-btn
+                      color="primary"
+                      :disabled="validateStep2"
+                      @click="next"
+                      >Siguiente</v-btn
+                    >
                   </v-row>
                 </v-col>
               </v-stepper-window-item>
@@ -230,8 +240,14 @@
                 </v-row>
                 <v-col class="my-5" cols="12" md="12">
                   <v-row justify="space-between">
-                    <v-btn color="grey" @click="back">Atrás</v-btn>
-                    <v-btn color="success" :disabled="!meta.valid" @click="save"
+                    <v-btn color="grey" :disabled="loading" @click="back"
+                      >Atrás</v-btn
+                    >
+                    <v-btn
+                      color="success"
+                      :loading="loading"
+                      :disabled="!meta.valid && !(start_date && end_date)"
+                      @click="save"
                       >Finalizar</v-btn
                     >
                   </v-row>
@@ -348,7 +364,8 @@ const validateStep1 = computed(() => {
     email.value &&
     campus.value &&
     phone.value &&
-    workstation.value
+    workstation.value &&
+    role.value
     ? false
     : true;
 });
@@ -363,7 +380,7 @@ const validateStep2 = computed(() => {
     bs_adrress.value &&
     bs_telphone.value &&
     bs_line.value &&
-    bs_website.value &&
+    // bs_website.value &&
     bs_description.value
     ? false
     : true;
@@ -382,15 +399,15 @@ watch(
       step.value = 1;
     } else {
       password.value = "Agentedecambio";
-      start_date.value = today;
-      end_date.value = nextYear;
+      // start_date.value = today;
+      // end_date.value = nextYear;
     }
   }
 );
 
 const step = ref(1);
-const today = dayjs().format("YYYY-MM-DD");
-const nextYear = dayjs().add(1, "year").format("YYYY-MM-DD");
+// const today = dayjs().format("YYYY-MM-DD");
+// const nextYear = dayjs().add(1, "year").format("YYYY-MM-DD");
 
 const close = () => {
   emit("update:modelValue", false);

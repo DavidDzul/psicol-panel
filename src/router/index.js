@@ -61,6 +61,11 @@ const routes = [
         name: "BusinessView",
         component: () => import("@/views/users/BusinessView.vue"),
       },
+      {
+        path: "/empresas/:id",
+        name: "BusinessDetailsView",
+        component: () => import("@/views/users/BusinessDetailsView.vue"),
+      },
     ],
   },
   {

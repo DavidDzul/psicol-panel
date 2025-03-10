@@ -62,7 +62,7 @@
 
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
-        <v-tooltip text="Editar" location="bottom">
+        <!-- <v-tooltip text="Editar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -76,7 +76,7 @@
             >
             </v-btn>
           </template>
-        </v-tooltip>
+        </v-tooltip> -->
         <v-tooltip text="Visualizar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn

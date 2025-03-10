@@ -50,8 +50,8 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         updateDialog.value = true
     }
 
-    const openUserDetail = (id) => {
-        router.push("becarios/" + id)
+    const openBusinessDetail = (id) => {
+        router.push("empresas/" + id)
     }
 
     const onSaveBusiness = async (form) => {
@@ -95,7 +95,7 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         loadingCreate,
         filteredCampus,
         // loadingUpdate,
-        // openUserDetail,
+        openBusinessDetail,
         // openUpdateDialog,
         openCreateDialog,
         onSaveBusiness,

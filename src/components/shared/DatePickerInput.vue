@@ -10,7 +10,7 @@
       <v-text-field
         v-bind="props"
         :label="inputText"
-        :model-value="modelValue"
+        :model-value="textDate"
         prepend-icon="mdi-calendar"
         readonly
         @update:model-value="$emit('update:modelValue', $event)"
@@ -32,16 +32,17 @@ import dayjs from "dayjs";
 defineProps({
   modelValue: { type: String },
   inputText: { type: String },
-  textDate: { type: String, default: () => "" },
 });
 
 const formMenuStart = ref(false);
 const fromDate = ref(null);
+const textDate = ref("");
 
 const getFormatDate = (date: string) => {
   fromDate.value = date;
   formMenuStart.value = false;
-  emit("update:modelValue", dayjs(fromDate.value).format("DD/MM/YYYY"));
+  textDate.value = dayjs(fromDate.value).format("DD-MM-YYYY");
+  emit("update:modelValue", dayjs(fromDate.value).format("YYYY-MM-DD"));
 };
 
 const emit = defineEmits<{

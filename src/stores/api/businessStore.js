@@ -8,7 +8,9 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
     const resBusiness = ref(new Map())
-    const resUserDetails = ref(null)
+    const resBusinessDetails = ref(null)
+    const resBusinessData = ref(null)
+    const resBusinessAgreements = ref(new Map())
 
     const fetchBusiness = async () => {
         try {
@@ -22,12 +24,36 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         }
     };
 
-    const showUser = async (id) => {
+    const getBusiness = async (id) => {
         try {
-            const res = await axios.get(`api/admin/users/${id}`, {
+            const res = await axios.get(`api/admin/business/${id}`, {
                 headers: { 'accept': 'application/json' }
             });
-            resUserDetails.value = res.data.user;
+            resBusinessDetails.value = res.data.business;
+            return res.data
+        } catch (error) {
+            console.error("Error al obtener al usuario:", error);
+        }
+    };
+
+    const getBusinessData = async (id) => {
+        try {
+            const res = await axios.get(`api/admin/businessData/${id}`, {
+                headers: { 'accept': 'application/json' }
+            });
+            resBusinessData.value = res.data.data;
+            return res.data
+        } catch (error) {
+            console.error("Error al obtener al usuario:", error);
+        }
+    };
+
+    const getBusinessAgreements = async (id) => {
+        try {
+            const res = await axios.get(`api/admin/businessAgreement/${id}`, {
+                headers: { 'accept': 'application/json' }
+            });
+            resBusinessAgreements.value = new Map(res.data.agreements.map((m) => [m.id, m]));
             return res.data
         } catch (error) {
             console.error("Error al obtener al usuario:", error);
@@ -109,7 +135,12 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
     return {
         resBusiness,
         fetchBusiness,
-        // resUserDetails,
+        getBusiness,
+        getBusinessData,
+        getBusinessAgreements,
+        resBusinessDetails,
+        resBusinessData,
+        resBusinessAgreements,
         // showUser,
         createBusiness,
         // updateUser,

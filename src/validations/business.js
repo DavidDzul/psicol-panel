@@ -14,7 +14,7 @@ export const bs_telphone = () => yup.string().required("Campo requerido").label(
 export const bs_line = () => yup.string().required("Campo requerido").label("Giro")
 export const bs_other_line = () => yup.string().notRequired().label("Especificar")
 export const bs_description = () => yup.string().required("Campo requerido").label("Descripción")
-export const bs_website = () => yup.string().required("Campo requerido").label("Sitio web")
+export const bs_website = () => yup.string().notRequired().label("Sitio web")
 
 export const start_date = () => yup.string().required("Campo requerido").label("Sitio web")
 export const end_date = () => yup.string().required("Campo requerido").label("Sitio web")
