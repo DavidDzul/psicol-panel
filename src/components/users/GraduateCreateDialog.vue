@@ -9,7 +9,7 @@
     <v-card>
       <v-form>
         <v-toolbar dark>
-          <v-toolbar-title>Actualizar becario/a</v-toolbar-title>
+          <v-toolbar-title>Nuevo egresado/a</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-toolbar-items>
             <v-btn icon @click="close"><v-icon>mdi-close</v-icon></v-btn>
@@ -49,7 +49,7 @@
                   @keypress="onlyNumbers"
                 ></v-text-field>
               </v-col>
-              <!-- <v-col cols="12" md="6">
+              <v-col cols="12" md="6">
                 <v-select
                   :items="userCampus"
                   v-model="campus"
@@ -68,7 +68,7 @@
                   item-value="id"
                   label="Generación"
                 ></v-select>
-              </v-col> -->
+              </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="enrollment"
@@ -81,26 +81,17 @@
                   v-model="password"
                   v-bind="passwordProps"
                   label="Contraseña"
+                  readonly
                 ></v-text-field>
               </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  :items="becTypeArray"
-                  v-model="user_type"
-                  v-bind="user_typeProps"
-                  item-title="text"
-                  item-value="value"
-                  label="Tipo de usuario"
-                ></v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-checkbox
-                  v-model="active"
-                  v-bind="activeProps"
-                  label="¿Permitir acceso a la plataforma?"
-                  density="comfortable"
-                ></v-checkbox>
-              </v-col>
+              <!-- <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="confirmation"
+                  type="password"
+                  v-bind="confirmationProps"
+                  label="Confirmar Contraseña"
+                ></v-text-field>
+              </v-col> -->
             </v-row>
           </v-form>
         </v-card-text>
@@ -114,7 +105,7 @@
             :loading="loading"
             @click="save"
           >
-            Actualizar</v-btn
+            Guadar</v-btn
           >
         </v-card-actions>
       </v-form>
@@ -129,12 +120,12 @@ import { computed, watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
-import { becTypeArray } from "@/constants";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+  generations: { type: Array, default: () => [] },
+  userCampus: { type: Array, default: () => [] },
 });
 
 const vuetifyConfig = (state) => ({
@@ -145,16 +136,14 @@ const vuetifyConfig = (state) => ({
 const { defineField, meta, values, setValues, resetForm } = useForm({
   validationSchema: toTypedSchema(
     yup.object({
+      campus: validations.campus(),
       first_name: validations.first_name(),
       last_name: validations.last_name(),
       email: validations.email(),
       password: validations.updatePassword(),
       enrollment: validations.enrollment(),
       phone: validations.phone(),
-      // campus: validations.campus(),
-      // generation_id: validations.generation_id(),
-      active: validations.user_active(),
-      user_type: validations.user_type(),
+      generation_id: validations.generation_id(),
     })
   ),
 });
@@ -176,46 +165,34 @@ const onlyNumbers = (event) => {
   }
 };
 
-const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
 const [first_name, first_nameProps] = defineField("first_name", vuetifyConfig);
 const [last_name, last_nameProps] = defineField("last_name", vuetifyConfig);
 const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
-// const [campus, campusProps] = defineField("campus", vuetifyConfig);
+const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
-// const [generation_id, generation_idProps] = defineField(
-//   "generation_id",
-//   vuetifyConfig
-// );
-const [active, activeProps] = defineField("active", vuetifyConfig);
-const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
+const [generation_id, generation_idProps] = defineField(
+  "generation_id",
+  vuetifyConfig
+);
+const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
+
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
   () => props.modelValue,
   (value) => {
-    if (value) {
-      if (props.editItem) {
-        setValues({
-          id: props.editItem.id,
-          enrollment: props.editItem.enrollment,
-          first_name: props.editItem.first_name,
-          last_name: props.editItem.last_name,
-          email: props.editItem.email,
-          phone: props.editItem.phone,
-          active: props.editItem.active ? true : false,
-          user_type: props.editItem.user_type,
-        });
-      }
-    } else {
+    if (!value) {
       resetForm();
+    } else {
+      password.value = "Agentedecambio";
     }
   }
 );
 
-// const filteredGenerations = computed(() =>
-//   props.generations.filter((map) => map.campus === campus.value)
-// );
+const filteredGenerations = computed(() =>
+  props.generations.filter((map) => map.campus === campus.value)
+);
 
 const close = () => {
   emit("update:modelValue", false);

@@ -100,37 +100,74 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         }
     };
 
-    const updateUser = async (form, id) => {
+    const updateBusiness = async (form, id) => {
         try {
-            const param = await axios.patch(`api/admin/users/${id}`, form, {
+            const param = await axios.put(`api/admin/business/${id}`, form, {
                 headers: { 'accept': 'application/json' }
             });
-
             if (param) {
                 showAlert({
-                    title: "Información actualizada exitosamente.",
+                    title: "Información guardada exitosamente.",
                     status: "success",
                 });
-
-                resUsers.value.set(param.data.updateUser.id, param.data.updateUser);
-                return param.data.res;
+                resBusinessDetails.value = param.data.updateBusiness
+                return param.data.res
             }
         } catch (error) {
-            if (error.response) {
-                const errorData = error.response.data;
-                showAlert({
-                    title: errorData.message || "Ocurrió un error inesperado.",
-                    status: "error",
-                });
-            } else {
-                showAlert({
-                    title: "Error de red, intenta más tarde.",
-                    status: "error",
-                });
-            }
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
             throw error;
         }
-    };
+    }
+
+    const updateBusinessData = async (form, id) => {
+        try {
+            const param = await axios.put(`api/admin/businessData/${id}`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información guardada exitosamente.",
+                    status: "success",
+                });
+                resBusinessData.value = param.data.updateData
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
+
+    const createAgreement = async (form, id) => {
+        try {
+            const param = await axios.post(`api/admin/business/${id}/agreement`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información guardada exitosamente.",
+                    status: "success",
+                });
+                resBusinessAgreements.value.set(param.data.agreement.id, param.data.agreement)
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
 
     return {
         resBusiness,
@@ -143,6 +180,9 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         resBusinessAgreements,
         // showUser,
         createBusiness,
+        updateBusiness,
+        updateBusinessData,
+        createAgreement,
         // updateUser,
     };
 });

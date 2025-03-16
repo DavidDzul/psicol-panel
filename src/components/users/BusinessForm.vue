@@ -4,6 +4,7 @@
       <!-- Primera columna -->
       <v-col cols="12" md="8">
         <v-list density="comfortable">
+          <v-list-item title="ID" :subtitle="business.id" />
           <v-list-item title="Nombre(s):" :subtitle="business.first_name" />
           <v-list-item title="Apellidos:" :subtitle="business.first_name" />
           <v-list-item title="Correo electrónico:" :subtitle="business.email" />

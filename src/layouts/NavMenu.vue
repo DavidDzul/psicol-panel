@@ -86,6 +86,10 @@ const links = ref([
         text: "Generaciones",
         link: "/generaciones",
       },
+      {
+        text: "Roles",
+        link: "/roles",
+      },
     ],
   },
 ]);

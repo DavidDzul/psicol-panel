@@ -10,10 +10,16 @@ export const useBusinessDetailsPageStore = defineStore("businessDetailsPage", ()
     const { userProfile } = storeToRefs(useAuthStore());
 
     const { resBusinessDetails, resBusinessData, resBusinessAgreements } = storeToRefs(useBusinessStore());
-    const { getBusiness, getBusinessData, getBusinessAgreements } = useBusinessStore();
+    const { getBusiness, getBusinessData, getBusinessAgreements, updateBusinessData, updateBusiness, createAgreement } = useBusinessStore();
 
     const route = useRoute();
     const loadUser = ref(false);
+    const editDialog = ref(false)
+    const editBusinessDialog = ref(false)
+    const agreementDialog = ref(false)
+
+    const loadingCreate = ref(false)
+    const loadingUpdate = ref(false)
 
     onBeforeMount(() => {
         validateAndFetchBusinessDetail();
@@ -68,10 +74,78 @@ export const useBusinessDetailsPageStore = defineStore("businessDetailsPage", ()
         },
     ])
 
+    const openUpdateDialog = () => {
+        if (!selectedBusiness.value) return
+        editDialog.value = true
+    }
+
+    const openUpdateBusinessDialog = () => {
+        if (!businessData.value) return
+        editBusinessDialog.value = true
+    }
+
+    const openAgreementDialog = () => {
+        if (!selectedBusiness.value) return
+        agreementDialog.value = true
+    }
+
+    const onUpdateBusinessData = async (form) => {
+        loadingUpdate.value = true
+        if (!form && !businessData) return
+        try {
+            const res = await updateBusinessData(form, businessData.value.id);
+            if (res) {
+                editBusinessDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingUpdate.value = false
+    };
+
+    const onUpdateBusiness = async (form) => {
+        loadingUpdate.value = true
+        if (!form && !selectedBusiness) return
+        try {
+            const res = await updateBusiness(form, selectedBusiness.value.id);
+            if (res) {
+                editDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingUpdate.value = false
+    };
+
+    const onCreateAgreement = async (form) => {
+        loadingCreate.value = true
+        if (!form && !selectedBusiness) return
+        try {
+            const res = await createAgreement(form, selectedBusiness.value.id);
+            if (res) {
+                agreementDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingCreate.value = false
+    };
+
     return {
         links,
         selectedBusiness,
         businessData,
         agreements,
+        editDialog,
+        editBusinessDialog,
+        loadingUpdate,
+        loadingCreate,
+        agreementDialog,
+        openUpdateBusinessDialog,
+        onUpdateBusiness,
+        onUpdateBusinessData,
+        openUpdateDialog,
+        openAgreementDialog,
+        onCreateAgreement,
     };
 });

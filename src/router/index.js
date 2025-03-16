@@ -57,6 +57,16 @@ const routes = [
         component: () => import("@/views/users/UserDetailsView.vue"),
       },
       {
+        path: "/egresados",
+        name: "GraduatesView",
+        component: () => import("@/views/users/GraduatesView.vue"),
+      },
+      {
+        path: "/egresados/:id",
+        name: "GraduateDetailsView",
+        component: () => import("@/views/users/GraduateDetailsView.vue"),
+      },
+      {
         path: "/empresas",
         name: "BusinessView",
         component: () => import("@/views/users/BusinessView.vue"),

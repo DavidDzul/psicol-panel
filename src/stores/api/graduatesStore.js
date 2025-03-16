@@ -4,39 +4,39 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert"
 
-export const useUserStore = defineStore("userStore", () => {
+export const useGraduateStore = defineStore("graduateStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
-    const resUsers = ref(new Map())
-    const resUserDetails = ref(null)
+    const resGraduates = ref(new Map())
+    const resGraduateDetails = ref(null)
 
-    const fetchUsers = async () => {
+    const fetchGraduates = async () => {
         try {
-            const res = await axios.get("api/admin/users", {
+            const res = await axios.get("api/admin/graduates", {
                 headers: { 'accept': 'application/json' }
             });
-            resUsers.value = new Map(res.data.users.map((m) => [m.id, m]))
+            resGraduates.value = new Map(res.data.graduates.map((m) => [m.id, m]))
             return res.data
         } catch (error) {
             console.error("Error en usuarios:", error);
         }
     };
 
-    const showUser = async (id) => {
+    const showGraduate = async (id) => {
         try {
-            const res = await axios.get(`api/admin/users/${id}`, {
+            const res = await axios.get(`api/admin/graduates/${id}`, {
                 headers: { 'accept': 'application/json' }
             });
-            resUserDetails.value = res.data.user;
+            resGraduateDetails.value = res.data.user;
             return res.data
         } catch (error) {
             console.error("Error al obtener al usuario:", error);
         }
     };
 
-    const createUser = async (form) => {
+    const createGraduate = async (form) => {
         try {
-            const param = await axios.post("api/admin/users", form, {
+            const param = await axios.post("api/admin/graduates", form, {
                 headers: { 'accept': 'application/json' }
             });
 
@@ -46,7 +46,7 @@ export const useUserStore = defineStore("userStore", () => {
                     status: "success",
                 });
 
-                resUsers.value.set(param.data.createUser.id, param.data.createUser);
+                resGraduates.value.set(param.data.createGraduate.id, param.data.createGraduate);
                 return param.data.res;
             }
         } catch (error) {
@@ -74,9 +74,9 @@ export const useUserStore = defineStore("userStore", () => {
         }
     };
 
-    const updateUser = async (form, id) => {
+    const updateGraduate = async (form, id) => {
         try {
-            const param = await axios.patch(`api/admin/users/${id}`, form, {
+            const param = await axios.patch(`api/admin/graduates/${id}`, form, {
                 headers: { 'accept': 'application/json' }
             });
 
@@ -86,10 +86,10 @@ export const useUserStore = defineStore("userStore", () => {
                     status: "success",
                 });
 
-                resUsers.value.set(param.data.updateUser.id, param.data.updateUser);
+                resGraduates.value.set(param.data.updateGraduate.id, param.data.updateGraduate);
 
-                if (resUserDetails.value && resUserDetails.value.id === id) {
-                    resUserDetails.value = param.data.updateUser;
+                if (resGraduateDetails.value && resGraduateDetails.value.id === id) {
+                    resGraduateDetails.value = param.data.updateGraduate;
                 }
 
                 return param.data.res;
@@ -112,11 +112,11 @@ export const useUserStore = defineStore("userStore", () => {
     };
 
     return {
-        resUsers,
-        resUserDetails,
-        showUser,
-        createUser,
-        fetchUsers,
-        updateUser,
+        resGraduates,
+        resGraduateDetails,
+        showGraduate,
+        createGraduate,
+        fetchGraduates,
+        updateGraduate,
     };
 });

@@ -2,8 +2,7 @@
   <BreadCrumbs :items="links" />
   <v-row>
     <v-col cols="12">
-      <!-- <GenerationsTable :generations="generations" @create="openCreateDialog" /> -->
-      {{ roles }}
+      <RolesTable :roles="roles" />
     </v-col>
   </v-row>
 
@@ -16,7 +15,7 @@ import { storeToRefs } from "pinia";
 import { useRolesPageStore } from "@/stores/views/rolesPage";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
-import GenerationsTable from "@/components/generations/GenerationsTable.vue";
+import RolesTable from "@/components/roles/RolesTable.vue";
 
 const { roles, links } = storeToRefs(useRolesPageStore());
 

@@ -41,6 +41,7 @@
                 title="Información de usuario"
                 button-text="Actualizar"
                 :expanded="expanded"
+                @button-click="openUpdateDialog"
               />
             </template>
           </v-expansion-panel-title>
@@ -60,6 +61,7 @@
                 title="Información de la Empresa"
                 button-text="Actualizar"
                 :expanded="expanded"
+                @button-click="openUpdateBusinessDialog"
               />
             </template>
           </v-expansion-panel-title>
@@ -76,6 +78,7 @@
                 title="Convenios de la Empresa"
                 button-text="Agregar"
                 :expanded="expanded"
+                @button-click="openAgreementDialog"
               />
             </template>
           </v-expansion-panel-title>
@@ -86,7 +89,25 @@
       </v-expansion-panels>
     </v-col>
   </v-row>
-
+  <BusinessUpdateDialog
+    v-if="selectedBusiness"
+    v-model="editDialog"
+    :edit-item="selectedBusiness"
+    :loading="loadingUpdate"
+    @submit="onUpdateBusiness"
+  />
+  <BusinessUpdateDataDialog
+    v-if="businessData"
+    v-model="editBusinessDialog"
+    :edit-item="businessData"
+    :loading="loadingUpdate"
+    @submit="onUpdateBusinessData"
+  />
+  <BusinessCreateAgreement
+    v-model="agreementDialog"
+    :loading="loadingCreate"
+    @submit="onCreateAgreement"
+  />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
 
@@ -96,17 +117,33 @@ import { storeToRefs } from "pinia";
 import { useBusinessDetailsPageStore } from "@/stores/views/businessDetailsPage";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
-import UserCreateDialog from "@/components/users/UserCreateDialog.vue";
-import UserUpdateDialog from "@/components/users/UserUpdateDialog.vue";
 import PanelHeaderOptions from "@/components/shared/PanelHeaderOptions.vue";
 import BusinessData from "@/components/users/BusinessData.vue";
 import BusinessForm from "@/components/users/BusinessForm.vue";
 import BusinessAgreements from "@/components/users/BusinessAgreements.vue";
+import BusinessUpdateDataDialog from "@/components/users/BusinessUpdateDataDialog.vue";
+import BusinessUpdateDialog from "@/components/users/BusinessUpdateDialog.vue";
+import BusinessCreateAgreement from "@/components/users/BusinessCreateAgreement.vue";
 
-const { links, selectedBusiness, businessData, agreements } = storeToRefs(
-  useBusinessDetailsPageStore()
-);
-const {} = useBusinessDetailsPageStore();
+const {
+  links,
+  selectedBusiness,
+  businessData,
+  agreements,
+  editBusinessDialog,
+  loadingUpdate,
+  loadingCreate,
+  editDialog,
+  agreementDialog,
+} = storeToRefs(useBusinessDetailsPageStore());
+const {
+  openUpdateBusinessDialog,
+  onUpdateBusinessData,
+  openUpdateDialog,
+  onUpdateBusiness,
+  openAgreementDialog,
+  onCreateAgreement,
+} = useBusinessDetailsPageStore();
 
 const panel = ref([0, 0, 0]);
 const confirmationDialog = ref();

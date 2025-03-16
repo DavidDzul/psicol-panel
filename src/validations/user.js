@@ -1,5 +1,6 @@
 import * as yup from "yup"
 
+export const id = () => yup.number().required()
 export const enrollment = () =>
     yup
         .string()
@@ -32,3 +33,4 @@ export const generation_id = () =>
         .transform((curr, orig) => (!orig ? undefined : curr))
         .label("Generación")
 export const user_active = () => yup.boolean().default(true)
+export const user_type = () => yup.string().required("Campo requerido")

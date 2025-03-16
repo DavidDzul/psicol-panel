@@ -1,16 +1,16 @@
 import { defineStore, storeToRefs } from "pinia";
-import { useUserStore } from "@/stores/api/usersStore";
+import { useGraduateStore } from "@/stores/api/graduatesStore";
 import { useAuthStore } from "@/stores/api/authStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router"
 
-export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
+export const useGraduateDetailsPageStore = defineStore("graduateDetailsPage", () => {
     const { setLoading } = useAppStore();
     const { userProfile } = storeToRefs(useAuthStore());
 
-    const { resUserDetails } = storeToRefs(useUserStore());
-    const { showUser, updateUser } = useUserStore();
+    const { resGraduateDetails } = storeToRefs(useGraduateStore());
+    const { showGraduate, updateGraduate } = useGraduateStore();
 
     const route = useRoute();
     const loadUser = ref(false);
@@ -28,7 +28,7 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
 
     const validateAndFetchUserDetail = async () => {
         // Verificar si la ruta coincide con "/becarios/:id"
-        if (!route.path.startsWith("/becarios/")) return;
+        if (!route.path.startsWith("/egresados/")) return;
 
         const id = parseInt(route.params.id, 10);
         if (isNaN(id) || id <= 0) {
@@ -38,7 +38,7 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
         }
 
         try {
-            await showUser(id);
+            await showGraduate(id);
             loadUser.value = true;
         } catch (error) {
             console.error("Error fetching user detail:", error);
@@ -46,7 +46,7 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
         }
     };
 
-    const selectedUser = computed(() => resUserDetails.value);
+    const selectedGraduate = computed(() => resGraduateDetails.value);
 
     const links = computed(() => [
         {
@@ -55,28 +55,28 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
             href: "/",
         },
         {
-            title: "Becarios",
+            title: "Egresados",
             disabled: false,
-            href: "/becarios",
+            href: "/egresados",
         },
         {
-            title: "Detalles del becario/a",
+            title: "Detalles del egresados/a",
             disabled: true,
-            href: "/becarios/:id",
+            href: "/egresados/:id",
         },
     ])
 
     const openUpdateDialog = () => {
-        if (!selectedUser.value) return
+        if (!selectedGraduate.value) return
         updateDialog.value = true
     }
 
-    const onUpdateUser = async (form) => {
-        if (!selectedUser.value) return
+    const onUpdateGraduate = async (form) => {
+        if (!selectedGraduate.value) return
         loadingUpdate.value = true
         if (form) {
             try {
-                const res = await updateUser(form, selectedUser.value.id);
+                const res = await updateGraduate(form, selectedGraduate.value.id);
                 if (res) {
                     updateDialog.value = false
                 }
@@ -90,9 +90,9 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
     return {
         links,
         updateDialog,
-        selectedUser,
         loadingUpdate,
-        onUpdateUser,
+        selectedGraduate,
+        onUpdateGraduate,
         openUpdateDialog
     };
 });

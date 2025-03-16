@@ -50,30 +50,30 @@
                 ></v-text-field>
               </v-col>
               <!-- <v-col cols="12" md="6">
-                <v-select
-                  :items="userCampus"
-                  v-model="campus"
-                  v-bind="campusProps"
-                  item-title="text"
-                  item-value="value"
-                  label="Sede"
-                ></v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  :items="filteredGenerations"
-                  v-model="generation_id"
-                  v-bind="generation_idProps"
-                  item-title="generation_name"
-                  item-value="id"
-                  label="Generación"
-                ></v-select>
-              </v-col> -->
+                  <v-select
+                    :items="userCampus"
+                    v-model="campus"
+                    v-bind="campusProps"
+                    item-title="text"
+                    item-value="value"
+                    label="Sede"
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    :items="filteredGenerations"
+                    v-model="generation_id"
+                    v-bind="generation_idProps"
+                    item-title="generation_name"
+                    item-value="id"
+                    label="Generación"
+                  ></v-select>
+                </v-col> -->
               <v-col cols="12" md="6">
                 <v-text-field
-                  v-model="enrollment"
-                  v-bind="enrollmentProps"
-                  label="Matrícula"
+                  v-model="workstation"
+                  v-bind="workstationProps"
+                  label="Puesto de trabajo"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
@@ -85,12 +85,10 @@
               </v-col>
               <v-col cols="12" md="6">
                 <v-select
-                  :items="becTypeArray"
-                  v-model="user_type"
-                  v-bind="user_typeProps"
+                  :items="roleArray"
                   item-title="text"
                   item-value="value"
-                  label="Tipo de usuario"
+                  label="Rol"
                 ></v-select>
               </v-col>
               <v-col cols="12" md="6">
@@ -129,11 +127,13 @@ import { computed, watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
-import { becTypeArray } from "@/constants";
+import { roleArray } from "@/constants";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
+  generations: { type: Array, default: () => [] },
+  userCampus: { type: Array, default: () => [] },
   editItem: { type: Object, default: () => null },
 });
 
@@ -149,12 +149,11 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
       last_name: validations.last_name(),
       email: validations.email(),
       password: validations.updatePassword(),
-      enrollment: validations.enrollment(),
       phone: validations.phone(),
       // campus: validations.campus(),
-      // generation_id: validations.generation_id(),
+      workstation: validations.workstation(),
+      role: validations.role(),
       active: validations.user_active(),
-      user_type: validations.user_type(),
     })
   ),
 });
@@ -176,19 +175,17 @@ const onlyNumbers = (event) => {
   }
 };
 
-const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
 const [first_name, first_nameProps] = defineField("first_name", vuetifyConfig);
 const [last_name, last_nameProps] = defineField("last_name", vuetifyConfig);
 const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
 // const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
-// const [generation_id, generation_idProps] = defineField(
-//   "generation_id",
-//   vuetifyConfig
-// );
+const [workstation, workstationProps] = defineField(
+  "workstation",
+  vuetifyConfig
+);
 const [active, activeProps] = defineField("active", vuetifyConfig);
-const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
@@ -198,13 +195,12 @@ watch(
       if (props.editItem) {
         setValues({
           id: props.editItem.id,
-          enrollment: props.editItem.enrollment,
           first_name: props.editItem.first_name,
           last_name: props.editItem.last_name,
           email: props.editItem.email,
           phone: props.editItem.phone,
+          workstation: props.editItem.workstation,
           active: props.editItem.active ? true : false,
-          user_type: props.editItem.user_type,
         });
       }
     } else {

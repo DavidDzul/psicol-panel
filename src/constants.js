@@ -108,6 +108,90 @@ export const lineBusiness = [
     { value: "OTHER", text: "Otro" },
 ]
 
+export const becTypeArray = [
+    { value: "BEC_ACTIVE", text: "Becario" },
+    { value: "BEC_INACTIVE", text: "Egresado" },
+]
+
+export const becTypeMap = new Map([
+    [
+        'BEC_ACTIVE',
+        {
+            value: 'BEC_ACTIVE',
+            text: "Becario",
+        },
+    ],
+    [
+        'BEC_INACTIVE',
+        {
+            value: 'BEC_INACTIVE',
+            text: "Egresado",
+        },
+    ],
+])
+
+export const rolesMap = new Map([
+    [
+        'BASIC',
+        {
+            value: 'BASIC',
+            text: "Básico",
+        },
+    ],
+    [
+        'BRONZE',
+        {
+            value: 'BRONZE',
+            text: "Bronce",
+        },
+    ],
+    [
+        'SILVER',
+        {
+            value: 'SILVER',
+            text: "Plata",
+        },
+    ],
+    [
+        'GOLD',
+        {
+            value: 'GOLD',
+            text: "Oro",
+        },
+    ],
+    [
+        'PLATINUM',
+        {
+            value: 'PLATINUM',
+            text: "Platino",
+        },
+    ],
+    [
+        'DIAMOND',
+        {
+            value: 'DIAMOND',
+            text: "Diamante",
+        },
+    ],
+])
+
+export const permissionsMap = new Map([
+    [
+        'CANDIDATES_VIEW',
+        {
+            value: 'CANDIDATES_VIEW',
+            text: "Visualizar apartado de candidatos",
+        },
+    ],
+    [
+        'CREATE_VACANT_JR',
+        {
+            value: 'CREATE_VACANT_JR',
+            text: "Creación de vacantes JR",
+        },
+    ],
+])
+
 // *******************************************************************
 
 export const typeKnowledge = [
