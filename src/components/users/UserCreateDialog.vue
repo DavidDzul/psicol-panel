@@ -105,7 +105,7 @@
             :loading="loading"
             @click="save"
           >
-            Actualizar</v-btn
+            Guardar</v-btn
           >
         </v-card-actions>
       </v-form>

@@ -70,11 +70,27 @@ const links = ref([
       // },
     ],
   },
+  // {
+  //   text: "Vacantes",
+  //   icon: "mdi-map",
+  //   link: "/vacantes",
+  //   group: false,
+  // },
   {
-    text: "Vacantes",
-    icon: "mdi-map",
-    link: "/vacantes",
-    group: false,
+    text: "Vinculación laboral",
+    icon: "mdi-briefcase",
+    link: "/laboral",
+    group: true,
+    links: [
+      {
+        text: "Vacantes",
+        link: "/vacantes",
+      },
+      {
+        text: "Postulaciones",
+        link: "/postulaciones",
+      },
+    ],
   },
   {
     text: "Configuración",

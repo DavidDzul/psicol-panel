@@ -85,6 +85,8 @@
               </v-col>
               <v-col cols="12" md="6">
                 <v-select
+                  v-model="role"
+                  v-bind="roleProps"
                   :items="roleArray"
                   item-title="text"
                   item-value="value"
@@ -186,6 +188,8 @@ const [workstation, workstationProps] = defineField(
   vuetifyConfig
 );
 const [active, activeProps] = defineField("active", vuetifyConfig);
+const [role, roleProps] = defineField("role", vuetifyConfig);
+
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
@@ -201,6 +205,7 @@ watch(
           phone: props.editItem.phone,
           workstation: props.editItem.workstation,
           active: props.editItem.active ? true : false,
+          role: props.editItem.role.name,
         });
       }
     } else {

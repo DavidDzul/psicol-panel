@@ -14,7 +14,7 @@
         @logout="logout"
       />
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" :permanent="!mobile" width="300">
+    <v-navigation-drawer v-model="drawer" :permanent="!mobile" width="280">
       <NavMenu />
     </v-navigation-drawer>
 

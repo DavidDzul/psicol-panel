@@ -14,7 +14,7 @@
                 <div class="login__screen-logo mx-auto">
                   <img
                     class="v-responsive"
-                    src="@/assets/img/logo-black.png"
+                    src="@/assets/img/logo_text.png"
                     alt="logo"
                   />
                 </div>
@@ -67,7 +67,7 @@ const { show, config } = storeToRefs(useAlertStore());
   flex-basis: 435px;
   max-width: inherit;
   &-logo {
-    max-width: 180px;
+    max-width: 330px;
     margin-bottom: 40px;
   }
   &-form {
@@ -84,7 +84,7 @@ const { show, config } = storeToRefs(useAlertStore());
   }
 }
 .login__cover {
-  background-image: url("@/assets/img/fondo.png");
+  background-image: url("@/assets/img/bg1.jpg");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;

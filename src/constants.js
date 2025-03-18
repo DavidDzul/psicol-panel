@@ -192,6 +192,60 @@ export const permissionsMap = new Map([
     ],
 ])
 
+export const vacantTypeMap = new Map([
+    [
+        'JOB_POSITION',
+        {
+            value: 'JOB_POSITION',
+            text: "Laboral",
+        },
+    ],
+    [
+        'PROFESSIONAL_PRACTICE',
+        {
+            value: 'PROFESSIONAL_PRACTICE',
+            text: "Prácticas profesionales",
+        },
+    ],
+    [
+        'JR_POSITION',
+        {
+            value: 'JR_POSITION',
+            text: "Vacante Jr",
+        },
+    ],
+])
+
+export const modeArray = [
+    { value: "IN_PERSON", text: "Presencial" },
+    { value: "REMOTE", text: "Remoto" },
+    { value: "HYBRID", text: "Híbrido" },
+]
+
+export const modeVacantMap = new Map([
+    [
+        'IN_PERSON',
+        {
+            value: 'IN_PERSON',
+            text: "Presencial",
+        },
+    ],
+    [
+        'REMOTE',
+        {
+            value: 'REMOTE',
+            text: "Remoto",
+        },
+    ],
+    [
+        'HYBRID',
+        {
+            value: 'HYBRID',
+            text: "Híbrido",
+        },
+    ],
+])
+
 // *******************************************************************
 
 export const typeKnowledge = [

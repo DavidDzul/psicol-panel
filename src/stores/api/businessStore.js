@@ -102,6 +102,9 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
 
     const updateBusiness = async (form, id) => {
         try {
+            const currentBusiness = resBusiness.value.get(id);
+            const currentBusinessData = currentBusiness?.business_data || null;
+
             const param = await axios.put(`api/admin/business/${id}`, form, {
                 headers: { 'accept': 'application/json' }
             });
@@ -110,8 +113,16 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
                     title: "Información guardada exitosamente.",
                     status: "success",
                 });
-                resBusinessDetails.value = param.data.updateBusiness
-                return param.data.res
+
+                const updatedBusiness = param.data.updateBusiness;
+
+                if (!updatedBusiness.business_data) {
+                    updatedBusiness.business_data = currentBusinessData;
+                }
+
+                resBusiness.value.set(updatedBusiness.id, updatedBusiness);
+                resBusinessDetails.value = updatedBusiness
+                return param.data.res;
             }
         } catch (error) {
             console.error(error);
@@ -128,13 +139,22 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
             const param = await axios.put(`api/admin/businessData/${id}`, form, {
                 headers: { 'accept': 'application/json' }
             });
+
             if (param) {
                 showAlert({
                     title: "Información guardada exitosamente.",
                     status: "success",
                 });
+
+                const currentBusiness = resBusiness.value.get(id);
+
+                if (currentBusiness) {
+                    currentBusiness.business_data = param.data.updateData;
+                    resBusiness.value.set(id, { ...currentBusiness });
+                }
+
                 resBusinessData.value = param.data.updateData
-                return param.data.res
+                return param.data.res;
             }
         } catch (error) {
             console.error(error);
@@ -144,7 +164,8 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
             });
             throw error;
         }
-    }
+    };
+
 
     const createAgreement = async (form, id) => {
         try {

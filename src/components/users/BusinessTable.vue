@@ -55,6 +55,9 @@
         </v-btn>
       </v-toolbar>
     </template>
+    <template #[`item.role`]="{ item }">
+      {{ roleMap.get(item?.role?.name)?.text }}
+    </template>
     <template #[`item.active`]="{ item }">
       <v-icon v-if="item.active" color="success">mdi-check</v-icon>
       <v-icon v-else color="error">mdi-close</v-icon>
@@ -102,7 +105,7 @@
 import { computed, ref, mergeProps } from "vue";
 import dayjs from "dayjs";
 
-import { campusMap } from "@/constants";
+import { roleMap } from "@/constants";
 
 const props = defineProps({
   business: { type: Array, default: () => [] },
@@ -116,6 +119,10 @@ const emit = defineEmits(["create", "edit", "show"]);
 
 const headers = computed(() => [
   {
+    title: "ID",
+    key: "id",
+  },
+  {
     title: "Nombre(s)",
     key: "first_name",
   },
@@ -123,13 +130,17 @@ const headers = computed(() => [
     title: "Apellido(s)",
     key: "last_name",
   },
-  {
-    title: "Correo electrónico",
-    key: "email",
-  },
+  // {
+  //   title: "Correo electrónico",
+  //   key: "email",
+  // },
   {
     title: "Empresa",
     key: "business_data.bs_name",
+  },
+  {
+    title: "Rol",
+    key: "role",
   },
   {
     title: "Activo",
