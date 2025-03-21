@@ -10,6 +10,7 @@
                 title="Información de la vacante"
                 button-text="Actualizar"
                 :expanded="expanded"
+                @button-click="openUpdateDialog"
               />
             </template>
           </v-expansion-panel-title>
@@ -22,6 +23,27 @@
   </v-row>
 
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
+  <VacantUpdateDialog
+    v-if="selectedVacant && selectedVacant.category === 'JOB_POSITION'"
+    v-model="updateDialog"
+    :edit-item="selectedVacant"
+    :loading="loadingUpdate"
+    @submit="onUpdateVacantLaboral"
+  />
+  <VacantPracticeUpdateDialog
+    v-if="selectedVacant && selectedVacant.category === 'PROFESSIONAL_PRACTICE'"
+    v-model="updatePracticeDialog"
+    :edit-item="selectedVacant"
+    :loading="loadingUpdate"
+    @submit="onUpdateVacantPractice"
+  />
+  <VacantJrUpdateDialog
+    v-if="selectedVacant && selectedVacant.category === 'JR_POSITION'"
+    v-model="updateJrDialog"
+    :edit-item="selectedVacant"
+    :loading="loadingUpdate"
+    @submit="onUpdateVacantJunior"
+  />
 </template>
 
 <script setup>
@@ -32,11 +54,24 @@ import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import PanelHeaderOptions from "@/components/shared/PanelHeaderOptions.vue";
 import VacantForm from "@/components/vacantPosition/VacantForm.vue";
+import VacantJrUpdateDialog from "@/components/vacantPosition/VacantJrUpdateDialog.vue";
+import VacantPracticeUpdateDialog from "@/components/vacantPosition/VacantPracticeUpdateDialog.vue";
+import VacantUpdateDialog from "@/components/vacantPosition/VacantUpdateDialog.vue";
 
-const { links, selectedVacant } = storeToRefs(
-  useVacantPositionDetailsPageStore()
-);
-const {} = useVacantPositionDetailsPageStore();
+const {
+  links,
+  selectedVacant,
+  updateDialog,
+  updatePracticeDialog,
+  updateJrDialog,
+  loadingUpdate,
+} = storeToRefs(useVacantPositionDetailsPageStore());
+const {
+  openUpdateDialog,
+  onUpdateVacantLaboral,
+  onUpdateVacantPractice,
+  onUpdateVacantJunior,
+} = useVacantPositionDetailsPageStore();
 
 const panel = ref([0]);
 const confirmationDialog = ref();

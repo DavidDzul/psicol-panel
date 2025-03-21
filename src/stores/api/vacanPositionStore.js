@@ -34,10 +34,88 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
         }
     };
 
+    const updateVacantLaboral = async (id, form) => {
+        try {
+            const param = await axios.put(`api/admin/vacantPositions/${id}/updateVacant`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información actualizada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.updateVacant.id, param.data.updateVacant)
+                resVacantDetails.value = param.data.updateVacant;
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
+    const updateVacantPractice = async (id, form) => {
+        try {
+            const param = await axios.put(`api/admin/vacantPositions/${id}/updatePractice`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información actualizada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.updatePractice.id, param.data.updatePractice)
+                resVacantDetails.value = param.data.updatePractice;
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
+    const updateVacantJr = async (id, form) => {
+        try {
+            const param = await axios.put(`api/admin/vacantPositions/${id}/updateVacantJr`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información actualizada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.updateVacantJr.id, param.data.updateVacantJr)
+                resVacantDetails.value = param.data.updateVacantJr;
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
     return {
         resPositions,
         resVacantDetails,
         showVacant,
         fetchVacantPositions,
+        updateVacantLaboral,
+        updateVacantPractice,
+        updateVacantJr,
     };
 });

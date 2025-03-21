@@ -10,11 +10,13 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
     const { userProfile } = storeToRefs(useAuthStore());
 
     const { resVacantDetails } = storeToRefs(useVacantPositionStore());
-    const { showVacant, } = useVacantPositionStore();
+    const { showVacant, updateVacantLaboral, updateVacantPractice, updateVacantJr } = useVacantPositionStore();
 
     const route = useRoute();
     const loadUser = ref(false);
     const updateDialog = ref(false)
+    const updatePracticeDialog = ref(false)
+    const updateJrDialog = ref(false)
     const loadingUpdate = ref(false)
 
     onBeforeMount(() => {
@@ -66,10 +68,58 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
         },
     ])
 
-    // const openUpdateDialog = () => {
-    //     if (!selectedUser.value) return
-    //     updateDialog.value = true
-    // }
+    const openUpdateDialog = () => {
+        if (!selectedVacant.value) return
+        if (selectedVacant.value.category === 'JOB_POSITION') {
+            updateDialog.value = true
+        } else if (selectedVacant.value.category === 'PROFESSIONAL_PRACTICE') {
+            updatePracticeDialog.value = true
+        } else if (selectedVacant.value.category === 'JR_POSITION') {
+            updateJrDialog.value = true
+        }
+    }
+
+    const onUpdateVacantLaboral = async (form) => {
+        loadingUpdate.value = true
+        if (!selectedVacant.value && !form) return
+        try {
+            const res = await updateVacantLaboral(selectedVacant.value.id, form);
+            if (res) {
+                updateDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingUpdate.value = false
+    };
+
+    const onUpdateVacantPractice = async (form) => {
+        loadingUpdate.value = true
+        if (!selectedVacant.value && !form) return
+        try {
+            const res = await updateVacantPractice(selectedVacant.value.id, form);
+            if (res) {
+                updatePracticeDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingUpdate.value = false
+    };
+
+    const onUpdateVacantJunior = async (form) => {
+        loadingUpdate.value = true
+        if (!selectedVacant.value && !form) return
+        try {
+            const res = await updateVacantJr(selectedVacant.value.id, form);
+            if (res) {
+                updateJrDialog.value = false
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        loadingUpdate.value = false
+    };
 
     // const onUpdateUser = async (form) => {
     //     if (!selectedUser.value) return
@@ -90,9 +140,14 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
     return {
         links,
         updateDialog,
+        updatePracticeDialog,
+        updateJrDialog,
         selectedVacant,
         loadingUpdate,
         // onUpdateUser,
-        // openUpdateDialog
+        openUpdateDialog,
+        onUpdateVacantLaboral,
+        onUpdateVacantPractice,
+        onUpdateVacantJunior
     };
 });

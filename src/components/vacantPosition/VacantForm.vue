@@ -1,11 +1,17 @@
 <template>
   <v-container class="user-details-list" fluid>
-    <v-row>
-      <v-col cols="12" md="12">
-        <h3>Sobre la vacante:</h3>
-      </v-col>
-      <v-col cols="12" md="12">
+    <!-- Sección: Sobre la vacante -->
+    <v-card class="mb-4" elevation="0">
+      <v-card-title>
+        <v-icon>mdi-briefcase</v-icon> Sobre la vacante</v-card-title
+      >
+      <v-divider></v-divider>
+      <v-card-text class="ma-4">
         <ul>
+          <li>
+            <b>Nombre:</b>
+            {{ props.vacant.vacant_name }}
+          </li>
           <li>
             <b>Tipo:</b>
             {{
@@ -68,13 +74,14 @@
             <b>Compensaciones:</b> {{ props.vacant.compensations }}
           </li>
         </ul>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12" md="12">
-        <h3>Te ofrecemos:</h3>
-      </v-col>
-      <v-col cols="12" md="12">
+      </v-card-text>
+    </v-card>
+
+    <!-- Sección: Te ofrecemos -->
+    <v-card class="mb-4" elevation="0">
+      <v-card-title>Te ofrecemos</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text class="ma-4">
         <template
           v-if="
             props.vacant.category === 'JOB_POSITION' ||
@@ -183,23 +190,34 @@
 
           <!-- Agregar más beneficios según los datos -->
         </ul>
+      </v-card-text>
+    </v-card>
 
-        <ul>
-          <li v-if="props.vacant.observations">
-            <b>Observaciones:</b>
-            {{ props.vacant.observations }}
-          </li>
-        </ul>
-      </v-col>
-    </v-row>
+    <!-- Observaciones -->
+    <v-card v-if="props.vacant.observations" elevation="2">
+      <v-card-title>Observaciones</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text>{{ props.vacant.observations }}</v-card-text>
+    </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
+import { defineProps } from "vue";
 import { modeVacantMap, vacantTypeMap } from "@/constants";
 
 const props = defineProps({
   vacant: { type: Object, required: true },
 });
 </script>
+
+<style scoped>
+li {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.user-details-list li {
+  font-size: 15px;
+}
+</style>
