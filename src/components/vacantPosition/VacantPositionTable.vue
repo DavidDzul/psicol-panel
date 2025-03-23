@@ -118,7 +118,7 @@
               variant="text"
               color="error"
               density="comfortable"
-              icon="mdi-delete"
+              icon="mdi-cancel"
               class="mr-2"
               size="small"
             >

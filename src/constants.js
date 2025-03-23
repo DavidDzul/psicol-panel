@@ -246,6 +246,105 @@ export const modeVacantMap = new Map([
     ],
 ])
 
+export const rejectedReasonMap = new Map([
+    [
+        'US_FIND_JOB',
+        {
+            value: 'US_FIND_JOB',
+            text: "Ya encontré un trabajo",
+        },
+    ],
+    [
+        'US_NOT_EXPECTATIONS',
+        {
+            value: 'US_NOT_EXPECTATIONS',
+            text: "No cumple mis expectativas laborales/servicio",
+        },
+    ],
+    [
+        'US_PERSONAL_PROBLEMS',
+        {
+            value: 'US_PERSONAL_PROBLEMS',
+            text: "Me surgieron imprevistos personales (académicos, laborales, salud, etc).",
+        },
+    ],
+    [
+        'US_CONFUSION',
+        {
+            value: 'US_CONFUSION',
+            text: "Me confundí al postularme",
+        },
+    ],
+    [
+        'BS_UNSOLICITED',
+        {
+            value: 'BS_UNSOLICITED',
+            text: "No cumple el perfil solicitado",
+        },
+    ],
+    [
+        'BS_WAS_COVERED',
+        {
+            value: 'BS_WAS_COVERED',
+            text: "Ya se cubrió la vacante",
+        },
+    ],
+    [
+        'BS_NOT_REQUIRED',
+        {
+            value: 'BS_NOT_REQUIRED',
+            text: "Ya no requiero cubrir la vacante",
+        },
+    ],
+    [
+        'BS_USER_NOT_CONTINUE',
+        {
+            value: 'BS_USER_NOT_CONTINUE',
+            text: "El postulante decide no continuar con el proceso",
+        },
+    ],
+    [
+        'OTHER',
+        {
+            value: 'OTHER',
+            text: "Otro",
+        },
+    ],
+
+])
+
+export const statusApplicationMap = new Map([
+    [
+        'PENDING',
+        {
+            value: 'PENDING',
+            text: "Pendiente",
+        },
+    ],
+    [
+        'ACCEPTED',
+        {
+            value: 'ACCEPTED',
+            text: "Aceptado",
+        },
+    ],
+    [
+        'REJECTED',
+        {
+            value: 'REJECTED',
+            text: "Descartado",
+        },
+    ],
+])
+
+export const bsRejectedArray = [
+    { value: "BS_UNSOLICITED", text: "No cumple el perfil solicitado" },
+    { value: "BS_WAS_COVERED", text: "Ya se cubrió la vacante" },
+    { value: "BS_NOT_REQUIRED", text: "Ya no requiero cubrir la vacante" },
+    { value: "BS_USER_NOT_CONTINUE", text: "El postulante decide no continuar con el proceso" },
+    { value: "OTHER", text: "Otro" },
+]
+
 // *******************************************************************
 
 export const typeKnowledge = [
