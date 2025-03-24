@@ -120,6 +120,9 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
                     status: "success",
                 });
                 resPositions.value.set(param.data.vacant.id, param.data.vacant);
+                if (resVacantDetails.value && resVacantDetails.value.id === id) {
+                    resVacantDetails.value = param.data.vacant;
+                }
                 return param.data.res;
             }
         } catch (error) {
@@ -143,6 +146,9 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
                     status: "success",
                 });
                 resPositions.value.set(param.data.vacant.id, param.data.vacant);
+                if (resVacantDetails.value && resVacantDetails.value.id === id) {
+                    resVacantDetails.value = param.data.vacant;
+                }
                 return param.data.res;
             }
         } catch (error) {

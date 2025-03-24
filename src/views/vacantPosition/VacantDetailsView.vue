@@ -3,15 +3,32 @@
   <v-row>
     <v-col cols="12">
       <v-expansion-panels v-model="panel" multiple>
-        <v-expansion-panel>
+        <v-expansion-panel :readonly="true">
           <v-expansion-panel-title color="#f8f8f8">
-            <template #default="{ expanded }">
+            <template v-if="selectedVacant" #default="{ expanded }">
               <PanelHeaderOptions
                 title="Información de la vacante"
                 button-text="Actualizar"
                 :expanded="expanded"
                 @button-click="openUpdateDialog"
               />
+
+              <v-btn
+                v-if="selectedVacant.status"
+                class="mr-2"
+                color="error"
+                @click="openDisabledDialog"
+              >
+                Desactivar
+              </v-btn>
+              <v-btn
+                v-else
+                class="mr-2"
+                color="success"
+                @click="openEnableDialog"
+              >
+                Activar
+              </v-btn>
             </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -44,6 +61,11 @@
     :loading="loadingUpdate"
     @submit="onUpdateVacantJunior"
   />
+  <VacantDisabledDialog
+    v-model="disabledDialog"
+    :loading="loadingDisabled"
+    @submit="onDisabledVacant"
+  />
 </template>
 
 <script setup>
@@ -57,6 +79,7 @@ import VacantForm from "@/components/vacantPosition/VacantForm.vue";
 import VacantJrUpdateDialog from "@/components/vacantPosition/VacantJrUpdateDialog.vue";
 import VacantPracticeUpdateDialog from "@/components/vacantPosition/VacantPracticeUpdateDialog.vue";
 import VacantUpdateDialog from "@/components/vacantPosition/VacantUpdateDialog.vue";
+import VacantDisabledDialog from "@/components/vacantPosition/VacantDisabledDialog.vue";
 
 const {
   links,
@@ -65,14 +88,29 @@ const {
   updatePracticeDialog,
   updateJrDialog,
   loadingUpdate,
+  disabledDialog,
+  loadingDisabled,
 } = storeToRefs(useVacantPositionDetailsPageStore());
 const {
   openUpdateDialog,
   onUpdateVacantLaboral,
   onUpdateVacantPractice,
   onUpdateVacantJunior,
+  openDisabledDialog,
+  onDisabledVacant,
+  onEnableVacant,
 } = useVacantPositionDetailsPageStore();
 
 const panel = ref([0]);
 const confirmationDialog = ref();
+
+const openEnableDialog = async () => {
+  if (!selectedVacant.value.id) return;
+  const response = await confirmationDialog.value?.open({
+    title: "Activar vacante",
+    body: "Al aceptar, la vacante se hará pública y los usuarios podrán postularse. ¿Estás seguro de que deseas continuar?",
+  });
+  if (!response) return;
+  await onEnableVacant(selectedVacant.value.id);
+};
 </script>

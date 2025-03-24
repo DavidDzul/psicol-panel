@@ -1,10 +1,11 @@
 <template>
   <v-container class="user-details-list" fluid>
     <!-- Sección: Sobre la vacante -->
+
     <v-card class="mb-4" elevation="0">
       <v-card-title>
-        <v-icon>mdi-briefcase</v-icon> Sobre la vacante</v-card-title
-      >
+        <v-icon>mdi-briefcase</v-icon> Sobre la vacante
+      </v-card-title>
       <v-divider></v-divider>
       <v-card-text class="ma-4">
         <ul>

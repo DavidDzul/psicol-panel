@@ -10,14 +10,18 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
     const { userProfile } = storeToRefs(useAuthStore());
 
     const { resVacantDetails } = storeToRefs(useVacantPositionStore());
-    const { showVacant, updateVacantLaboral, updateVacantPractice, updateVacantJr } = useVacantPositionStore();
+    const { showVacant, updateVacantLaboral, updateVacantPractice, updateVacantJr, statusVacant, resetVacant } = useVacantPositionStore();
 
     const route = useRoute();
     const loadUser = ref(false);
     const updateDialog = ref(false)
     const updatePracticeDialog = ref(false)
     const updateJrDialog = ref(false)
+    const disabledDialog = ref(false)
+    const selectedVacantId = ref(null)
+
     const loadingUpdate = ref(false)
+    const loadingDisabled = ref(false)
 
     onBeforeMount(() => {
         validateAndFetchUserDetail();
@@ -137,6 +141,33 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
     //     loadingUpdate.value = false
     // };
 
+    const openDisabledDialog = (id) => {
+        if (!id) return
+        selectedVacantId.value = id
+        disabledDialog.value = true
+    }
+
+    const onDisabledVacant = async (form) => {
+        if (!selectedVacant.value) return
+        loadingDisabled.value = true
+        try {
+            await statusVacant(selectedVacant.value.id, form)
+            disabledDialog.value = false
+        } catch (e) {
+            console.error(e)
+        }
+        loadingDisabled.value = false
+    }
+
+    const onEnableVacant = async (id) => {
+        if (!id) return
+        try {
+            await resetVacant(id)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     return {
         links,
         updateDialog,
@@ -144,10 +175,14 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
         updateJrDialog,
         selectedVacant,
         loadingUpdate,
+        disabledDialog,
         // onUpdateUser,
         openUpdateDialog,
         onUpdateVacantLaboral,
         onUpdateVacantPractice,
-        onUpdateVacantJunior
+        onUpdateVacantJunior,
+        openDisabledDialog,
+        onDisabledVacant,
+        onEnableVacant
     };
 });
