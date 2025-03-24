@@ -6,6 +6,8 @@
         :positions="positions"
         @laboral="openVacantDialog"
         @show="openVacantDetail"
+        @disabled="openDisabledDialog"
+        @enable="openEnableDialog"
       />
     </v-col>
   </v-row>
@@ -24,6 +26,11 @@
     /> -->
 
   <VacantCreateDialog v-model="vacantDialog" />
+  <VacantDisabledDialog
+    v-model="disabledDialog"
+    :loading="loadingDisabled"
+    @submit="onDisabledVacant"
+  />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
 
@@ -37,11 +44,27 @@ import VacantPositionTable from "@/components/vacantPosition/VacantPositionTable
 import VacantCreateDialog from "@/components/vacantPosition/VacantCreateDialog.vue";
 import VacantJrCreateDialog from "@/components/vacantPosition/VacantJrCreateDialog.vue";
 import VacantPracticeCreateDialog from "@/components/vacantPosition/VacantPracticeCreateDialog.vue";
+import VacantDisabledDialog from "@/components/vacantPosition/VacantDisabledDialog.vue";
 
-const { links, positions, vacantDialog } = storeToRefs(
-  useVacantPositionPageStore()
-);
-const { openVacantDialog, openVacantDetail } = useVacantPositionPageStore();
+const { links, positions, vacantDialog, disabledDialog, loadingDisabled } =
+  storeToRefs(useVacantPositionPageStore());
+const {
+  openVacantDialog,
+  openVacantDetail,
+  openDisabledDialog,
+  onDisabledVacant,
+  onEnableVacant,
+} = useVacantPositionPageStore();
 
 const confirmationDialog = ref();
+
+const openEnableDialog = async (id) => {
+  if (!id) return;
+  const response = await confirmationDialog.value?.open({
+    title: "Activar vacante",
+    body: "Al aceptar, la vacante se hará pública y los usuarios podrán postularse. ¿Estás seguro de que deseas continuar?",
+  });
+  if (!response) return;
+  await onEnableVacant(id);
+};
 </script>

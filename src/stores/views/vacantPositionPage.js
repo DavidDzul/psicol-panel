@@ -12,15 +12,18 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
     const { resPositions } = storeToRefs(useVacantPositionStore())
-    const { fetchVacantPositions } = useVacantPositionStore()
+    const { fetchVacantPositions, statusVacant, resetVacant } = useVacantPositionStore()
 
     const router = useRouter()
     const createDialog = ref(false)
     const updateDialog = ref(false)
     const vacantDialog = ref(false)
+    const disabledDialog = ref(false)
+    const selectedVacantId = ref(null)
 
     const loadingCreate = ref(false)
     const loadingUpdate = ref(false)
+    const loadingDisabled = ref(false)
 
     onBeforeMount(async () => {
         await fetchVacantPositions()
@@ -54,6 +57,33 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         vacantDialog.value = true
     }
 
+    const openDisabledDialog = (id) => {
+        if (!id) return
+        selectedVacantId.value = id
+        disabledDialog.value = true
+    }
+
+    const onDisabledVacant = async (form) => {
+        if (!selectedVacantId.value) return
+        loadingDisabled.value = true
+        try {
+            await statusVacant(selectedVacantId.value, form)
+            disabledDialog.value = false
+        } catch (e) {
+            console.error(e)
+        }
+        loadingDisabled.value = false
+    }
+
+    const onEnableVacant = async (id) => {
+        if (!id) return
+        try {
+            await resetVacant(id)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     return {
         links,
         positions,
@@ -64,8 +94,13 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         filteredCampus,
         loadingUpdate,
         vacantDialog,
+        disabledDialog,
+        loadingDisabled,
         openVacantDetail,
         openCreateDialog,
         openVacantDialog,
+        openDisabledDialog,
+        onDisabledVacant,
+        onEnableVacant,
     };
 });

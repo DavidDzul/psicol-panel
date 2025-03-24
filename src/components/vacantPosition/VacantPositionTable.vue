@@ -111,7 +111,7 @@
             </v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip text="Desactivar" location="bottom">
+        <v-tooltip v-if="item.status" text="Desactivar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -121,6 +121,22 @@
               icon="mdi-cancel"
               class="mr-2"
               size="small"
+              @click="disabledItem(item)"
+            >
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip v-else text="Activar" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="text"
+              color="success"
+              density="comfortable"
+              icon="mdi-check"
+              class="mr-2"
+              size="small"
+              @click="enableItem(item)"
             >
             </v-btn>
           </template>
@@ -145,7 +161,14 @@ const props = defineProps({
 const search = ref("");
 const groupBy = ref(undefined);
 
-const emit = defineEmits(["show", "laboral", "junior", "practice"]);
+const emit = defineEmits([
+  "show",
+  "disabled",
+  "laboral",
+  "junior",
+  "practice",
+  "enable",
+]);
 
 const headers = computed(() => [
   {
@@ -185,5 +208,13 @@ const formattedHistory = (time) => {
 
 const showItem = (item) => {
   emit("show", item.id);
+};
+
+const disabledItem = (item) => {
+  emit("disabled", item.id);
+};
+
+const enableItem = (item) => {
+  emit("enable", item.id);
 };
 </script>

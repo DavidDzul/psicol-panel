@@ -109,6 +109,52 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
         }
     };
 
+    const statusVacant = async (id, form) => {
+        try {
+            const param = await axios.put(`api/admin/vacantPositions/${id}/status`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Estatus actualizado exitosamente.",
+                    status: "success",
+                });
+                resPositions.value.set(param.data.vacant.id, param.data.vacant);
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
+    const resetVacant = async (id) => {
+        try {
+            const param = await axios.put(`api/admin/vacantPositions/${id}/reset`, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Estatus actualizado exitosamente.",
+                    status: "success",
+                });
+                resPositions.value.set(param.data.vacant.id, param.data.vacant);
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
     return {
         resPositions,
         resVacantDetails,
@@ -117,5 +163,7 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
         updateVacantLaboral,
         updateVacantPractice,
         updateVacantJr,
+        statusVacant,
+        resetVacant
     };
 });
