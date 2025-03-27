@@ -9,7 +9,7 @@ import { useAuthStore } from "@/stores/api/authStore";
 export const useUserPageStore = defineStore("userPage", () => {
     const { setLoading } = useAppStore();
 
-    const { filteredCampus } = storeToRefs(useAuthStore())
+    const { filteredCampus, readUsers, createUsers, editUsers } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
     const { resUsers } = storeToRefs(useUserStore())
     const { showUser, fetchUsers, createUser, updateUser } = useUserStore()
@@ -98,6 +98,9 @@ export const useUserPageStore = defineStore("userPage", () => {
         loadingCreate,
         filteredCampus,
         loadingUpdate,
+        readUsers,
+        createUsers,
+        editUsers,
         openUserDetail,
         openUpdateDialog,
         openCreateDialog,

@@ -50,7 +50,12 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn prepend-icon="mdi-plus" color="primary" @click="$emit('create')">
+        <v-btn
+          v-if="create"
+          prepend-icon="mdi-plus"
+          color="primary"
+          @click="$emit('create')"
+        >
           Agregar
         </v-btn>
       </v-toolbar>
@@ -80,7 +85,7 @@
             </v-btn>
           </template>
         </v-tooltip> -->
-        <v-tooltip text="Visualizar" location="bottom">
+        <v-tooltip v-if="read" text="Visualizar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -110,6 +115,9 @@ import { roleMap } from "@/constants";
 const props = defineProps({
   business: { type: Array, default: () => [] },
   loading: { type: Boolean, default: () => false },
+  read: { type: Boolean, default: () => false },
+  create: { type: Boolean, default: () => false },
+  edit: { type: Boolean, default: () => false },
 });
 
 const search = ref("");

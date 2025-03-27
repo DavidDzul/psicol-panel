@@ -17,6 +17,7 @@ export const useAuthStore = defineStore("authStore", () => {
     const loggedUser = ref(false);
     const userProfile = ref(null);
     const openUserProfileDialog = ref(false)
+    const permissions = ref([])
 
     const openUserDialog = () => {
         openUserProfileDialog.value = true;
@@ -38,6 +39,7 @@ export const useAuthStore = defineStore("authStore", () => {
 
             await fetchRoles()
             await fetchGenerations();
+            await getPermissions(token.value)
             await router.push({ path: "/" });
 
         } catch (error) {
@@ -69,7 +71,7 @@ export const useAuthStore = defineStore("authStore", () => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
         await axios.get("sanctum/csrf-cookie");
         await axios
-            .get("api/admin/user")
+            .get("api/admin/admin")
             .then(async (res) => {
                 loggedUser.value = true;
                 userProfile.value = res.data;
@@ -80,6 +82,22 @@ export const useAuthStore = defineStore("authStore", () => {
             .catch((error) => {
                 console.error("Error al obtener el perfil:", error);
             });
+    };
+
+    const getPermissions = async (authToken) => {
+        try {
+            const response = await axios.get("/api/admin/permissions", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                }
+            });
+
+            permissions.value = response.data.permissions;
+            return permissions;
+        } catch (error) {
+            console.error("Error fetching user permissions:", error);
+            return [];
+        }
     };
 
     const updateUserProfile = async (form) => {
@@ -114,12 +132,29 @@ export const useAuthStore = defineStore("authStore", () => {
             : campusArray.filter((c) => c.value === userProfile.value?.campus);
     });
 
+    const readUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_USERS"))
+    const createUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_USERS"))
+    const editUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_USERS"))
+    const readGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_GRADUATES"))
+    const createGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_GRADUATES"))
+    const editGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_GRADUATES"))
+    const readBusiness = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_BUSINESS"))
+    const createBusinessPermission = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_BUSINESS"))
+    const editBusiness = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_BUSINESS"))
+    const readVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_VACANT"))
+    const createVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_VACANT"))
+    const editVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_VACANT"))
+    const readApplication = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_APPLICATION"))
+    const editApplication = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_APPLICATION"))
+
+
     return {
         login,
         logout,
         getProfile,
         openUserDialog,
         updateUserProfile,
+        getPermissions,
         token,
         fullName,
         loggedUser,
@@ -127,5 +162,21 @@ export const useAuthStore = defineStore("authStore", () => {
         userInitials,
         filteredCampus,
         openUserProfileDialog,
+        // PERMISSIONS
+        permissions,
+        readUsers,
+        createUsers,
+        editUsers,
+        readGraduates,
+        createGraduates,
+        editGraduates,
+        readBusiness,
+        createBusinessPermission,
+        editBusiness,
+        readVacant,
+        createVacant,
+        editVacant,
+        readApplication,
+        editApplication
     };
 });

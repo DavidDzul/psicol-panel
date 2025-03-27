@@ -8,6 +8,9 @@
         @show="openVacantDetail"
         @disabled="openDisabledDialog"
         @enable="openEnableDialog"
+        :read="readVacant"
+        :create="createVacant"
+        :edit="editVacant"
       />
     </v-col>
   </v-row>
@@ -46,8 +49,16 @@ import VacantJrCreateDialog from "@/components/vacantPosition/VacantJrCreateDial
 import VacantPracticeCreateDialog from "@/components/vacantPosition/VacantPracticeCreateDialog.vue";
 import VacantDisabledDialog from "@/components/vacantPosition/VacantDisabledDialog.vue";
 
-const { links, positions, vacantDialog, disabledDialog, loadingDisabled } =
-  storeToRefs(useVacantPositionPageStore());
+const {
+  links,
+  positions,
+  vacantDialog,
+  disabledDialog,
+  loadingDisabled,
+  readVacant,
+  createVacant,
+  editVacant,
+} = storeToRefs(useVacantPositionPageStore());
 const {
   openVacantDialog,
   openVacantDetail,

@@ -6,6 +6,9 @@
         :business="business"
         @create="openCreateDialog"
         @show="openBusinessDetail"
+        :read="readBusiness"
+        :create="createBusinessPermission"
+        :edit="editBusiness"
       />
     </v-col>
   </v-row>
@@ -28,8 +31,16 @@ import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import BusinessTable from "@/components/users/BusinessTable.vue";
 import BusinessCreateDialog from "@/components/users/BusinessCreateDialog.vue";
 
-const { links, business, createDialog, loadingCreate, filteredCampus } =
-  storeToRefs(useBusinessPageStore());
+const {
+  links,
+  business,
+  createDialog,
+  loadingCreate,
+  filteredCampus,
+  readBusiness,
+  createBusinessPermission,
+  editBusiness,
+} = storeToRefs(useBusinessPageStore());
 const { openCreateDialog, onSaveBusiness, openBusinessDetail } =
   useBusinessPageStore();
 

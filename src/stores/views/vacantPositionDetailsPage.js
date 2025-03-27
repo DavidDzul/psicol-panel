@@ -7,7 +7,7 @@ import { useRoute, useRouter } from "vue-router"
 
 export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDetailsPage", () => {
     const { setLoading } = useAppStore();
-    const { userProfile } = storeToRefs(useAuthStore());
+    const { editVacant } = storeToRefs(useAuthStore());
 
     const { resVacantDetails } = storeToRefs(useVacantPositionStore());
     const { showVacant, updateVacantLaboral, updateVacantPractice, updateVacantJr, statusVacant, resetVacant } = useVacantPositionStore();
@@ -176,6 +176,7 @@ export const useVacantPositionDetailsPageStore = defineStore("vacantPositionDeta
         selectedVacant,
         loadingUpdate,
         disabledDialog,
+        editVacant,
         // onUpdateUser,
         openUpdateDialog,
         onUpdateVacantLaboral,

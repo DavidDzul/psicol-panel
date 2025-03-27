@@ -112,7 +112,7 @@ const router = createRouter({
 // Guard global para manejar autenticación
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-  const { getProfile } = authStore;
+  const { getProfile, getPermissions } = authStore;
   const { loggedUser } = storeToRefs(authStore);
   const token = localStorage.getItem("token");
 
@@ -121,6 +121,8 @@ router.beforeEach(async (to, from, next) => {
       return next();
     } else if (token && !loggedUser.value) {
       await getProfile(token);
+      await getPermissions(token)
+
       if (loggedUser.value) {
         return next();
       } else {

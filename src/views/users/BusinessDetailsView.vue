@@ -37,11 +37,15 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template #default="{ expanded }">
               <PanelHeaderOptions
-                v-if="selectedBusiness"
+                v-if="selectedBusiness && editBusiness"
                 title="Información de usuario"
                 button-text="Actualizar"
                 :expanded="expanded"
                 @button-click="openUpdateDialog"
+              />
+              <PanelHeaderOptions
+                v-else="selectedBusiness"
+                title="Información de usuario"
               />
             </template>
           </v-expansion-panel-title>
@@ -57,11 +61,15 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template #default="{ expanded }">
               <PanelHeaderOptions
-                v-if="businessData"
+                v-if="businessData && editBusiness"
                 title="Información de la Empresa"
                 button-text="Actualizar"
                 :expanded="expanded"
                 @button-click="openUpdateBusinessDialog"
+              />
+              <PanelHeaderOptions
+                v-else="selectedBusiness"
+                title="Información de la Empresa"
               />
             </template>
           </v-expansion-panel-title>
@@ -74,12 +82,13 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template #default="{ expanded }">
               <PanelHeaderOptions
-                v-if="agreements"
+                v-if="agreements && editBusiness"
                 title="Convenios de la Empresa"
                 button-text="Agregar"
                 :expanded="expanded"
                 @button-click="openAgreementDialog"
               />
+              <PanelHeaderOptions v-else title="Convenios de la Empresa" />
             </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -90,20 +99,21 @@
     </v-col>
   </v-row>
   <BusinessUpdateDialog
-    v-if="selectedBusiness"
+    v-if="selectedBusiness && editBusiness"
     v-model="editDialog"
     :edit-item="selectedBusiness"
     :loading="loadingUpdate"
     @submit="onUpdateBusiness"
   />
   <BusinessUpdateDataDialog
-    v-if="businessData"
+    v-if="businessData && editBusiness"
     v-model="editBusinessDialog"
     :edit-item="businessData"
     :loading="loadingUpdate"
     @submit="onUpdateBusinessData"
   />
   <BusinessCreateAgreement
+    v-if="editBusiness"
     v-model="agreementDialog"
     :loading="loadingCreate"
     @submit="onCreateAgreement"
@@ -135,6 +145,7 @@ const {
   loadingCreate,
   editDialog,
   agreementDialog,
+  editBusiness,
 } = storeToRefs(useBusinessDetailsPageStore());
 const {
   openUpdateBusinessDialog,

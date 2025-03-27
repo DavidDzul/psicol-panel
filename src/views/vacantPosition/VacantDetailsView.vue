@@ -7,14 +7,16 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template v-if="selectedVacant" #default="{ expanded }">
               <PanelHeaderOptions
+                v-if="editVacant"
                 title="Información de la vacante"
                 button-text="Actualizar"
                 :expanded="expanded"
                 @button-click="openUpdateDialog"
               />
+              <PanelHeaderOptions v-else title="Información de la vacante" />
 
               <v-btn
-                v-if="selectedVacant.status"
+                v-if="selectedVacant.status && editVacant"
                 class="mr-2"
                 color="error"
                 @click="openDisabledDialog"
@@ -22,7 +24,7 @@
                 Desactivar
               </v-btn>
               <v-btn
-                v-else
+                v-else-if="!selectedVacant.status && editVacant"
                 class="mr-2"
                 color="success"
                 @click="openEnableDialog"
@@ -90,6 +92,7 @@ const {
   loadingUpdate,
   disabledDialog,
   loadingDisabled,
+  editVacant,
 } = storeToRefs(useVacantPositionDetailsPageStore());
 const {
   openUpdateDialog,

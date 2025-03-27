@@ -54,7 +54,7 @@
               Agregar
             </v-btn> -->
 
-        <v-btn prepend-icon="mdi-plus" color="primary">
+        <v-btn v-if="create" prepend-icon="mdi-plus" color="primary">
           AGREGAR
           <v-menu activator="parent">
             <v-list>
@@ -96,7 +96,7 @@
     </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
-        <v-tooltip text="Visualizar" location="bottom">
+        <v-tooltip v-if="read" text="Visualizar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -111,7 +111,11 @@
             </v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip v-if="item.status" text="Desactivar" location="bottom">
+        <v-tooltip
+          v-if="item.status && edit"
+          text="Desactivar"
+          location="bottom"
+        >
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -126,7 +130,11 @@
             </v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip v-else text="Activar" location="bottom">
+        <v-tooltip
+          v-else-if="!item.status && edit"
+          text="Activar"
+          location="bottom"
+        >
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -156,6 +164,9 @@ import { vacantTypeMap } from "@/constants";
 const props = defineProps({
   positions: { type: Array, default: () => [] },
   loading: { type: Boolean, default: () => false },
+  read: { type: Boolean, default: () => false },
+  create: { type: Boolean, default: () => false },
+  edit: { type: Boolean, default: () => false },
 });
 
 const search = ref("");

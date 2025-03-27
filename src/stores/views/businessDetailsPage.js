@@ -7,7 +7,7 @@ import { useRoute, useRouter } from "vue-router"
 
 export const useBusinessDetailsPageStore = defineStore("businessDetailsPage", () => {
     const { setLoading } = useAppStore();
-    const { userProfile } = storeToRefs(useAuthStore());
+    const { userProfile, editBusiness } = storeToRefs(useAuthStore());
 
     const { resBusinessDetails, resBusinessData, resBusinessAgreements } = storeToRefs(useBusinessStore());
     const { getBusiness, getBusinessData, getBusinessAgreements, updateBusinessData, updateBusiness, createAgreement } = useBusinessStore();
@@ -141,6 +141,7 @@ export const useBusinessDetailsPageStore = defineStore("businessDetailsPage", ()
         loadingUpdate,
         loadingCreate,
         agreementDialog,
+        editBusiness,
         openUpdateBusinessDialog,
         onUpdateBusiness,
         onUpdateBusinessData,

@@ -7,6 +7,9 @@
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @show="openUserDetail"
+        :read="readUsers"
+        :create="createUsers"
+        :edit="editUsers"
       />
     </v-col>
   </v-row>
@@ -46,6 +49,9 @@ const {
   updateDialog,
   editUser,
   loadingUpdate,
+  readUsers,
+  createUsers,
+  editUsers,
 } = storeToRefs(useUserPageStore());
 const {
   openCreateDialog,

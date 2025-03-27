@@ -8,6 +8,8 @@
         @rejected="openBusinessRejectedDialog"
         @accepted="onApplicationAccepted"
         :loading="loadingCV"
+        :read="readApplication"
+        :edit="editApplication"
       />
       <!-- <UsersTable
         :users="users"
@@ -53,6 +55,8 @@ const {
   businessRejectedDialog,
   loadingCV,
   loadingRejected,
+  readApplication,
+  editApplication,
 } = storeToRefs(useJobAppliactionPageStore());
 const {
   openBusinessRejectedDialog,

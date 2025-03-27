@@ -7,6 +7,9 @@
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @show="openGraduateDetail"
+        :read="readGraduates"
+        :create="createGraduates"
+        :edit="editGraduates"
       />
     </v-col>
   </v-row>
@@ -47,6 +50,10 @@ const {
   generations,
   loadingUpdate,
   editGraduate,
+
+  readGraduates,
+  createGraduates,
+  editGraduates,
 } = storeToRefs(useGraduatesPageStore());
 const {
   openCreateDialog,

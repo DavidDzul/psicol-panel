@@ -31,7 +31,7 @@
     </template>
     <template #[`item.view_cv`]="{ item }">
       <div style="width: 100%; text-align: center">
-        <v-tooltip text="Visualizar" location="bottom">
+        <v-tooltip v-if="read" text="Visualizar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -86,7 +86,7 @@
     </template>
 
     <template #[`item.actions`]="{ item }">
-      <template v-if="item.status === 'PENDING'">
+      <template v-if="item.status === 'PENDING' && edit">
         <div style="width: 100%; text-align: right">
           <v-tooltip text="Descartar" location="bottom">
             <template v-slot:activator="{ props }">
@@ -133,6 +133,8 @@ import { statusApplicationMap, rejectedReasonMap } from "@/constants";
 const props = defineProps({
   applications: { type: Array, default: () => [] },
   loading: { type: Boolean, default: () => false },
+  read: { type: Boolean, default: () => false },
+  edit: { type: Boolean, default: () => false },
 });
 
 const search = ref("");

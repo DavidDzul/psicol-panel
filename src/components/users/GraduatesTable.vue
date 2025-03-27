@@ -50,7 +50,12 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn prepend-icon="mdi-plus" color="primary" @click="$emit('create')">
+        <v-btn
+          v-if="create"
+          prepend-icon="mdi-plus"
+          color="primary"
+          @click="$emit('create')"
+        >
           Agregar
         </v-btn>
       </v-toolbar>
@@ -60,7 +65,7 @@
       <v-icon v-else color="error">mdi-close</v-icon>
     </template>
 
-    <template #[`item.actions`]="{ item }">
+    <template v-if="edit" #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
         <v-tooltip text="Editar" location="bottom">
           <template v-slot:activator="{ props }">
@@ -77,7 +82,7 @@
             </v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip text="Visualizar" location="bottom">
+        <v-tooltip v-if="read" text="Visualizar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"
@@ -107,6 +112,9 @@ import { campusMap } from "@/constants";
 const props = defineProps({
   graduates: { type: Array, default: () => [] },
   loading: { type: Boolean, default: () => false },
+  read: { type: Boolean, default: () => false },
+  create: { type: Boolean, default: () => false },
+  edit: { type: Boolean, default: () => false },
 });
 
 const search = ref("");

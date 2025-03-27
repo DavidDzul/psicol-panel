@@ -8,7 +8,8 @@ import { useAuthStore } from "@/stores/api/authStore";
 export const useJobAppliactionPageStore = defineStore("jobAppliactionPage", () => {
     const { setLoading } = useAppStore();
 
-    const { filteredCampus } = storeToRefs(useAuthStore())
+    const { readApplication,
+        editApplication } = storeToRefs(useAuthStore())
     const { resApplications } = storeToRefs(useJobApplicationsStore());
     const { fetchApplications, dowloandCV, updateStatusApplications } = useJobApplicationsStore();
 
@@ -86,6 +87,8 @@ export const useJobAppliactionPageStore = defineStore("jobAppliactionPage", () =
         applications,
         loadingRejected,
         businessRejectedDialog,
+        readApplication,
+        editApplication,
         openBusinessRejectedDialog,
         onRejectedApplication,
         openUserCV,
