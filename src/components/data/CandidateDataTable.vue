@@ -36,7 +36,9 @@
     <template #[`item.campus`]="{ item }">
       {{ campusMap.get(item.campus).text }}
     </template>
-    
+    <template #['item.job_type']="{ item }">
+        {{ jobTypeMap.get(item.job_type).text }}
+    </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
         <v-tooltip text="Editar" location="bottom">
@@ -49,6 +51,7 @@
               icon="mdi-pencil"
               class="mr-2"
               size="small"
+              @click="$emit('edit', item.id)"
             >
             </v-btn>
           </template>
@@ -63,6 +66,8 @@
               icon="mdi-delete"
               class="mr-2"
               size="small"
+              @click="$emit('remove', item.id)"
+
             >
             </v-btn>
           </template>
@@ -77,7 +82,7 @@
 import { computed, ref, mergeProps } from "vue";
 import dayjs from "dayjs";
 
-import { campusMap, userTypeMap } from "@/constants";
+import { campusMap, userTypeMap, jobTypeMap } from "@/constants";
 
 const props = defineProps({
   candidates: { type: Array, default: () => [] },
@@ -93,7 +98,7 @@ const getAreaName = (areaId) => {
   return area ? area.name : "Área no encontrada";
 };
 
-const emit = defineEmits(["create"]);
+const emit = defineEmits(["remove", "edit"]);
 
 const headers = computed(() => [
   {
@@ -125,4 +130,6 @@ const headers = computed(() => [
     key: "actions",
   },
 ]);
+
+
 </script>

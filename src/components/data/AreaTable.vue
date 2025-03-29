@@ -38,6 +38,7 @@
               icon="mdi-pencil"
               class="mr-2"
               size="small"
+              @click="editItem(item)"
             >
             </v-btn>
           </template>
@@ -52,6 +53,7 @@
               icon="mdi-delete"
               class="mr-2"
               size="small"
+              @click="deleteItem(item)"
             >
             </v-btn>
           </template>
@@ -76,7 +78,7 @@ const props = defineProps({
 const search = ref("");
 const groupBy = ref(undefined);
 
-const emit = defineEmits(["create"]);
+const emit = defineEmits(["delete", "edit"]);
 
 const headers = computed(() => [
   {
@@ -92,4 +94,12 @@ const headers = computed(() => [
     key: "actions",
   },
 ]);
+
+const editItem = (item) => {
+  emit("edit", item.id);
+};
+
+const deleteItem = (item) => {
+  emit("delete", item.id);
+};
 </script>

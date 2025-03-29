@@ -132,21 +132,20 @@ export const useAuthStore = defineStore("authStore", () => {
             : campusArray.filter((c) => c.value === userProfile.value?.campus);
     });
 
-    const readUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_USERS"))
-    const createUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_USERS"))
-    const editUsers = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_USERS"))
-    const readGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_GRADUATES"))
-    const createGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_GRADUATES"))
-    const editGraduates = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_GRADUATES"))
-    const readBusiness = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_BUSINESS"))
-    const createBusinessPermission = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_BUSINESS"))
-    const editBusiness = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_BUSINESS"))
-    const readVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_VACANT"))
-    const createVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_CREATE_VACANT"))
-    const editVacant = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_VACANT"))
-    const readApplication = computed(() => !!permissions.value.find((map) => map === "ADMIN_READ_APPLICATION"))
-    const editApplication = computed(() => !!permissions.value.find((map) => map === "ADMIN_EDIT_APPLICATION"))
-
+    const readUsers = computed(() => !!permissions.value.find((map) => map === "PS_READ_USERS"))
+    const createUsers = computed(() => !!permissions.value.find((map) => map === "PS_CREATE_USERS"))
+    const editUsers = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_USERS"))
+    const readGraduates = computed(() => !!permissions.value.find((map) => map === "PS_READ_GRADUATES"))
+    const createGraduates = computed(() => !!permissions.value.find((map) => map === "PS_CREATE_GRADUATES"))
+    const editGraduates = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_GRADUATES"))
+    const readBusiness = computed(() => !!permissions.value.find((map) => map === "PS_READ_BUSINESS"))
+    const createBusinessPermission = computed(() => !!permissions.value.find((map) => map === "PS_CREATE_BUSINESS"))
+    const editBusiness = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_BUSINESS"))
+    const readVacant = computed(() => !!permissions.value.find((map) => map === "PS_READ_VACANT"))
+    const createVacant = computed(() => !!permissions.value.find((map) => map === "PS_CREATE_VACANT"))
+    const editVacant = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_VACANT"))
+    const readApplication = computed(() => !!permissions.value.find((map) => map === "PS_READ_APPLICATION"))
+    const editApplication = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_APPLICATION"))
 
     return {
         login,
