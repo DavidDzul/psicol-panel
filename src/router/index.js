@@ -91,6 +91,11 @@ const routes = [
         name: "JobApplicationsView",
         component: () => import("@/views/jobApplications/JobApplicationsView.vue"),
       },
+      {
+        path: "/datos",
+        name: "DataView",
+        component: () => import("@/views/data/DataView.vue"),
+      },
     ],
   },
   {
