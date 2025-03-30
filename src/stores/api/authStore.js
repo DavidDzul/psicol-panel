@@ -58,7 +58,9 @@ export const useAuthStore = defineStore("authStore", () => {
             userProfile.value = null;
             token.value = "";
             localStorage.removeItem('token')
-            await router.push({ path: "/auth/login" });
+            // await router.push({ path: "/auth/login" });
+            window.location.href = "/auth/login";
+
         }).catch((error) => {
             showAlert({
                 title: "Error al cerrar sesión.",
