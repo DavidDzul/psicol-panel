@@ -43,19 +43,20 @@
             <v-stepper-window>
               <v-stepper-window-item :value="1">
                 <v-row>
-                  <v-col cols="12" md="12">
-                    <b>Seleccionar empresa:</b>
-                  </v-col>
-                  <!-- <v-col cols="12" md="12">
-                    <v-select
-                      :items="business"
-                      v-bind="modeProps"
-                      item-title="bs_name"
-                      item-value="id"
-                      label="Empresas"
-                    ></v-select>
-                  </v-col> -->
+                  <v-autocomplete
+                    v-model="selectedBusiness"
+                    v-model:search="searchQuery"
+                    :items="businessList"
+                    item-title="bs_name"
+                    item-value="user_id"
+                    label="Buscar Empresa"
+                    :filterable="true"
+                    @update:search="searchInput"
+                    :loading="loading"
+                    clearable
+                  />
                 </v-row>
+
                 <v-col class="my-5" cols="12" md="12">
                   <v-row justify="space-between">
                     <v-spacer></v-spacer>
@@ -698,14 +699,20 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
 import { PublicPathState, useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
+import { useBusinessSearchStore } from "@/stores/views/businessSearch";
+
 import * as yup from "yup";
 
 import * as validations from "@/validations";
 
 import { daysValue, modeArray } from "@/constants";
+
+const { businessList } = storeToRefs(useBusinessSearchStore());
+const { getBusiness } = useBusinessSearchStore();
 
 const vuetifyConfig = (state: PublicPathState) => ({
   props: {
@@ -929,7 +936,6 @@ watch(
 );
 
 const step = ref(1);
-
 const close = () => {
   emit("update:modelValue", false);
 };
@@ -967,6 +973,14 @@ const save = () => {
   if (meta.value.valid) {
     emit("submit", values);
   }
+};
+
+const searchQuery = ref("");
+const businesses = ref([]);
+const selectedBusiness = ref(null);
+
+const searchInput = async () => {
+  getBusiness(searchQuery.value);
 };
 </script>
 

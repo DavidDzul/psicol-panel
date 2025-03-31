@@ -27,7 +27,7 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template #default="{ expanded }">
               <PanelHeaderOptions
-                title="Datos registrados"
+                title="Informe para empresas"
                 button-text="Agregar"
                 :expanded="expanded"
                 @button-click="openCandidateDataDialog"

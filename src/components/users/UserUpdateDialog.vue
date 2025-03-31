@@ -49,7 +49,23 @@
                   @keypress="onlyNumbers"
                 ></v-text-field>
               </v-col>
-              <!-- <v-col cols="12" md="6">
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="enrollment"
+                  v-bind="enrollmentProps"
+                  label="Matrícula"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="password"
+                  v-bind="passwordProps"
+                  label="Contraseña"
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12" md="6">
                 <v-select
                   :items="userCampus"
                   v-model="campus"
@@ -68,20 +84,6 @@
                   item-value="id"
                   label="Generación"
                 ></v-select>
-              </v-col> -->
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="enrollment"
-                  v-bind="enrollmentProps"
-                  label="Matrícula"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="password"
-                  v-bind="passwordProps"
-                  label="Contraseña"
-                ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
                 <v-select
@@ -135,6 +137,8 @@ const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
   editItem: { type: Object, default: () => null },
+  userCampus: { type: Array, default: () => [] },
+  generations: { type: Array, default: () => [] },
 });
 
 const vuetifyConfig = (state) => ({
@@ -151,8 +155,8 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
       password: validations.updatePassword(),
       enrollment: validations.enrollment(),
       phone: validations.phone(),
-      // campus: validations.campus(),
-      // generation_id: validations.generation_id(),
+      campus: validations.campus(),
+      generation_id: validations.generation_id(),
       active: validations.user_active(),
       user_type: validations.user_type(),
     })
@@ -181,12 +185,12 @@ const [first_name, first_nameProps] = defineField("first_name", vuetifyConfig);
 const [last_name, last_nameProps] = defineField("last_name", vuetifyConfig);
 const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
-// const [campus, campusProps] = defineField("campus", vuetifyConfig);
+const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
-// const [generation_id, generation_idProps] = defineField(
-//   "generation_id",
-//   vuetifyConfig
-// );
+const [generation_id, generation_idProps] = defineField(
+  "generation_id",
+  vuetifyConfig
+);
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
 const emit = defineEmits(["update:modelValue", "submit"]);
@@ -205,6 +209,8 @@ watch(
           phone: props.editItem.phone,
           active: props.editItem.active ? true : false,
           user_type: props.editItem.user_type,
+          campus: props.editItem.campus,
+          generation_id: props.editItem.generation_id,
         });
       }
     } else {
@@ -213,9 +219,9 @@ watch(
   }
 );
 
-// const filteredGenerations = computed(() =>
-//   props.generations.filter((map) => map.campus === campus.value)
-// );
+const filteredGenerations = computed(() =>
+  props.generations.filter((map) => map.campus === campus.value)
+);
 
 const close = () => {
   emit("update:modelValue", false);

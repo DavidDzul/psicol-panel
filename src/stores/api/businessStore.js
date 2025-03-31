@@ -190,6 +190,18 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         }
     }
 
+    const searchBusiness = async () => {
+        try {
+            const res = await axios.get(`api/admin/search`, {
+                headers: { 'accept': 'application/json' }
+            });
+            console.log(res)
+            return res
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
     return {
         resBusiness,
         fetchBusiness,
@@ -204,6 +216,7 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         updateBusiness,
         updateBusinessData,
         createAgreement,
+        searchBusiness,
         // updateUser,
     };
 });

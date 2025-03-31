@@ -24,6 +24,8 @@
     v-model="updateDialog"
     :edit-item="editUser"
     :loading="loadingUpdate"
+    :user-campus="filteredCampus"
+    :generations="generations"
     @submit="onUpdateUser"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>

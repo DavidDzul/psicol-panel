@@ -1,12 +1,15 @@
 import axios from "@/axiosConfig";
-import { defineStore } from "pinia";
+import { defineStore, storeToRefs } from "pinia";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert"
+import { useUserStore } from "@/stores/api/usersStore";
 
 export const useGraduateStore = defineStore("graduateStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
+    const { resUsers } = storeToRefs(useUserStore())
+
     const resGraduates = ref(new Map())
     const resGraduateDetails = ref(null)
 
@@ -76,40 +79,47 @@ export const useGraduateStore = defineStore("graduateStore", () => {
 
     const updateGraduate = async (form, id) => {
         try {
-            const param = await axios.patch(`api/admin/graduates/${id}`, form, {
+            const response = await axios.patch(`api/admin/graduates/${id}`, form, {
                 headers: { 'accept': 'application/json' }
             });
 
-            if (param) {
-                showAlert({
-                    title: "Información actualizada exitosamente.",
-                    status: "success",
-                });
-
-                resGraduates.value.set(param.data.updateGraduate.id, param.data.updateGraduate);
-
-                if (resGraduateDetails.value && resGraduateDetails.value.id === id) {
-                    resGraduateDetails.value = param.data.updateGraduate;
-                }
-
-                return param.data.res;
+            const updatedGraduate = response?.data?.updateGraduate;
+            if (!updatedGraduate) {
+                throw new Error("Respuesta inválida del servidor.");
             }
-        } catch (error) {
-            if (error.response) {
-                const errorData = error.response.data;
-                showAlert({
-                    title: errorData.message || "Ocurrió un error inesperado.",
-                    status: "error",
-                });
+
+            showAlert({
+                title: "Información actualizada exitosamente.",
+                status: "success",
+            });
+
+            const { id: graduateId, user_type } = updatedGraduate;
+
+            if (user_type === "BEC_ACTIVE") {
+                resUsers.value.set(graduateId, updatedGraduate);
+                resGraduates.value.delete(graduateId);
             } else {
-                showAlert({
-                    title: "Error de red, intenta más tarde.",
-                    status: "error",
-                });
+                resGraduates.value.set(graduateId, updatedGraduate);
             }
+
+            if (resGraduateDetails.value?.id === id) {
+                resGraduateDetails.value = updatedGraduate;
+            }
+
+            return response.data.res;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message ||
+                "Error de red, intenta más tarde.";
+
+            showAlert({
+                title: errorMessage,
+                status: "error",
+            });
+
             throw error;
         }
     };
+
 
     return {
         resGraduates,

@@ -28,6 +28,8 @@
     v-model="updateDialog"
     :edit-item="selectedUser"
     :loading="loadingUpdate"
+    :user-campus="filteredCampus"
+    :generations="generations"
     @submit="onUpdateUser"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
@@ -44,9 +46,14 @@ import PanelHeaderOptions from "@/components/shared/PanelHeaderOptions.vue";
 import UserUpdateDialog from "@/components/users/UserUpdateDialog.vue";
 import UserForm from "@/components/users/UserForm.vue";
 
-const { links, selectedUser, updateDialog, loadingUpdate } = storeToRefs(
-  useUserDetailsPageStore()
-);
+const {
+  links,
+  selectedUser,
+  updateDialog,
+  loadingUpdate,
+  generations,
+  filteredCampus,
+} = storeToRefs(useUserDetailsPageStore());
 const { openUpdateDialog, onUpdateUser } = useUserDetailsPageStore();
 
 const panel = ref([0]);

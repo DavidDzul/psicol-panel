@@ -1,7 +1,7 @@
 <template>
   <v-data-table
     :headers="headers"
-    :items="roles"
+    :items="filterRoles"
     class="elevation-1"
     :loading="loading"
     :search="search"
@@ -56,7 +56,7 @@
       </v-toolbar>
     </template>
     <template #[`item.name`]="{ item }">
-      {{ rolesMap.get(item.name).text }}
+      {{ rolesMap.get(item?.name)?.text }}
     </template>
     <template #[`item.num_visualizations`]="{ item }">
       {{
@@ -141,4 +141,10 @@ const headers = computed(() => [
 const getPermissionName = (permissionName) => {
   return permissionsMap.get(permissionName)?.text || permissionName;
 };
+
+const filterRoles = computed(() => {
+  return props.roles.filter(
+    (map) => !["ROOT", "CAMPUS", "YUCATAN"].includes(map.name)
+  );
+});
 </script>

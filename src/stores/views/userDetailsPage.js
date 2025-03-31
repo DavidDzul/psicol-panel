@@ -4,13 +4,15 @@ import { useAuthStore } from "@/stores/api/authStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router"
+import { useGenerationsStore } from "@/stores/api/generationStore";
 
 export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
     const { setLoading } = useAppStore();
-    const { userProfile } = storeToRefs(useAuthStore());
+    const { userProfile, filteredCampus } = storeToRefs(useAuthStore());
 
     const { resUserDetails } = storeToRefs(useUserStore());
     const { showUser, updateUser } = useUserStore();
+    const { resGenerations } = storeToRefs(useGenerationsStore());
 
     const route = useRoute();
     const loadUser = ref(false);
@@ -47,6 +49,7 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
     };
 
     const selectedUser = computed(() => resUserDetails.value);
+    const generations = computed(() => [...resGenerations.value.values()])
 
     const links = computed(() => [
         {
@@ -92,6 +95,8 @@ export const useUserDetailsPageStore = defineStore("userDetailsPage", () => {
         updateDialog,
         selectedUser,
         loadingUpdate,
+        generations,
+        filteredCampus,
         onUpdateUser,
         openUpdateDialog
     };
