@@ -4,7 +4,10 @@
     <v-col cols="12">
       <VacantPositionTable
         :positions="positions"
+        :loading="loadingTable"
         @laboral="openVacantDialog"
+        @junior="openVacantJuniorDialog"
+        @practice="openVacantPracticeDialog"
         @show="openVacantDetail"
         @disabled="openDisabledDialog"
         @enable="openEnableDialog"
@@ -28,7 +31,21 @@
       @submit="onUpdateUser"
     /> -->
 
-  <VacantCreateDialog v-model="vacantDialog" />
+  <VacantCreateDialog
+    v-model="vacantDialog"
+    :loading="loadingCreate"
+    @submit="saveVacantPosition"
+  />
+  <VacantJrCreateDialog
+    v-model="vacantJuniorDialog"
+    :loading="loadingCreate"
+    @submit="saveVacantJunior"
+  />
+  <VacantPracticeCreateDialog
+    v-model="practiceDialog"
+    :loading="loadingCreate"
+    @submit="saveVacantPractice"
+  />
   <VacantDisabledDialog
     v-model="disabledDialog"
     :loading="loadingDisabled"
@@ -58,6 +75,10 @@ const {
   readVacant,
   createVacant,
   editVacant,
+  loadingCreate,
+  vacantJuniorDialog,
+  practiceDialog,
+  loadingTable,
 } = storeToRefs(useVacantPositionPageStore());
 const {
   openVacantDialog,
@@ -65,6 +86,11 @@ const {
   openDisabledDialog,
   onDisabledVacant,
   onEnableVacant,
+  saveVacantPosition,
+  openVacantJuniorDialog,
+  saveVacantJunior,
+  openVacantPracticeDialog,
+  saveVacantPractice,
 } = useVacantPositionPageStore();
 
 const confirmationDialog = ref();

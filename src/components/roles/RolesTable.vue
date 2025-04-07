@@ -61,15 +61,13 @@
     <template #[`item.num_visualizations`]="{ item }">
       {{
         item?.configuration?.unlimited
-          ? "N/A"
+          ? ""
           : item?.configuration?.num_visualizations
       }}
     </template>
     <template #[`item.num_vacancies`]="{ item }">
       {{
-        item?.configuration?.unlimited
-          ? "N/A"
-          : item?.configuration?.num_vacancies
+        item?.configuration?.unlimited ? "" : item?.configuration?.num_vacancies
       }}
     </template>
     <template #[`item.permissions`]="{ item }">

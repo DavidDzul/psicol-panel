@@ -13,22 +13,27 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         storeToRefs(useAuthStore());
     const { resGenerations } = storeToRefs(useGenerationsStore());
     const { resPositions } = storeToRefs(useVacantPositionStore());
-    const { fetchVacantPositions, statusVacant, resetVacant } =
+    const { fetchVacantPositions, statusVacant, resetVacant, createVacantLaboral, createVacantJunior, createVacantPractice } =
         useVacantPositionStore();
 
     const router = useRouter();
     const createDialog = ref(false);
     const updateDialog = ref(false);
     const vacantDialog = ref(false);
+    const vacantJuniorDialog = ref(false);
+    const practiceDialog = ref(false);
     const disabledDialog = ref(false);
     const selectedVacantId = ref(null);
 
     const loadingCreate = ref(false);
     const loadingUpdate = ref(false);
     const loadingDisabled = ref(false);
+    const loadingTable = ref(false);
 
     onBeforeMount(async () => {
+        loadingTable.value = true
         await fetchVacantPositions();
+        loadingTable.value = false
     });
 
     const links = computed(() => [
@@ -59,6 +64,15 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         vacantDialog.value = true;
     };
 
+    const openVacantJuniorDialog = () => {
+        vacantJuniorDialog.value = true;
+    };
+
+    const openVacantPracticeDialog = () => {
+        practiceDialog.value = true;
+    };
+
+
     const openDisabledDialog = (id) => {
         if (!id) return;
         selectedVacantId.value = id;
@@ -86,6 +100,44 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         }
     };
 
+    const saveVacantPosition = async (form) => {
+        if (!form) return
+        loadingCreate.value = true
+        try {
+            await createVacantLaboral(form.id, form)
+            vacantDialog.value = false
+        } catch (e) {
+            console.error(e)
+        }
+        loadingCreate.value = false
+    };
+
+    const saveVacantJunior = async (form) => {
+        if (!form) return
+        loadingCreate.value = true
+        try {
+            await createVacantJunior(form.id, form)
+            vacantJuniorDialog.value = false
+        } catch (e) {
+            console.error(e)
+        }
+        loadingCreate.value = false
+    };
+
+
+    const saveVacantPractice = async (form) => {
+        if (!form) return
+        loadingCreate.value = true
+        try {
+            await createVacantPractice(form.id, form)
+            practiceDialog.value = false
+        } catch (e) {
+            console.error(e)
+        }
+        loadingCreate.value = false
+    };
+
+
     return {
         links,
         positions,
@@ -101,12 +153,20 @@ export const useVacantPositionPageStore = defineStore("vacantPositionPage", () =
         readVacant,
         createVacant,
         editVacant,
+        vacantJuniorDialog,
+        practiceDialog,
+        loadingTable,
         openVacantDetail,
         openCreateDialog,
         openVacantDialog,
         openDisabledDialog,
         onDisabledVacant,
         onEnableVacant,
+        saveVacantPosition,
+        openVacantJuniorDialog,
+        saveVacantJunior,
+        openVacantPracticeDialog,
+        saveVacantPractice
     };
 }
 );

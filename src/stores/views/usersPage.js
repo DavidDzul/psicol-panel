@@ -19,11 +19,14 @@ export const useUserPageStore = defineStore("userPage", () => {
     const updateDialog = ref(false)
     const editUser = ref(undefined)
 
+    const loadingTable = ref(false)
     const loadingCreate = ref(false)
     const loadingUpdate = ref(false)
 
     onBeforeMount(async () => {
+        loadingTable.value = true
         await fetchUsers()
+        loadingTable.value = false
     })
 
     const links = computed(() => [
@@ -41,6 +44,7 @@ export const useUserPageStore = defineStore("userPage", () => {
 
     const users = computed(() => [...resUsers.value.values()])
     const generations = computed(() => [...resGenerations.value.values()])
+    const loadingUsers = computed(() => loading.value)
 
     const openCreateDialog = () => {
         createDialog.value = true
@@ -101,6 +105,7 @@ export const useUserPageStore = defineStore("userPage", () => {
         readUsers,
         createUsers,
         editUsers,
+        loadingTable,
         openUserDetail,
         openUpdateDialog,
         openCreateDialog,

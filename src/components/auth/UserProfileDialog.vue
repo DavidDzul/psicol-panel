@@ -99,7 +99,7 @@ import { lineBusiness } from "@/constants";
 const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, required: true },
+  editItem: { type: Object, required: true, default: () => ({}) },
 });
 
 const vuetifyConfig = (state: PublicPathState) => ({

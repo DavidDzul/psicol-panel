@@ -194,6 +194,12 @@ const filteredGenerations = computed(() =>
   props.generations.filter((map) => map.campus === campus.value)
 );
 
+watch(enrollment, (newValue) => {
+  if (newValue) {
+    enrollment.value = newValue.toUpperCase();
+  }
+});
+
 const close = () => {
   emit("update:modelValue", false);
 };

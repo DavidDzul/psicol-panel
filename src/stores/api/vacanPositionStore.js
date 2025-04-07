@@ -161,6 +161,78 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
         }
     };
 
+    const createVacantLaboral = async (id, form) => {
+        try {
+            const param = await axios.post(`api/admin/vacantPositions/${id}/storeVacant`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Vacante guardada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.createVacant.id, param.data.createVacant)
+                return param.data.res;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.msg || "Error al guardar la información, intente nuevamente.";
+            showAlert({
+                title: errorMessage,
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
+    const createVacantJunior = async (id, form) => {
+        try {
+            const param = await axios.post(`api/admin/vacantPositions/${id}/storeVacantJr`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Vacante guardada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.createVacantJr.id, param.data.createVacantJr)
+                return param.data.res;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.msg || "Error al guardar la información, intente nuevamente.";
+            showAlert({
+                title: errorMessage,
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
+    const createVacantPractice = async (id, form) => {
+        try {
+            const param = await axios.post(`api/admin/vacantPositions/${id}/storePractice`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Vacante guardada exitosamente.",
+                    status: "success",
+                });
+
+                resPositions.value.set(param.data.createPractice.id, param.data.createPractice)
+                return param.data.res;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.msg || "Error al guardar la información, intente nuevamente.";
+            showAlert({
+                title: errorMessage,
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
     return {
         resPositions,
         resVacantDetails,
@@ -170,6 +242,9 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
         updateVacantPractice,
         updateVacantJr,
         statusVacant,
-        resetVacant
+        resetVacant,
+        createVacantLaboral,
+        createVacantJunior,
+        createVacantPractice
     };
 });

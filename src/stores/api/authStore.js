@@ -103,27 +103,34 @@ export const useAuthStore = defineStore("authStore", () => {
     };
 
     const updateUserProfile = async (form) => {
-        // try {
-        //     const param = await axios.post("api/updateUser", form, {
-        //         headers: { 'accept': 'application/json' }
-        //     });
-        //     if (param) {
-        //         showAlert({
-        //             title: "Información guardada exitosamente.",
-        //             status: "success",
-        //         });
-        //         userProfile.value = param.data.user
-        //         openUserProfileDialog.value = false
-        //         return param.data.res
-        //     }
-        // } catch (error) {
-        //     console.error(error);
-        //     showAlert({
-        //         title: "Error al guardar la información, intente nuevamente.",
-        //         status: "error",
-        //     });
-        //     throw error;
-        // }
+        try {
+            const param = await axios.post("api/admin/updateProfile", form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información guardada exitosamente.",
+                    status: "success",
+                });
+                userProfile.value = {
+                    ...userProfile.value,
+                    first_name: param.data.user.first_name,
+                    last_name: param.data.user.last_name,
+                    email: param.data.user.email,
+                    phone: param.data.user.phone,
+                    workstation: param.data.user.workstation,
+                };
+                openUserProfileDialog.value = false
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
     }
 
     const userInitials = computed(() => `${userProfile?.value?.first_name.charAt(0) || ""}${userProfile?.value?.last_name.charAt(0) || ""}`)

@@ -4,6 +4,7 @@
     <v-col cols="12">
       <GraduatesTable
         :graduates="graduates"
+        :loading="loadingTable"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @show="openGraduateDetail"
@@ -50,7 +51,7 @@ const {
   generations,
   loadingUpdate,
   editGraduate,
-
+  loadingTable,
   readGraduates,
   createGraduates,
   editGraduates,

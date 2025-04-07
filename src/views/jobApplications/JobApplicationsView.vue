@@ -4,10 +4,10 @@
     <v-col cols="12">
       <JobApplicationsTable
         :applications="applications"
+        :loading="loadingTable || loadingCV"
         @submit="openUserCV"
         @rejected="openBusinessRejectedDialog"
         @accepted="onApplicationAccepted"
-        :loading="loadingCV"
         :read="readApplication"
         :edit="editApplication"
       />
@@ -57,6 +57,7 @@ const {
   loadingRejected,
   readApplication,
   editApplication,
+  loadingTable,
 } = storeToRefs(useJobAppliactionPageStore());
 const {
   openBusinessRejectedDialog,

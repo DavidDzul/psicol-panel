@@ -26,3 +26,10 @@ app.use(router);
 app.use(vuetify);
 app.use(pinia)
 app.mount("#app");
+
+router.isReady().then(() => {
+    const preloader = document.getElementById('preloader')
+    if (preloader) {
+        preloader.style.display = 'none'
+    }
+})

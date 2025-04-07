@@ -24,9 +24,12 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
 
     const loadingCreate = ref(false);
     const loadingUpdate = ref(false);
+    const loadingTable = ref(false)
 
     onBeforeMount(async () => {
+        loadingTable.value = true
         await fetchBusiness();
+        loadingTable.value = false
     });
 
     const links = computed(() => [
@@ -103,6 +106,7 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
         readBusiness,
         createBusinessPermission,
         editBusiness,
+        loadingTable,
         openBusinessDetail,
         // openUpdateDialog,
         openCreateDialog,

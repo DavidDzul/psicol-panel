@@ -22,26 +22,58 @@
             <v-stepper-header>
               <v-stepper-item
                 :complete="step > 1"
-                title="Información General"
+                title="Seleccionar empresa"
                 :value="1"
               ></v-stepper-item>
               <v-divider></v-divider>
               <v-stepper-item
                 :complete="step > 2"
-                title="Compensaciones"
+                title="Información General"
                 :value="2"
               ></v-stepper-item>
               <v-divider></v-divider>
               <v-stepper-item
                 :complete="step > 3"
-                title="Información adicional"
+                title="Compensaciones"
                 :value="3"
               ></v-stepper-item>
               <v-divider></v-divider>
-              <v-stepper-item title="Contacto" :value="4"></v-stepper-item>
+              <v-stepper-item
+                :complete="step > 4"
+                title="Información adicional"
+                :value="4"
+              ></v-stepper-item>
             </v-stepper-header>
             <v-stepper-window>
               <v-stepper-window-item :value="1">
+                <v-row>
+                  <v-col cols="12" lg="12">
+                    <v-autocomplete
+                      v-model="selectedBusiness"
+                      v-model:search="searchQuery"
+                      :items="businessList"
+                      item-title="bs_name"
+                      item-value="user_id"
+                      label="Buscar Empresa"
+                      :loading="loading"
+                      clearable
+                    />
+                  </v-col>
+                </v-row>
+
+                <v-col class="my-5" cols="12" md="12">
+                  <v-row justify="space-between">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      color="primary"
+                      @click="next"
+                      :disabled="validateBusiness"
+                      >Siguiente</v-btn
+                    >
+                  </v-row>
+                </v-col>
+              </v-stepper-window-item>
+              <v-stepper-window-item :value="2">
                 <v-row>
                   <v-col cols="12" md="12">
                     <b>Información acerca de la vacante:</b>
@@ -115,7 +147,7 @@
                   </v-row>
                 </v-col>
               </v-stepper-window-item>
-              <v-stepper-window-item :value="2">
+              <v-stepper-window-item :value="3">
                 <v-row>
                   <v-col cols="12" md="12">
                     <b> Compensaciones: </b>
@@ -141,7 +173,7 @@
                   </v-row>
                 </v-col>
               </v-stepper-window-item>
-              <v-stepper-window-item :value="3">
+              <v-stepper-window-item :value="4">
                 <v-row>
                   <v-col cols="12" md="12">
                     <b>Establecer días y horarios de prácticas (24 hrs):</b>
@@ -485,10 +517,11 @@
                   <v-row justify="space-between">
                     <v-btn color="grey" @click="back">Atrás</v-btn>
                     <v-btn
-                      color="primary"
-                      @click="next"
-                      :disabled="validateStep2"
-                      >Siguiente</v-btn
+                      color="success"
+                      :disabled="!meta.valid"
+                      :loading="loading"
+                      @click="save"
+                      >Finalizar</v-btn
                     >
                   </v-row>
                 </v-col>
@@ -502,15 +535,19 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
 import { PublicPathState, useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
 import * as yup from "yup";
-
 import * as validations from "@/validations";
-import { modeArray } from "@/constants";
 
+import { useBusinessSearchStore } from "@/stores/views/businessSearch";
+import { modeArray } from "@/constants";
 import { daysValue } from "@/constants";
+
+const { businessList } = storeToRefs(useBusinessSearchStore());
+const { getBusiness } = useBusinessSearchStore();
 
 const vuetifyConfig = (state: PublicPathState) => ({
   props: {
@@ -649,6 +686,10 @@ const [compensations, compensationsProps] = defineField(
   vuetifyConfig
 );
 
+const validateBusiness = computed(() => {
+  return selectedBusiness.value ? false : true;
+});
+
 const validateStep1 = computed(() => {
   if (financial_support.value) {
     return vacant_name.value &&
@@ -738,9 +779,26 @@ const onlyNumbers = (event) => {
   }
 };
 
+const searchQuery = ref("");
+const selectedBusiness = ref(null);
+let timeout = null;
+
+watch(searchQuery, (newQuery) => {
+  clearTimeout(timeout);
+
+  if (!newQuery || newQuery.length < 3) {
+    businessList.value = [];
+    return;
+  }
+
+  timeout = setTimeout(() => {
+    getBusiness(newQuery);
+  }, 500);
+});
+
 const save = () => {
-  if (meta.value.valid) {
-    emit("submit", values);
+  if (meta.value.valid && selectedBusiness.value) {
+    emit("submit", { ...values, id: selectedBusiness.value });
   }
 };
 </script>

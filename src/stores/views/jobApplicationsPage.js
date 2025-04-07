@@ -18,9 +18,12 @@ export const useJobAppliactionPageStore = defineStore("jobAppliactionPage", () =
     const businessRejectedDialog = ref(false)
     const loadingCV = ref(false)
     const loadingRejected = ref(false)
+    const loadingTable = ref(false)
 
     onBeforeMount(async () => {
+        loadingTable.value = true
         await fetchApplications()
+        loadingTable.value = false
     })
 
     const links = computed(() => [
@@ -89,6 +92,7 @@ export const useJobAppliactionPageStore = defineStore("jobAppliactionPage", () =
         businessRejectedDialog,
         readApplication,
         editApplication,
+        loadingTable,
         openBusinessRejectedDialog,
         onRejectedApplication,
         openUserCV,

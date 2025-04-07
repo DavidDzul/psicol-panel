@@ -1,6 +1,4 @@
-export const API_URL = "http://127.0.0.1:8000/";
-// export const API_URL = "https://api.develop.iu.org.mx/";
-export const FILE_URL = import.meta.env.VITE_FILES_URL
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const campusArray = [
     { value: 'MERIDA', text: "Mérida" },
@@ -394,6 +392,38 @@ export const jobTypeMap = new Map([
         {
             value: 'FULL_TIME',
             text: "Tiempo completo",
+        },
+    ],
+])
+
+
+export const candidateTypeMap = new Map([
+    [
+        'INTERNAL',
+        {
+            value: 'INTERNAL',
+            text: "CANDIDATO INTERNO IU",
+        },
+    ],
+    [
+        'EXTERNAL',
+        {
+            value: 'EXTERNAL',
+            text: "CANDIDATO EXTERNO",
+        },
+    ],
+    [
+        'NOT_COVERED',
+        {
+            value: 'NOT_COVERED',
+            text: "NO CUBIERTA",
+        },
+    ],
+    [
+        'OTHER',
+        {
+            value: 'OTHER',
+            text: "OTRO",
         },
     ],
 ])

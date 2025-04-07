@@ -23,6 +23,7 @@
                 title="Seleccionar empresa"
                 :value="1"
               ></v-stepper-item>
+              <v-divider></v-divider>
               <v-stepper-item
                 :complete="step > 2"
                 title="Información General"
@@ -43,18 +44,18 @@
             <v-stepper-window>
               <v-stepper-window-item :value="1">
                 <v-row>
-                  <v-autocomplete
-                    v-model="selectedBusiness"
-                    v-model:search="searchQuery"
-                    :items="businessList"
-                    item-title="bs_name"
-                    item-value="user_id"
-                    label="Buscar Empresa"
-                    :filterable="true"
-                    @update:search="searchInput"
-                    :loading="loading"
-                    clearable
-                  />
+                  <v-col cols="12" lg="12">
+                    <v-autocomplete
+                      v-model="selectedBusiness"
+                      v-model:search="searchQuery"
+                      :items="businessList"
+                      item-title="bs_name"
+                      item-value="user_id"
+                      label="Buscar Empresa"
+                      :loading="loading"
+                      clearable
+                    />
+                  </v-col>
                 </v-row>
 
                 <v-col class="my-5" cols="12" md="12">
@@ -344,6 +345,7 @@
                   </v-row>
                 </v-col>
               </v-stepper-window-item>
+
               <v-stepper-window-item :value="4">
                 <v-row>
                   <v-col cols="12" md="12">
@@ -677,9 +679,7 @@
                 </v-row>
                 <v-col class="my-5" cols="12" md="12">
                   <v-row justify="space-between">
-                    <v-btn color="grey" @click="back" :disabled="loading"
-                      >Atrás</v-btn
-                    >
+                    <v-btn color="grey" @click="back">Atrás</v-btn>
                     <v-btn
                       color="success"
                       :disabled="!meta.valid"
@@ -897,12 +897,7 @@ const [benefit_description, benefit_descriptionProps] = defineField(
 );
 
 const validateStep1 = computed(() => {
-  return vacant_name.value &&
-    activities.value &&
-    study_profile.value &&
-    net_salary.value
-    ? false
-    : true;
+  return selectedBusiness.value ? false : true;
 });
 
 const validateStep3 = computed(() => {
@@ -969,18 +964,27 @@ const startMinuteError = computed(() => errors.value.start_minute);
 const endHourError = computed(() => errors.value.end_hour);
 const endMinuteError = computed(() => errors.value.end_minute);
 
-const save = () => {
-  if (meta.value.valid) {
-    emit("submit", values);
-  }
-};
-
 const searchQuery = ref("");
-const businesses = ref([]);
 const selectedBusiness = ref(null);
+let timeout = null;
 
-const searchInput = async () => {
-  getBusiness(searchQuery.value);
+watch(searchQuery, (newQuery) => {
+  clearTimeout(timeout);
+
+  if (!newQuery || newQuery.length < 3) {
+    businessList.value = [];
+    return;
+  }
+
+  timeout = setTimeout(() => {
+    getBusiness(newQuery);
+  }, 500);
+});
+
+const save = () => {
+  if (meta.value.valid && selectedBusiness.value) {
+    emit("submit", { ...values, id: selectedBusiness.value });
+  }
 };
 </script>
 

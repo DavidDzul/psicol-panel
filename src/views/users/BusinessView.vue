@@ -4,6 +4,7 @@
     <v-col cols="12">
       <BusinessTable
         :business="business"
+        :loading="loadingTable"
         @create="openCreateDialog"
         @show="openBusinessDetail"
         :read="readBusiness"
@@ -40,6 +41,7 @@ const {
   readBusiness,
   createBusinessPermission,
   editBusiness,
+  loadingTable,
 } = storeToRefs(useBusinessPageStore());
 const { openCreateDialog, onSaveBusiness, openBusinessDetail } =
   useBusinessPageStore();

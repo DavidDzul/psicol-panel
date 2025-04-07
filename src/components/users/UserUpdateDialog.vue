@@ -219,6 +219,12 @@ watch(
   }
 );
 
+watch(enrollment, (newValue) => {
+  if (newValue) {
+    enrollment.value = newValue.toUpperCase();
+  }
+});
+
 const filteredGenerations = computed(() =>
   props.generations.filter((map) => map.campus === campus.value)
 );

@@ -22,9 +22,12 @@ export const useGraduatesPageStore = defineStore("graduatesPage", () => {
 
     const loadingCreate = ref(false);
     const loadingUpdate = ref(false);
+    const loadingTable = ref(false)
 
     onBeforeMount(async () => {
+        loadingTable.value = true
         await fetchGraduates();
+        loadingTable.value = false
     });
 
     const links = computed(() => [
@@ -102,6 +105,7 @@ export const useGraduatesPageStore = defineStore("graduatesPage", () => {
         readGraduates,
         createGraduates,
         editGraduates,
+        loadingTable,
         openCreateDialog,
         onSaveGradute,
         openUpdateDialog,

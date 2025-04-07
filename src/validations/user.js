@@ -17,7 +17,6 @@ export const updatePassword = () => yup.string().min(6).label("Contraseña")
 export const confirmation = () =>
     yup
         .string()
-        .required()
         .transform((curr, orig) => (orig === "" ? undefined : curr))
         .when("password", {
             is: (val) => !!val,

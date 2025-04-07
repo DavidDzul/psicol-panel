@@ -4,6 +4,7 @@
     <v-col cols="12">
       <UsersTable
         :users="users"
+        :loading="loadingTable"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @show="openUserDetail"
@@ -54,6 +55,7 @@ const {
   readUsers,
   createUsers,
   editUsers,
+  loadingTable,
 } = storeToRefs(useUserPageStore());
 const {
   openCreateDialog,

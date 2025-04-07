@@ -200,12 +200,28 @@
       <v-divider></v-divider>
       <v-card-text>{{ props.vacant.observations }}</v-card-text>
     </v-card>
+
+    <v-card
+      color="red"
+      v-if="props.vacant.candidate_type"
+      class="mt-5"
+      elevation="2"
+    >
+      <v-card-title>Deshabilitada</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text>
+        <p>
+          Motivo: {{ candidateTypeMap.get(props.vacant.candidate_type).text }}
+        </p>
+        <p>Descripción: {{ props.vacant.candidate_other }}</p>
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { defineProps } from "vue";
-import { modeVacantMap, vacantTypeMap } from "@/constants";
+import { modeVacantMap, vacantTypeMap, candidateTypeMap } from "@/constants";
 
 const props = defineProps({
   vacant: { type: Object, required: true },

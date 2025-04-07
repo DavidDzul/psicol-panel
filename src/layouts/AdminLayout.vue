@@ -11,6 +11,7 @@
         :user="userProfile"
         :initials="userInitials"
         :full-name="fullName"
+        @configuration="openUserDialog"
         @logout="logout"
       />
     </v-app-bar>
@@ -45,6 +46,11 @@
       </div>
     </v-snackbar>
   </v-layout>
+  <UserProfileDialog
+    v-model="openUserProfileDialog"
+    :edit-item="userProfile"
+    @submit="updateUserProfile"
+  />
 </template>
 
 <script setup lang="ts">
@@ -58,9 +64,11 @@ import { useAlertStore } from "@/stores/alert";
 
 import ProfileMenu from "@/layouts/ProfileMenu.vue";
 import NavMenu from "@/layouts/NavMenu.vue";
+import UserProfileDialog from "@/components/auth/UserProfileDialog.vue";
 
-const { userProfile, userInitials, fullName } = storeToRefs(useAuthStore());
-const { logout } = useAuthStore();
+const { userProfile, userInitials, fullName, openUserProfileDialog } =
+  storeToRefs(useAuthStore());
+const { logout, openUserDialog, updateUserProfile } = useAuthStore();
 const { show, config } = storeToRefs(useAlertStore());
 
 const { mobile } = useDisplay();
