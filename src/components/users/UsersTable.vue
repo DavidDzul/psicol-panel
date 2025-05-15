@@ -1,7 +1,7 @@
 <template>
   <v-data-table
     :headers="headers"
-    :items="users"
+    :items="filteredUsers"
     class="elevation-1"
     :loading="loading"
     :search="search"
@@ -19,7 +19,7 @@
           label="Buscar"
           :clearable="true"
         ></v-text-field>
-        <v-menu min-width="300px" :close-on-content-click="false">
+        <v-menu width="200px" :close-on-content-click="false">
           <template v-slot:activator="{ props }">
             <v-tooltip location="top">
               <template v-slot:activator="{ props: tooltip }">
@@ -37,14 +37,45 @@
           <v-card>
             <v-card-title> <small>Seleccionar filtros</small> </v-card-title>
             <v-divider></v-divider>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" lg="12">
+                  <v-select
+                    clearable
+                    :items="userCampus"
+                    v-model="campus"
+                    item-title="text"
+                    item-value="value"
+                    label="Sede"
+                  ></v-select>
+                  <v-select
+                    clearable
+                    :items="filteredGenerations"
+                    v-model="generation_id"
+                    item-title="generation_name"
+                    item-value="id"
+                    label="Generación"
+                  ></v-select>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
             <!-- <v-list style="max-height: 300px; overflow-y: auto">
-                      <v-list-item v-for="layer in layers" :key="layer.id" @click="toggleLayer(layer.id)">
-                        <template v-slot:prepend>
-                          <v-checkbox v-model="selectedLayers" :value="layer.id" hide-details />
-                        </template>
-                        <v-list-item-title>{{ layer.name }}</v-list-item-title>
-                      </v-list-item>
-                    </v-list> -->
+              <v-list-item
+                v-for="layer in layers"
+                :key="layer.id"
+                @click="toggleLayer(layer.id)"
+              >
+                <template v-slot:prepend>
+                  <v-checkbox
+                    v-model="selectedLayers"
+                    :value="layer.id"
+                    hide-details
+                  />
+                </template>
+                <v-list-item-title>{{ layer.name }}</v-list-item-title>
+              </v-list-item>
+            </v-list> -->
           </v-card>
         </v-menu>
 
@@ -104,7 +135,7 @@
 </template>
 
 <script setup>
-import { computed, ref, mergeProps } from "vue";
+import { computed, ref, mergeProps, watch } from "vue";
 import dayjs from "dayjs";
 
 import { campusMap } from "@/constants";
@@ -115,9 +146,14 @@ const props = defineProps({
   read: { type: Boolean, default: () => false },
   create: { type: Boolean, default: () => false },
   edit: { type: Boolean, default: () => false },
+  generations: { type: Array, default: () => [] },
+  userCampus: { type: Array, default: () => [] },
 });
 
 const search = ref("");
+const generation_id = ref(null);
+const campus = ref(null);
+
 const groupBy = ref(undefined);
 
 const emit = defineEmits(["create", "edit", "show"]);
@@ -139,6 +175,10 @@ const headers = computed(() => [
     title: "Apellido(s)",
     key: "last_name",
   },
+  // {
+  //   title: "Generación",
+  //   key: "generation_id",
+  // },
   {
     title: "Activo",
     key: "active",
@@ -148,6 +188,25 @@ const headers = computed(() => [
     key: "actions",
   },
 ]);
+
+const filteredGenerations = computed(() =>
+  props.generations.filter((map) => map.campus === campus.value)
+);
+
+const filteredUsers = computed(() => {
+  console.log(generation_id.value);
+  return props.users.filter((user) => {
+    const campusMatch = campus.value ? user.campus === campus.value : true;
+    const generationMatch = generation_id.value
+      ? Number(user.generation_id) === Number(generation_id.value)
+      : true;
+    return campusMatch && generationMatch;
+  });
+});
+
+watch(campus, () => {
+  generation_id.value = null;
+});
 
 const editItem = (item) => {
   emit("edit", item.id);

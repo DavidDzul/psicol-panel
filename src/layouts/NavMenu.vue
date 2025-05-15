@@ -81,7 +81,7 @@ const links = ref([
     links: [
       { text: "Generaciones", link: "/generaciones" },
       { text: "Roles", link: "/roles" },
-      { text: "Áreas e informes", link: "/datos" },
+      { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
     ],
   },
 ]);

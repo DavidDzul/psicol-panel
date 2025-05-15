@@ -154,11 +154,11 @@
             <li>Prima vacacional</li>
             <li>Prima Dominical</li>
             <li>Días de descanso</li>
-            <li>Pago horas extras</li>
             <li>Aguinaldo</li>
             <li>
               Licencia por maternidad/paternidad, de lactancia y/o adopción
             </li>
+            <li v-if="props.vacant.overtime_pay">Pago horas extras</li>
             <li v-if="props.vacant.utilities">
               Participación de utilidades (en caso de aplicar)
             </li>

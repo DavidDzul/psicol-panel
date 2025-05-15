@@ -10,6 +10,7 @@
         :read="readBusiness"
         :create="createBusinessPermission"
         :edit="editBusiness"
+        :user-campus="filteredCampus"
       />
     </v-col>
   </v-row>

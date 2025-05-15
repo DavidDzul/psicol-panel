@@ -191,14 +191,6 @@
                   </v-col>
                   <v-col cols="12" md="6">
                     <v-checkbox
-                      label="Pago horas extras"
-                      density="comfortable"
-                      :model-value="true"
-                      disabled
-                    ></v-checkbox>
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <v-checkbox
                       label="Aguinaldo"
                       density="comfortable"
                       :model-value="true"
@@ -211,6 +203,14 @@
                       density="comfortable"
                       :model-value="true"
                       disabled
+                    ></v-checkbox>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-checkbox
+                      v-model="overtime_pay"
+                      v-bind="overtime_payProps"
+                      label="Pago horas extras"
+                      density="comfortable"
                     ></v-checkbox>
                   </v-col>
                   <v-col cols="12" md="6">
@@ -761,6 +761,7 @@ const { defineField, meta, values, errors, setValues, resetForm } = useForm({
       skills: validations.skills(),
       observations: validations.observations(),
 
+      overtime_pay: validations.overtime_pay(),
       utilities: validations.utilities(),
       bonuses: validations.bonuses(),
       dining_room: validations.dining_room(),
@@ -850,6 +851,10 @@ const [observations, observationsProps] = defineField(
   vuetifyConfig
 );
 
+const [overtime_pay, overtime_payProps] = defineField(
+  "overtime_pay",
+  vuetifyConfig
+);
 const [utilities, utilitiesProps] = defineField("utilities", vuetifyConfig);
 const [bonuses, bonusesProps] = defineField("bonuses", vuetifyConfig);
 const [dining_room, dining_roomProps] = defineField(

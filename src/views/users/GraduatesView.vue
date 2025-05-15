@@ -11,6 +11,8 @@
         :read="readGraduates"
         :create="createGraduates"
         :edit="editGraduates"
+        :user-campus="filteredCampus"
+        :generations="generations"
       />
     </v-col>
   </v-row>
