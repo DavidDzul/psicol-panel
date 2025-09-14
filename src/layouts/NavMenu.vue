@@ -49,6 +49,30 @@ const links = ref([
     group: false,
   },
   {
+    text: "Asistencias",
+    icon: "mdi-timer",
+    group: true,
+    key: "PS_GROUP_USERS",
+    links: [
+      { text: "Checador", link: "/checador", key: "PS_USERS" },
+      {
+        text: "Gestionar asistencias",
+        link: "/gestionar-asistencias",
+        key: "PS_BUSINESS",
+      },
+    ],
+    // key: "PS_GROUP_ATTENDANCE",
+    // links: [
+    //   { text: "Checador", link: "/checador", key: "PS_TIME_CLOCK" },
+    //   { text: "Clases", link: "/clases", key: "PS_CLASSES" },
+    //   {
+    //     text: "Gestionar asistencias",
+    //     link: "/gestionar-asistencias",
+    //     key: "PS_MANAGE_ATTENDANCE",
+    //   },
+    // ],
+  },
+  {
     text: "Usuarios",
     icon: "mdi-account-multiple",
     group: true,
@@ -82,6 +106,7 @@ const links = ref([
       { text: "Generaciones", link: "/generaciones" },
       { text: "Roles", link: "/roles" },
       { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
+      { text: "Clases", link: "/clases", key: "PS_GRADUATES" },
     ],
   },
 ]);

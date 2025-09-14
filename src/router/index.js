@@ -96,6 +96,11 @@ const routes = [
         name: "DataView",
         component: () => import("@/views/data/DataView.vue"),
       },
+      {
+        path: "/checador",
+        name: "CreateAttendanceView",
+        component: () => import("@/views/attendance/CreateAttendanceView.vue"),
+      },
     ],
   },
   {
