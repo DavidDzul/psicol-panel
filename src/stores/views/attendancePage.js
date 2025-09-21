@@ -25,15 +25,16 @@ export const useAttendancePageStore = defineStore("attendancePage", () => {
 
     const onCreateCheckIn = async (code) => {
         loading.value = true;
-        if (code) {
-            try {
-                const res = await createCheckIn({ token: code });
-                console.log(res)
-            } catch (error) {
-                console.error(error);
-            }
+        try {
+            if (!code) throw new Error("Código QR vacío");
+            const res = await createCheckIn({ token: code });
+            return res;
+        } catch (error) {
+            loading.value = false;
+            throw error;
+        } finally {
+            loading.value = false;
         }
-        loading.value = false;
     };
 
 

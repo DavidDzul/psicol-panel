@@ -9,14 +9,10 @@ export const useAttendanceStore = defineStore("attendanceStore", () => {
     const { showAlert } = useAlertStore()
 
     const createCheckIn = async (code) => {
-        try {
-            const res = await axios.post("api/attendance/check-in", code, {
-                headers: { 'accept': 'application/json' }
-            });
-            return res.data
-        } catch (error) {
-            console.error("Error:", error);
-        }
+        const res = await axios.post("api/attendance/check-in", code, {
+            headers: { accept: "application/json" },
+        });
+        return res.data;
     };
 
 

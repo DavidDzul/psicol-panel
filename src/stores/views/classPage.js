@@ -1,0 +1,88 @@
+import { defineStore, storeToRefs } from "pinia";
+import { useClassStore } from "@/stores/api/classStore";
+import { useAppStore } from "@/stores/app";
+import { computed, onBeforeMount, ref } from "vue";
+import { useRouter } from "vue-router";
+
+export const useClassPageStore = defineStore("classPage", () => {
+    const { setLoading } = useAppStore();
+    const { classMap } = storeToRefs(useClassStore())
+    const { fetchClasses, createClass, updateClass, deleteClass } = useClassStore()
+
+    const loading = ref(false)
+    const links = computed(() => [
+        {
+            title: "Inicio",
+            disabled: false,
+            href: "/",
+        },
+        {
+            title: "Empresas",
+            disabled: true,
+            href: "/empresas",
+        },
+    ]);
+    const createDialog = ref(false)
+    const editClass = ref(undefined)
+    const updateDialog = ref(false)
+
+    onBeforeMount(async () => {
+        loading.value = true
+        await fetchClasses();
+        loading.value = false
+    });
+
+    const openCreateDialog = () => {
+        createDialog.value = true
+    }
+
+    const openUpdateDialog = (id) => {
+        const data = classMap.value.get(id);
+        if (!data) return;
+        editClass.value = { ...data };
+        updateDialog.value = true;
+    };
+
+    const classes = computed(() => [...classMap.value.values()])
+
+    const onCreateClass = async (form) => {
+        loading.value = true
+        if (form) {
+            const res = await createClass(form);
+            if (res) {
+                createDialog.value = false
+            }
+        }
+        loading.value = false
+    };
+
+    const onUpdateClass = async (form) => {
+        loading.value = true
+        if (form && editClass.value) {
+            const res = await updateClass(form, editClass.value.id);
+            if (res) {
+                updateDialog.value = false
+            }
+        }
+        loading.value = false
+    };
+
+    const onRemoveClass = async (id) => {
+        if (!id) return
+        await deleteClass(id)
+    }
+
+    return {
+        links,
+        loading,
+        classes,
+        editClass,
+        createDialog,
+        updateDialog,
+        onCreateClass,
+        openCreateDialog,
+        openUpdateDialog,
+        onUpdateClass,
+        onRemoveClass
+    };
+});

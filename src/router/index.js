@@ -101,6 +101,11 @@ const routes = [
         name: "CreateAttendanceView",
         component: () => import("@/views/attendance/CreateAttendanceView.vue"),
       },
+      {
+        path: "/clases",
+        name: "ClassView",
+        component: () => import("@/views/classes/ClassView.vue"),
+      },
     ],
   },
   {

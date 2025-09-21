@@ -60,6 +60,7 @@ const links = ref([
         link: "/gestionar-asistencias",
         key: "PS_BUSINESS",
       },
+      { text: "Sesiones de F.", link: "/clases", key: "PS_GRADUATES" },
     ],
     // key: "PS_GROUP_ATTENDANCE",
     // links: [
@@ -106,7 +107,6 @@ const links = ref([
       { text: "Generaciones", link: "/generaciones" },
       { text: "Roles", link: "/roles" },
       { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
-      { text: "Clases", link: "/clases", key: "PS_GRADUATES" },
     ],
   },
 ]);

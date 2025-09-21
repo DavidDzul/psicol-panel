@@ -1,13 +1,44 @@
 <template>
-  <div>
-    <div id="reader" style="width: 400px; margin: auto"></div>
+  <div class="scanner-wrapper">
+    <!-- Lector QR fullscreen -->
+    <div id="reader" class="scanner-wrapper"></div>
 
-    <p v-if="qrResult">Resultado: {{ qrResult }}</p>
+    <!-- Botones flotantes -->
+    <div class="scanner-buttons">
+      <v-btn v-if="!isScanning" color="primary" icon @click="startScanner">
+        <v-icon>mdi-play</v-icon>
+      </v-btn>
 
-    <div style="margin-top: 1rem">
-      <button @click="startScanner" v-if="!isScanning">Iniciar escaneo</button>
-      <button @click="stopScanner" v-if="isScanning">Detener escaneo</button>
+      <v-btn v-if="isScanning" color="red" icon @click="stopScanner">
+        <v-icon>mdi-stop</v-icon>
+      </v-btn>
     </div>
+
+    <!-- Dialog de resultados -->
+    <v-dialog v-model="dialogOpen" max-width="500" persistent>
+      <v-card
+        :color="
+          dialogData?.type === 'success' ? 'green-lighten-5' : 'red-lighten-5'
+        "
+        class="pa-4"
+      >
+        <v-card-title class="d-flex align-center gap-2">
+          <v-icon
+            :color="dialogData?.type === 'success' ? 'green' : 'red'"
+            size="28"
+          >
+            {{
+              dialogData?.type === "success"
+                ? "mdi-check-circle"
+                : "mdi-alert-circle"
+            }}
+          </v-icon>
+          <span class="text-h6 font-weight-medium">{{
+            dialogData?.message
+          }}</span>
+        </v-card-title>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -17,13 +48,17 @@ import { Html5Qrcode } from "html5-qrcode";
 import { useAttendancePageStore } from "@/stores/views/attendancePage";
 import { storeToRefs } from "pinia";
 
-const qrResult = ref<string>("");
-const errorMessage = ref<string>("");
-const isScanning = ref<boolean>(false);
+const isScanning = ref(false);
 let html5QrCode: Html5Qrcode | null = null;
 let isProcessing = false;
 
-const { loading } = storeToRefs(useAttendancePageStore());
+const dialogOpen = ref(false);
+const dialogData = ref<{
+  type: string;
+  message: string;
+  attendance?: any;
+} | null>(null);
+
 const { onCreateCheckIn } = useAttendancePageStore();
 
 async function startScanner() {
@@ -34,49 +69,63 @@ async function startScanner() {
   try {
     await html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      {
+        fps: 10,
+        qrbox: { width: 400, height: 400 },
+        aspectRatio: 1.7778,
+      },
       async (decodedText) => {
         if (!isProcessing) {
           isProcessing = true;
-          qrResult.value = decodedText;
-          errorMessage.value = ""; // limpiar error anterior
-
-          console.log("QR detectado:", decodedText);
-
-          // 👉 Pausar escaneo mientras procesas
-          await html5QrCode?.pause();
+          html5QrCode?.pause();
 
           try {
-            await onCreateCheckIn(decodedText);
-          } catch (err) {
-            console.error("Error al procesar el QR:", err);
-            errorMessage.value =
-              "❌ QR inválido o caducado. Vuelve a intentar.";
+            const res = await onCreateCheckIn(decodedText);
+
+            dialogData.value = {
+              type: "success",
+              message: "Entrada registrada",
+              attendance: res.attendance,
+            };
+          } catch (err: any) {
+            const msg =
+              err?.response?.data?.message ||
+              err?.message ||
+              "❌ QR inválido o caducado";
+            dialogData.value = {
+              type: "error",
+              message: msg,
+            };
           }
 
-          // 👉 Reanudar con un pequeño delay
+          dialogOpen.value = true;
+
+          // Cerrar diálogo automáticamente después de 3s y reanudar escaneo
           setTimeout(async () => {
+            dialogOpen.value = false;
+            dialogData.value = null;
             await html5QrCode?.resume();
             isProcessing = false;
-          }, 2000);
+          }, 3000);
         }
       },
-      () => {
-        // se ejecuta cuando no detecta QR, lo dejamos vacío
-      }
+      () => {}
     );
 
     isScanning.value = true;
   } catch (err) {
-    console.error("Error al iniciar cámara:", err);
-    errorMessage.value = "No se pudo iniciar la cámara 📷";
+    dialogData.value = {
+      type: "error",
+      message: "No se pudo iniciar la cámara 📷",
+    };
+    dialogOpen.value = true;
   }
 }
 
 async function stopScanner() {
   if (html5QrCode && isScanning.value) {
     await html5QrCode.stop();
-    await html5QrCode.clear();
+    html5QrCode.clear();
     isScanning.value = false;
     html5QrCode = null;
   }
@@ -86,8 +135,34 @@ onUnmounted(() => {
   stopScanner();
 });
 </script>
+
 <style scoped>
+.scanner-wrapper {
+  width: 100%;
+  height: calc(100vh - 100px);
+  position: relative;
+  overflow: hidden;
+  background: black;
+  /* border: 2px solid #ff7900; */
+  border-radius: 10px;
+}
+
+/* Video espejo */
 :deep(#reader video) {
-  transform: scaleX(-1); /* espejo */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* Botones flotantes */
+.scanner-buttons {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
 }
 </style>

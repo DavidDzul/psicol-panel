@@ -29,7 +29,7 @@
 import { ref, watch, computed } from "vue";
 import dayjs from "dayjs";
 
-defineProps({
+const props = defineProps({
   modelValue: { type: String },
   inputText: { type: String },
 });
@@ -44,6 +44,19 @@ const getFormatDate = (date: string) => {
   textDate.value = dayjs(fromDate.value).format("DD-MM-YYYY");
   emit("update:modelValue", dayjs(fromDate.value).format("YYYY-MM-DD"));
 };
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val) {
+      textDate.value = dayjs(val).format("DD-MM-YYYY");
+    } else {
+      fromDate.value = null;
+      textDate.value = "";
+    }
+  },
+  { immediate: true }
+);
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
