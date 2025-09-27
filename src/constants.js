@@ -606,3 +606,10 @@ export const vacantType = [
     { value: 'JOB_POSITION', text: "Laboral" },
     { value: 'PROFESSIONAL_PRACTICE', text: "Prácticas profesionales" },
 ]
+
+export const attendanceStatusMap = {
+    PRESENT: { label: "Presente", color: "green" },
+    ABSENT: { label: "Falta", color: "red" },
+    JUSTIFIED: { label: "Justificada", color: "blue" },
+    LATE: { label: "Retardo", color: "orange" },
+};

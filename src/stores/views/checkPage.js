@@ -1,12 +1,12 @@
 import { defineStore, storeToRefs } from "pinia";
-import { useAttendanceStore } from "@/stores/api/attendanceStore";
+import { useCheckStore } from "@/stores/api/checkStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref } from "vue";
 import { useRouter } from "vue-router";
 
-export const useAttendancePageStore = defineStore("attendancePage", () => {
+export const useCheckPageStore = defineStore("checkPage", () => {
     const { setLoading } = useAppStore();
-    const { createCheckIn } = useAttendanceStore();
+    const { createCheckIn } = useCheckStore();
 
     const loading = ref(false)
 
@@ -15,11 +15,6 @@ export const useAttendancePageStore = defineStore("attendancePage", () => {
             title: "Inicio",
             disabled: false,
             href: "/",
-        },
-        {
-            title: "Asistencias",
-            disabled: true,
-            href: "/asistencias",
         },
     ]);
 

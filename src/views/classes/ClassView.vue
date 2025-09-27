@@ -7,6 +7,7 @@
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @delete="removeDialog"
+        @show="openClassDetail"
       />
     </v-col>
   </v-row>
@@ -48,6 +49,7 @@ const {
   openUpdateDialog,
   onUpdateClass,
   onRemoveClass,
+  openClassDetail,
 } = useClassPageStore();
 
 const confirmationDialog = ref();
@@ -56,7 +58,7 @@ const removeDialog = async (id) => {
   if (!id) return;
   const response = await confirmationDialog.value?.open({
     title: "Eliminar",
-    body: "Al aceptar, esta información se removerá del listado al igual que de los datos representados en el informe. ¿Estás seguro de que deseas continuar?",
+    body: "Al aceptar, esta información se removerá al igual que las asignaciones de usuarios a las clases de manera permanente. ¿Estás seguro de que deseas continuar?",
   });
   if (!response) return;
   await onRemoveClass(id);

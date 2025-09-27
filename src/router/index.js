@@ -106,6 +106,11 @@ const routes = [
         name: "ClassView",
         component: () => import("@/views/classes/ClassView.vue"),
       },
+      {
+        path: "/clases/:id",
+        name: "ClassDetailsView",
+        component: () => import("@/views/classes/ClassDetailsView.vue"),
+      },
     ],
   },
   {

@@ -2,13 +2,14 @@ import { defineStore, storeToRefs } from "pinia";
 import { useClassStore } from "@/stores/api/classStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router"
 
 export const useClassPageStore = defineStore("classPage", () => {
     const { setLoading } = useAppStore();
     const { classMap } = storeToRefs(useClassStore())
     const { fetchClasses, createClass, updateClass, deleteClass } = useClassStore()
 
+    const router = useRouter()
     const loading = ref(false)
     const links = computed(() => [
         {
@@ -17,9 +18,9 @@ export const useClassPageStore = defineStore("classPage", () => {
             href: "/",
         },
         {
-            title: "Empresas",
+            title: "Sesiones de F",
             disabled: true,
-            href: "/empresas",
+            href: "/clases",
         },
     ]);
     const createDialog = ref(false)
@@ -72,6 +73,10 @@ export const useClassPageStore = defineStore("classPage", () => {
         await deleteClass(id)
     }
 
+    const openClassDetail = (id) => {
+        router.push("clases/" + id);
+    };
+
     return {
         links,
         loading,
@@ -83,6 +88,7 @@ export const useClassPageStore = defineStore("classPage", () => {
         openCreateDialog,
         openUpdateDialog,
         onUpdateClass,
-        onRemoveClass
+        onRemoveClass,
+        openClassDetail
     };
 });

@@ -55,11 +55,11 @@ const links = ref([
     key: "PS_GROUP_USERS",
     links: [
       { text: "Checador", link: "/checador", key: "PS_USERS" },
-      {
-        text: "Gestionar asistencias",
-        link: "/gestionar-asistencias",
-        key: "PS_BUSINESS",
-      },
+      // {
+      //   text: "Gestionar asistencias",
+      //   link: "/asistencias",
+      //   key: "PS_BUSINESS",
+      // },
       { text: "Sesiones de F.", link: "/clases", key: "PS_GRADUATES" },
     ],
     // key: "PS_GROUP_ATTENDANCE",

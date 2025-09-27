@@ -64,6 +64,21 @@
     </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
+        <v-tooltip text="Visualizar" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="text"
+              color="warning"
+              density="comfortable"
+              icon="mdi-eye"
+              class="mr-2"
+              size="small"
+              @click="showItem(item)"
+            >
+            </v-btn>
+          </template>
+        </v-tooltip>
         <v-tooltip text="Editar" location="bottom">
           <template v-slot:activator="{ props }">
             <v-btn
@@ -114,7 +129,7 @@ const props = defineProps({
 const search = ref("");
 const groupBy = ref(undefined);
 
-const emit = defineEmits(["create", "edit", "delete"]);
+const emit = defineEmits(["create", "edit", "delete", "show"]);
 
 const headers = computed(() => [
   {
@@ -149,5 +164,9 @@ const editItem = (item) => {
 
 const deleteItem = (item) => {
   emit("delete", item.id);
+};
+
+const showItem = (item) => {
+  emit("show", item.id);
 };
 </script>

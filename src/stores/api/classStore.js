@@ -8,6 +8,8 @@ export const useClassStore = defineStore("classStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
     const classMap = ref(new Map())
+    const attendanceMap = ref(new Map())
+    const classDetail = ref(null)
 
     const fetchClasses = async () => {
         try {
@@ -15,6 +17,30 @@ export const useClassStore = defineStore("classStore", () => {
                 headers: { 'accept': 'application/json' }
             });
             classMap.value = new Map(res.data.data.map((m) => [m.id, m]))
+            return res.data
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    const fetchClassDetais = async (id) => {
+        try {
+            const res = await axios.get(`api/admin/class/${id}`, {
+                headers: { 'accept': 'application/json' }
+            });
+            classDetail.value = res.data.data
+            return res.data
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    const fetchAttendancesByClass = async (id) => {
+        try {
+            const res = await axios.get(`api/admin/class/${id}/attendances`, {
+                headers: { 'accept': 'application/json' }
+            });
+            attendanceMap.value = new Map(res.data.data.map((m) => [m.id, m]))
             return res.data
         } catch (error) {
             console.error("Error:", error);
@@ -94,9 +120,13 @@ export const useClassStore = defineStore("classStore", () => {
 
     return {
         classMap,
+        classDetail,
+        attendanceMap,
         fetchClasses,
         createClass,
         updateClass,
-        deleteClass
+        deleteClass,
+        fetchClassDetais,
+        fetchAttendancesByClass
     };
 });
