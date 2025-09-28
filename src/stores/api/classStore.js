@@ -10,6 +10,7 @@ export const useClassStore = defineStore("classStore", () => {
     const classMap = ref(new Map())
     const attendanceMap = ref(new Map())
     const classDetail = ref(null)
+    const usersByFilters = ref(new Map())
 
     const fetchClasses = async () => {
         try {
@@ -118,15 +119,58 @@ export const useClassStore = defineStore("classStore", () => {
         }
     }
 
+    const fetchUsersByFilters = async (form) => {
+        try {
+            const res = await axios.get(`api/admin/filterUsers`, {
+                params: form,
+                headers: { 'accept': 'application/json' }
+            });
+            usersByFilters.value = res.data.data
+            return res.data
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    const assignUsers = async (form) => {
+        try {
+            const param = await axios.post("api/admin/attendance", form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información guardada exitosamente.",
+                    status: "success",
+                });
+
+                // param.data.data es un array de attendance
+                const updatedMap = new Map(param.data.data.map(m => [m.id, m]));
+                attendanceMap.value = updatedMap;
+
+                return param.data.res;
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al guardar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    };
+
     return {
         classMap,
         classDetail,
         attendanceMap,
+        usersByFilters,
+        assignUsers,
         fetchClasses,
         createClass,
         updateClass,
         deleteClass,
         fetchClassDetais,
+        fetchUsersByFilters,
         fetchAttendancesByClass
     };
 });

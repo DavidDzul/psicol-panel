@@ -1,25 +1,18 @@
 <template>
   <v-row class="align-center pb-3">
-    <!-- Bloque de título -->
     <v-col cols="12" md="6" v-if="classData">
-      <!-- Nombre del programa -->
       <h3 class="font-weight-bold mb-1">{{ classData.name }}</h3>
 
-      <!-- Fecha -->
       <p class="text-body-2 text-grey-darken-1 mb-2">📅 {{ classData.date }}</p>
 
-      <!-- Subtítulo -->
       <h3 class="text-subtitle-1 text-primary font-weight-medium">
         Asistencias generadas
       </h3>
     </v-col>
 
-    <!-- Botones a la derecha -->
     <v-col cols="12" md="6" class="d-flex justify-end align-center gap-2">
-      <v-btn class="mx-3" color="primary" @click="applyFilters">
-        Generar reporte
-      </v-btn>
-      <v-btn color="warning" @click="applyFilters"> Asignar usuarios </v-btn>
+      <v-btn class="mx-3" color="grey"> Generar reporte </v-btn>
+      <v-btn color="warning" @click="assignItem"> Asignar usuarios </v-btn>
     </v-col>
   </v-row>
 
@@ -107,7 +100,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["create", "edit", "delete", "filter"]);
+const emit = defineEmits(["assign", "edit", "delete"]);
 
 const search = ref("");
 const selectedCampus = ref(null);
@@ -142,13 +135,8 @@ const itemsWithUserName = computed(() =>
 
 const editItem = (item) => emit("edit", item.id);
 const deleteItem = (item) => emit("delete", item.id);
-
-// Solo al dar clic en el botón
-const applyFilters = () => {
-  emit("filter", {
-    campus: selectedCampus.value,
-    year: selectedYear.value,
-  });
+const assignItem = () => {
+  emit("assign");
 };
 </script>
 

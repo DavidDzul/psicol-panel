@@ -1,5 +1,7 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useClassStore } from "@/stores/api/classStore";
+import { useAuthStore } from "@/stores/api/authStore";
+import { useGenerationsStore } from "@/stores/api/generationStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router"
@@ -7,12 +9,15 @@ import { useRoute, useRouter } from "vue-router"
 export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const { setLoading } = useAppStore();
     const { classDetail,
-        attendanceMap, } = storeToRefs(useClassStore())
-    const { fetchClassDetais, fetchAttendancesByClass } = useClassStore()
+        attendanceMap, usersByFilters } = storeToRefs(useClassStore())
+    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers } = useClassStore()
+    const { filteredCampus } = storeToRefs(useAuthStore())
+    const { resGenerations } = storeToRefs(useGenerationsStore());
 
     const router = useRouter()
     const route = useRoute();
     const loading = ref(false)
+    const assignDialog = ref(false)
 
     const links = computed(() => [
         {
@@ -22,8 +27,13 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         },
         {
             title: "Sesiones de F",
-            disabled: true,
+            disabled: false,
             href: "/clases",
+        },
+        {
+            title: "Detalles de sesión de F.",
+            disabled: true,
+            href: "/clases/:id",
         },
     ]);
 
@@ -57,12 +67,40 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     };
 
     const attendances = computed(() => [...attendanceMap.value.values()])
+    const generations = computed(() => [...resGenerations.value.values()])
+    const users = computed(() => [...usersByFilters.value.values()])
 
+    const openAssignDialog = () => {
+        assignDialog.value = true
+    }
+
+    const searchUsers = async (form) => {
+        if (!form) return
+        await fetchUsersByFilters(form)
+    }
+
+    const onAssignUsersToClass = async (ids) => {
+        if (!ids) return
+        const form = { class_id: classDetail.value.id, user_ids: ids }
+        const res = await assignUsers(form)
+        if (res) {
+            assignDialog.value = false
+
+        }
+    }
 
     return {
         links,
         loading,
         classDetail,
-        attendances
+        attendances,
+        assignDialog,
+        filteredCampus,
+        generations,
+        users,
+        searchUsers,
+        assignUsers,
+        openAssignDialog,
+        onAssignUsersToClass
     };
 });
