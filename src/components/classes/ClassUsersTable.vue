@@ -50,6 +50,34 @@
         {{ attendanceStatusMap[item.status]?.label || item.status }}
       </v-chip>
     </template>
+    <template #item.check_in="{ item }">
+      {{ item.check_in }}
+      <v-btn
+        v-bind="props"
+        variant="text"
+        color="grey"
+        density="comfortable"
+        icon="mdi-timer-edit-outline"
+        @click="editCheckIn(item)"
+        size="small"
+      >
+      </v-btn>
+    </template>
+
+    <template #item.check_out="{ item }">
+      {{ item.check_out }}
+      <v-btn
+        v-bind="props"
+        variant="text"
+        color="grey"
+        density="comfortable"
+        icon="mdi-timer-edit-outline"
+        @click="editCheckOut(item)"
+        size="small"
+      >
+      </v-btn>
+    </template>
+
     <template #item.observations="{ item }">
       <v-tooltip activator="parent" location="top">
         {{ item.observations }}
@@ -61,17 +89,6 @@
     </template>
     <!-- Acciones -->
     <template #item.actions="{ item }">
-      <v-btn
-        v-bind="props"
-        variant="text"
-        color="warning"
-        density="comfortable"
-        icon="mdi-pencil"
-        class="mr-2"
-        size="small"
-        @click="editItem(item)"
-      >
-      </v-btn>
       <v-btn
         v-bind="props"
         variant="text"
@@ -100,7 +117,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["assign", "edit", "delete"]);
+const emit = defineEmits(["assign", "checkIn", "delete", "checkOut"]);
 
 const search = ref("");
 const selectedCampus = ref(null);
@@ -133,7 +150,8 @@ const itemsWithUserName = computed(() =>
   }))
 );
 
-const editItem = (item) => emit("edit", item.id);
+const editCheckIn = (item) => emit("checkIn", item.id);
+const editCheckOut = (item) => emit("checkOut", item.id);
 const deleteItem = (item) => emit("delete", item.id);
 const assignItem = () => {
   emit("assign");

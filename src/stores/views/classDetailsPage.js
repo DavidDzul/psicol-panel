@@ -10,7 +10,7 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const { setLoading } = useAppStore();
     const { classDetail,
         attendanceMap, usersByFilters } = storeToRefs(useClassStore())
-    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers } = useClassStore()
+    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers, updateTimeAttendance } = useClassStore()
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
 
@@ -18,7 +18,9 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const route = useRoute();
     const loading = ref(false)
     const assignDialog = ref(false)
-
+    const checkInDialog = ref(false)
+    const checkOutDialog = ref(false)
+    const editItem = ref(null)
     const links = computed(() => [
         {
             title: "Inicio",
@@ -74,6 +76,20 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         assignDialog.value = true
     }
 
+    const openCheckInDialog = (id) => {
+        const data = attendanceMap.value.get(id);
+        if (!data) return;
+        editItem.value = { ...data };
+        checkInDialog.value = true
+    }
+
+    const openCheckOutDialog = (id) => {
+        const data = attendanceMap.value.get(id);
+        if (!data) return;
+        editItem.value = { ...data };
+        checkOutDialog.value = true
+    }
+
     const searchUsers = async (form) => {
         if (!form) return
         await fetchUsersByFilters(form)
@@ -89,6 +105,14 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         }
     }
 
+    const onCheckInUpdate = async (form) => {
+        if (!form && editItem.value) return
+        const res = await updateTimeAttendance(form, editItem.value.id)
+        if (res) {
+            checkInDialog.value = false
+        }
+    }
+
     return {
         links,
         loading,
@@ -98,9 +122,15 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         filteredCampus,
         generations,
         users,
+        checkInDialog,
+        editItem,
+        checkOutDialog,
         searchUsers,
         assignUsers,
         openAssignDialog,
-        onAssignUsersToClass
+        onAssignUsersToClass,
+        openCheckInDialog,
+        openCheckOutDialog,
+        onCheckInUpdate
     };
 });

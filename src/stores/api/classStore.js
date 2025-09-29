@@ -159,6 +159,30 @@ export const useClassStore = defineStore("classStore", () => {
         }
     };
 
+    const updateTimeAttendance = async (form, id) => {
+        try {
+            const param = await axios.put(`api/admin/attendance/${id}`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información actualizada exitosamente.",
+                    status: "success",
+                });
+
+                attendanceMap.value.set(param.data.data.id, param.data.data)
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
+
     return {
         classMap,
         classDetail,
@@ -171,6 +195,7 @@ export const useClassStore = defineStore("classStore", () => {
         deleteClass,
         fetchClassDetais,
         fetchUsersByFilters,
-        fetchAttendancesByClass
+        fetchAttendancesByClass,
+        updateTimeAttendance
     };
 });
