@@ -10,7 +10,7 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const { setLoading } = useAppStore();
     const { classDetail,
         attendanceMap, usersByFilters } = storeToRefs(useClassStore())
-    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers, updateTimeAttendance } = useClassStore()
+    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers, updateAttendance, deleteAttendance } = useClassStore()
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
 
@@ -18,9 +18,9 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const route = useRoute();
     const loading = ref(false)
     const assignDialog = ref(false)
-    const checkInDialog = ref(false)
-    const checkOutDialog = ref(false)
     const editItem = ref(null)
+    const updateDialog = ref(null)
+
     const links = computed(() => [
         {
             title: "Inicio",
@@ -76,18 +76,11 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         assignDialog.value = true
     }
 
-    const openCheckInDialog = (id) => {
+    const openUpdateDialog = (id) => {
         const data = attendanceMap.value.get(id);
         if (!data) return;
         editItem.value = { ...data };
-        checkInDialog.value = true
-    }
-
-    const openCheckOutDialog = (id) => {
-        const data = attendanceMap.value.get(id);
-        if (!data) return;
-        editItem.value = { ...data };
-        checkOutDialog.value = true
+        updateDialog.value = true
     }
 
     const searchUsers = async (form) => {
@@ -105,11 +98,20 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         }
     }
 
-    const onCheckInUpdate = async (form) => {
+    const onAttendanceUpdate = async (form) => {
         if (!form && editItem.value) return
-        const res = await updateTimeAttendance(form, editItem.value.id)
+        const res = await updateAttendance(form, editItem.value.id)
         if (res) {
-            checkInDialog.value = false
+            updateDialog.value = false
+        }
+    }
+
+    const onRemoveAttendance = async (id) => {
+        if (!id) return
+        try {
+            await deleteAttendance(id)
+        } catch (e) {
+            console.error(e)
         }
     }
 
@@ -122,15 +124,14 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         filteredCampus,
         generations,
         users,
-        checkInDialog,
         editItem,
-        checkOutDialog,
+        updateDialog,
         searchUsers,
         assignUsers,
         openAssignDialog,
         onAssignUsersToClass,
-        openCheckInDialog,
-        openCheckOutDialog,
-        onCheckInUpdate
+        openUpdateDialog,
+        onAttendanceUpdate,
+        onRemoveAttendance
     };
 });

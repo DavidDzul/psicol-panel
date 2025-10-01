@@ -52,30 +52,10 @@
     </template>
     <template #item.check_in="{ item }">
       {{ item.check_in }}
-      <v-btn
-        v-bind="props"
-        variant="text"
-        color="grey"
-        density="comfortable"
-        icon="mdi-timer-edit-outline"
-        @click="editCheckIn(item)"
-        size="small"
-      >
-      </v-btn>
     </template>
 
     <template #item.check_out="{ item }">
       {{ item.check_out }}
-      <v-btn
-        v-bind="props"
-        variant="text"
-        color="grey"
-        density="comfortable"
-        icon="mdi-timer-edit-outline"
-        @click="editCheckOut(item)"
-        size="small"
-      >
-      </v-btn>
     </template>
 
     <template #item.observations="{ item }">
@@ -89,6 +69,17 @@
     </template>
     <!-- Acciones -->
     <template #item.actions="{ item }">
+      <v-btn
+        v-bind="props"
+        variant="text"
+        color="warning"
+        density="comfortable"
+        icon="mdi-pencil"
+        class="mr-2"
+        size="small"
+        @click="editItem(item)"
+      >
+      </v-btn>
       <v-btn
         v-bind="props"
         variant="text"
@@ -108,7 +99,6 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import dayjs from "dayjs";
 import { attendanceStatusMap } from "@/constants";
 
 const props = defineProps({
@@ -117,19 +107,9 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["assign", "checkIn", "delete", "checkOut"]);
+const emit = defineEmits(["assign", "edit", "delete"]);
 
 const search = ref("");
-const selectedCampus = ref(null);
-const selectedYear = ref(null);
-
-const campusOptions = ["MERIDA", "VALLADOLID", "TIZIMIN"];
-
-// Generar años dinámicos
-const yearOptions = computed(() => {
-  const currentYear = dayjs().year();
-  return Array.from({ length: 3 }, (_, i) => currentYear - i);
-});
 
 const headers = computed(() => [
   { title: "ID", key: "id" },
@@ -150,8 +130,7 @@ const itemsWithUserName = computed(() =>
   }))
 );
 
-const editCheckIn = (item) => emit("checkIn", item.id);
-const editCheckOut = (item) => emit("checkOut", item.id);
+const editItem = (item) => emit("edit", item.id);
 const deleteItem = (item) => emit("delete", item.id);
 const assignItem = () => {
   emit("assign");

@@ -159,7 +159,7 @@ export const useClassStore = defineStore("classStore", () => {
         }
     };
 
-    const updateTimeAttendance = async (form, id) => {
+    const updateAttendance = async (form, id) => {
         try {
             const param = await axios.put(`api/admin/attendance/${id}`, form, {
                 headers: { 'accept': 'application/json' }
@@ -183,6 +183,29 @@ export const useClassStore = defineStore("classStore", () => {
         }
     }
 
+    const deleteAttendance = async (id) => {
+        try {
+            const param = await axios.delete(`api/admin/attendance/${id}`, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información eliminada exitosamente.",
+                    status: "success",
+                });
+                attendanceMap.value.delete(id)
+                return param.data.res
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al eliminar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
+
     return {
         classMap,
         classDetail,
@@ -196,6 +219,7 @@ export const useClassStore = defineStore("classStore", () => {
         fetchClassDetais,
         fetchUsersByFilters,
         fetchAttendancesByClass,
-        updateTimeAttendance
+        updateAttendance,
+        deleteAttendance
     };
 });

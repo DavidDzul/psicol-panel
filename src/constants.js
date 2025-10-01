@@ -613,3 +613,10 @@ export const attendanceStatusMap = {
     JUSTIFIED: { label: "Justificada", color: "blue" },
     LATE: { label: "Retardo", color: "orange" },
 };
+
+export const classStatus = [
+    { value: 'PRESENT', text: "Presente" },
+    { value: 'LATE', text: "Retardo" },
+    { value: "JUSTIFIED", text: "Justificado" },
+    { value: "ABSENT", text: "Falta" }
+]

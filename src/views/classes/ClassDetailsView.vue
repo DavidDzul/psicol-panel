@@ -5,9 +5,9 @@
       <ClassUsersTable
         :class-data="classDetail"
         :attendances="attendances"
+        @edit="openUpdateDialog"
         @assign="openAssignDialog"
-        @checkIn="openCheckInDialog"
-        @checkOut="openCheckOutDialog"
+        @delete="removeDataDialog"
       />
       <ClassAssignUserModa
         v-model="assignDialog"
@@ -21,12 +21,13 @@
     </v-col>
   </v-row>
 
-  <CheckInUpdateModal
-    v-model="checkInDialog"
+  <ClassUpdateDialog
+    v-model="updateDialog"
     :edit-item="editItem"
-    @submit="onCheckInUpdate"
+    @submit="onAttendanceUpdate"
   />
-  <CheckOutUpdateModal v-model="checkOutDialog" :edit-item="editItem" />
+
+  <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
 
 <script setup>
@@ -35,8 +36,8 @@ import { storeToRefs } from "pinia";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ClassUsersTable from "@/components/classes/ClassUsersTable.vue";
 import ClassAssignUserModa from "@/components/classes/ClassAssignUserModa.vue";
-import CheckInUpdateModal from "@/components/classes/CheckInUpdateModal.vue";
-import CheckOutUpdateModal from "@/components/classes/CheckOutUpdateModal.vue";
+import ClassUpdateDialog from "@/components/classes/ClassUpdateDialog.vue";
+import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 
 import { useClassDetailsPageStore } from "@/stores/views/classDetailsPage";
 const {
@@ -47,16 +48,27 @@ const {
   filteredCampus,
   generations,
   users,
-  checkInDialog,
+  updateDialog,
   editItem,
-  checkOutDialog,
 } = storeToRefs(useClassDetailsPageStore());
 const {
   openAssignDialog,
   searchUsers,
   onAssignUsersToClass,
-  openCheckInDialog,
-  openCheckOutDialog,
-  onCheckInUpdate,
+  openUpdateDialog,
+  onAttendanceUpdate,
+  onRemoveAttendance,
 } = useClassDetailsPageStore();
+
+const confirmationDialog = ref();
+
+const removeDataDialog = async (id) => {
+  if (!id) return;
+  const response = await confirmationDialog.value?.open({
+    title: "Eliminar",
+    body: "Al aceptar, esta información se removerá del listado al igual que de los datos representados para el usuario de manera permanente. ¿Estás seguro de que deseas continuar?",
+  });
+  if (!response) return;
+  await onRemoveAttendance(id);
+};
 </script>
