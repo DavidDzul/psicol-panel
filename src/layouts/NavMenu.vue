@@ -52,26 +52,11 @@ const links = ref([
     text: "Asistencias",
     icon: "mdi-timer",
     group: true,
-    key: "PS_GROUP_USERS",
+    key: "PS_GROUP_ATTENDANCE",
     links: [
-      { text: "Checador", link: "/checador", key: "PS_USERS" },
-      // {
-      //   text: "Gestionar asistencias",
-      //   link: "/asistencias",
-      //   key: "PS_BUSINESS",
-      // },
-      { text: "Sesiones de F.", link: "/clases", key: "PS_GRADUATES" },
+      { text: "Checador", link: "/checador", key: "PS_CHECK" },
+      { text: "Sesiones de F.", link: "/clases", key: "PS_CLASSES" },
     ],
-    // key: "PS_GROUP_ATTENDANCE",
-    // links: [
-    //   { text: "Checador", link: "/checador", key: "PS_TIME_CLOCK" },
-    //   { text: "Clases", link: "/clases", key: "PS_CLASSES" },
-    //   {
-    //     text: "Gestionar asistencias",
-    //     link: "/gestionar-asistencias",
-    //     key: "PS_MANAGE_ATTENDANCE",
-    //   },
-    // ],
   },
   {
     text: "Usuarios",

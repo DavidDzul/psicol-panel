@@ -155,6 +155,8 @@ export const useAuthStore = defineStore("authStore", () => {
     const editVacant = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_VACANT"))
     const readApplication = computed(() => !!permissions.value.find((map) => map === "PS_READ_APPLICATION"))
     const editApplication = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_APPLICATION"))
+    const checkView = computed(() => !!permissions.value.find((map) => map === "PS_CHECK"))
+    const classesView = computed(() => !!permissions.value.find((map) => map === "PS_CLASSES"))
 
     return {
         login,
@@ -185,6 +187,8 @@ export const useAuthStore = defineStore("authStore", () => {
         createVacant,
         editVacant,
         readApplication,
-        editApplication
+        editApplication,
+        checkView,
+        classesView
     };
 });
