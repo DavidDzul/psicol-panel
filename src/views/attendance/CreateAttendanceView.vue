@@ -17,30 +17,83 @@
         </div>
 
         <!-- Dialog de resultados -->
-        <v-dialog v-model="dialogOpen" max-width="500" persistent>
+        <v-dialog v-model="dialogOpen" max-width="600" persistent>
           <v-card
             :color="
-              dialogData?.type === 'success'
+              dialogData?.attendance
+                ? dialogData.attendance.status === 'LATE'
+                  ? 'red-lighten-5'
+                  : 'green-lighten-5'
+                : dialogData?.type === 'success'
                 ? 'green-lighten-5'
                 : 'red-lighten-5'
             "
             class="pa-4"
           >
-            <v-card-title class="d-flex align-center gap-2">
-              <v-icon
+            <!-- Encabezado -->
+
+            <!-- Contenido detallado -->
+            <v-card-text v-if="dialogData?.attendance" class="pt-2 text-center">
+              <!-- <v-icon
                 :color="dialogData?.type === 'success' ? 'green' : 'red'"
-                size="28"
+                size="20"
               >
                 {{
                   dialogData?.type === "success"
                     ? "mdi-check-circle"
                     : "mdi-alert-circle"
                 }}
-              </v-icon>
-              <span class="text-h6 font-weight-medium">{{
-                dialogData?.message
-              }}</span>
-            </v-card-title>
+              </v-icon> -->
+              <span
+                class="text-h6 font-weight-medium"
+                :style="
+                  dialogData?.type === 'success' ? 'color: green' : 'color: red'
+                "
+              >
+                {{ dialogData?.message }}
+              </span>
+              <!-- Nombre del usuario destacado -->
+              <div class="text-h5 font-weight-medium mb-2 mt-5">
+                {{ dialogData.attendance.user.first_name }}
+                {{ dialogData.attendance.user.last_name }}
+              </div>
+
+              <!-- Estatus con color -->
+              <v-chip
+                :color="
+                  dialogData.attendance.status === 'LATE' ? 'error' : 'green'
+                "
+                text-color="white"
+                class="mb-4"
+              >
+                {{
+                  dialogData.attendance.status === "LATE"
+                    ? "Retardo"
+                    : "Presente"
+                }}
+              </v-chip>
+
+              <!-- Detalles en formato limpio -->
+              <v-row dense>
+                <v-col cols="12">
+                  <strong>📚 Sesión:</strong>
+                  <div>{{ dialogData.attendance.class.name }}</div>
+                </v-col>
+
+                <v-col cols="12">
+                  <strong>🕓 Hora de entrada:</strong>
+                  <div>{{ dialogData.attendance.check_in }}</div>
+                </v-col>
+              </v-row>
+            </v-card-text>
+            <v-card-text v-else class="text-center">
+              <v-icon color="red" size="28" class="mb-2"
+                >mdi-alert-circle</v-icon
+              >
+              <div class="text-h6 font-weight-medium text-red">
+                {{ dialogData?.message || "Ocurrió un error inesperado." }}
+              </div>
+            </v-card-text>
           </v-card>
         </v-dialog>
       </div>

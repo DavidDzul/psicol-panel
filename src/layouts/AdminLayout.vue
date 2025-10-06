@@ -73,10 +73,22 @@ const { show, config } = storeToRefs(useAlertStore());
 
 const { mobile } = useDisplay();
 const drawer = ref(!mobile.value);
+const route = useRoute();
 
 const onClick = () => {
   drawer.value = !drawer.value;
 };
+
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath.includes("/checador")) {
+      drawer.value = false;
+    } else if (!mobile.value) {
+      drawer.value = true;
+    }
+  }
+);
 </script>
 <style lang="scss" scoped>
 .container__main {
