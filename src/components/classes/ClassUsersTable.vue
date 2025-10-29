@@ -11,7 +11,24 @@
     </v-col>
 
     <v-col cols="12" md="6" class="d-flex justify-end align-center gap-2">
-      <v-btn class="mx-3" color="grey"> Generar reporte </v-btn>
+      <!-- <v-btn class="mx-3" color="grey" @click="reportItem">
+        Generar reporte
+      </v-btn> -->
+      <v-menu>
+        <template v-slot:activator="{ props }">
+          <v-btn class="mx-3" color="grey" v-bind="props">
+            Generar reporte
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="reportItem">
+            <v-list-item-title>Reporte PDF</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="reportSheet">
+            <v-list-item-title>Reporte sheet</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-btn color="warning" @click="assignItem"> Asignar usuarios </v-btn>
     </v-col>
   </v-row>
@@ -107,7 +124,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["assign", "edit", "delete"]);
+const emit = defineEmits(["assign", "edit", "delete", "report", "sheet"]);
 
 const search = ref("");
 
@@ -132,6 +149,8 @@ const itemsWithUserName = computed(() =>
 
 const editItem = (item) => emit("edit", item.id);
 const deleteItem = (item) => emit("delete", item.id);
+const reportItem = (item) => emit("report");
+const reportSheet = (item) => emit("sheet");
 const assignItem = () => {
   emit("assign");
 };

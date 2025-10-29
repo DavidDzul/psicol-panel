@@ -10,7 +10,7 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
     const { setLoading } = useAppStore();
     const { classDetail,
         attendanceMap, usersByFilters } = storeToRefs(useClassStore())
-    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers, updateAttendance, deleteAttendance } = useClassStore()
+    const { fetchClassDetais, fetchAttendancesByClass, fetchUsersByFilters, assignUsers, updateAttendance, deleteAttendance, generateReportPDF, generateReportSheet } = useClassStore()
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
 
@@ -115,6 +115,27 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         }
     }
 
+    const getReport = async () => {
+        if (!classDetail.value.id) return
+        try {
+            await generateReportPDF(classDetail.value.id)
+        } catch (e) {
+            console.error(e)
+
+        }
+    }
+
+
+    const getReportSheet = async () => {
+        if (!classDetail.value.id) return
+        try {
+            await generateReportSheet(classDetail.value.id)
+        } catch (e) {
+            console.error(e)
+
+        }
+    }
+
     return {
         links,
         loading,
@@ -132,6 +153,8 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
         onAssignUsersToClass,
         openUpdateDialog,
         onAttendanceUpdate,
-        onRemoveAttendance
+        onRemoveAttendance,
+        getReport,
+        getReportSheet
     };
 });

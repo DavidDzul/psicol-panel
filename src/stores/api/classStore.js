@@ -206,6 +206,52 @@ export const useClassStore = defineStore("classStore", () => {
         }
     }
 
+    const generateReportPDF = async (id) => {
+        try {
+            const res = await axios.get(`api/admin/class/${id}/pdf`, {
+                responseType: "blob",
+                headers: { Accept: "application/pdf" },
+            });
+
+            const fileURL = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+
+            window.open(fileURL, "_blank");
+        } catch (error) {
+            console.error("Error al generar el reporte:", error);
+        }
+    };
+
+    const generateReportSheet = async (id) => {
+        try {
+            const res = await axios.get(`/api/admin/class/${id}/sheet`, {
+                responseType: "blob",
+                headers: {
+                    Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                },
+            });
+
+            // Crear URL temporal para descarga
+            const fileURL = window.URL.createObjectURL(
+                new Blob([res.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                })
+            );
+
+            // Crear link temporal y hacer click
+            const link = document.createElement("a");
+            link.href = fileURL;
+            link.setAttribute("download", `Asistencias_Clase_${id}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error("Error al descargar el Excel:", error);
+        }
+    };
+
+
+
+
     return {
         classMap,
         classDetail,
@@ -220,6 +266,8 @@ export const useClassStore = defineStore("classStore", () => {
         fetchUsersByFilters,
         fetchAttendancesByClass,
         updateAttendance,
-        deleteAttendance
+        deleteAttendance,
+        generateReportPDF,
+        generateReportSheet
     };
 });

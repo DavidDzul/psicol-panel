@@ -610,13 +610,15 @@ export const vacantType = [
 export const attendanceStatusMap = {
     PRESENT: { label: "Presente", color: "green" },
     ABSENT: { label: "Falta", color: "red" },
-    JUSTIFIED: { label: "Justificada", color: "blue" },
-    LATE: { label: "Retardo", color: "orange" },
+    JUSTIFIED_LATE: { label: "Retardo justificado", color: "blue" },
+    JUSTIFIED_ABSENCE: { label: "Falta justificada", color: "orange" },
+    LATE: { label: "Retardo", color: "yellow" },
 };
 
 export const classStatus = [
     { value: 'PRESENT', text: "Presente" },
     { value: 'LATE', text: "Retardo" },
-    { value: "JUSTIFIED", text: "Justificado" },
+    { value: "JUSTIFIED_LATE", text: "Retardo justificado" },
+    { value: "JUSTIFIED_ABSENCE", text: "Falta justificada" },
     { value: "ABSENT", text: "Falta" }
 ]

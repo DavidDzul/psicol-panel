@@ -17,22 +17,19 @@
 
         <v-card-text>
           <v-row>
-            <!-- Nombre -->
             <v-col cols="12">
-              <v-text-field
-                v-model="class_name"
-                v-bind="class_nameProps"
-                label="Nombre"
+              <v-select
+                clearable
+                :items="classStatus"
+                v-model="class_status"
+                item-title="text"
+                item-value="value"
+                label="Estatus"
               />
             </v-col>
 
-            <!-- Fecha -->
-            <v-col cols="12">
-              <DatePickerInput v-model="class_date" input-text="Fecha" />
-            </v-col>
-
             <!-- Hora de inicio -->
-            <v-col cols="12"><strong>Hora de inicio:</strong></v-col>
+            <v-col cols="12"><strong>Hora de entrada:</strong></v-col>
             <v-col cols="6">
               <v-select v-model="startHour" :items="hours" label="Hora" />
             </v-col>
@@ -45,12 +42,21 @@
             </v-col>
 
             <!-- Hora fin -->
-            <v-col cols="12"><strong>Hora de término:</strong></v-col>
+            <v-col cols="12"><strong>Hora de salida:</strong></v-col>
             <v-col cols="6">
               <v-select v-model="endHour" :items="hours" label="Hora" />
             </v-col>
             <v-col cols="6">
               <v-select v-model="endMinute" :items="minutes" label="Minutos" />
+            </v-col>
+
+            <v-col cols="12">
+              <v-textarea
+                v-model="class_observation"
+                v-bind="class_observationProps"
+                label="Observaciones"
+                rows="3"
+              ></v-textarea>
             </v-col>
           </v-row>
         </v-card-text>
@@ -87,7 +93,7 @@ import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import * as validations from "@/validations";
 import dayjs from "dayjs";
-import DatePickerInput from "@/components/shared/DatePickerInput.vue";
+import { classStatus } from "@/constants";
 
 const props = defineProps({
   modelValue: Boolean,
@@ -101,7 +107,9 @@ const vuetifyConfig = (state) => ({
 
 // Horas y minutos
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const minutes = ["00", "15", "30", "45"];
+const minutes = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
 
 // Selects de hora
 const startHour = ref(null);
@@ -114,24 +122,37 @@ const { defineField, meta, values, setFieldValue, setValues, resetForm } =
   useForm({
     validationSchema: toTypedSchema(
       yup.object({
-        class_name: validations.class_name(),
-        class_date: validations.class_date(),
+        class_status: validations.class_status(),
+        class_observation: validations.class_observation(),
         class_start_time: validations.class_start_time(),
         class_end_time: validations.class_end_time(),
       })
     ),
   });
 
-const [class_name, class_nameProps] = defineField("class_name", vuetifyConfig);
-const [class_date] = defineField("class_date");
+const [class_status, class_statusProps] = defineField(
+  "class_status",
+  vuetifyConfig
+);
+const [class_observation, class_observationProps] = defineField(
+  "class_observation",
+  vuetifyConfig
+);
 
 defineField("class_start_time");
 defineField("class_end_time");
 
-const class_start_time = computed(
-  () => `${startHour.value}:${startMinute.value}`
-);
-const class_end_time = computed(() => `${endHour.value}:${endMinute.value}`);
+const class_start_time = computed(() => {
+  return startHour.value && startMinute.value
+    ? `${startHour.value}:${startMinute.value}`
+    : null;
+});
+
+const class_end_time = computed(() => {
+  return endHour.value && endMinute.value
+    ? `${endHour.value}:${endMinute.value}`
+    : null;
+});
 
 watch(class_start_time, (val) => {
   setFieldValue("class_start_time", val);
@@ -147,29 +168,29 @@ watch(
     if (value) {
       if (props.editItem) {
         setValues({
-          class_name: props.editItem.name,
-          class_date: props.editItem.date,
-          class_start_time: props.editItem.start_time,
-          class_end_time: props.editItem.end_time,
+          class_status: props.editItem.status,
+          class_start_time: props.editItem.check_in,
+          class_end_time: props.editItem.check_out,
+          class_observation: props.editItem.observation,
         });
 
-        if (props.editItem.start_time) {
-          const [h, m] = props.editItem.start_time.split(":");
+        if (props.editItem.check_in) {
+          const [h, m] = props.editItem.check_in.split(":");
           startHour.value = h;
           startMinute.value = m;
         }
 
-        if (props.editItem.end_time) {
-          const [h, m] = props.editItem.end_time.split(":");
+        if (props.editItem.check_out) {
+          const [h, m] = props.editItem.check_out.split(":");
           endHour.value = h;
           endMinute.value = m;
         }
       } else {
         // Valores por defecto para crear
-        startHour.value = "09";
-        startMinute.value = "00";
-        endHour.value = "14";
-        endMinute.value = "00";
+        startHour.value = "";
+        startMinute.value = "";
+        endHour.value = "";
+        endMinute.value = "";
       }
     } else {
       resetForm();
@@ -185,10 +206,10 @@ const close = () => emit("update:modelValue", false);
 const save = () => {
   if (meta.value.valid) {
     emit("submit", {
-      name: values.class_name,
-      date: dayjs(values.class_date).format("YYYY-MM-DD"),
-      start_time: values.class_start_time,
-      end_time: values.class_end_time,
+      status: values.class_status,
+      check_in: values.class_start_time,
+      check_out: values.class_end_time,
+      observations: values.class_observation,
     });
   }
 };

@@ -46,9 +46,14 @@
               </v-icon> -->
               <span
                 class="text-h6 font-weight-medium"
-                :style="
-                  dialogData?.type === 'success' ? 'color: green' : 'color: red'
-                "
+                :style="{
+                  color:
+                    dialogData?.attendance?.status === 'LATE'
+                      ? 'orange'
+                      : dialogData?.type === 'success'
+                      ? 'green'
+                      : 'red',
+                }"
               >
                 {{ dialogData?.message }}
               </span>

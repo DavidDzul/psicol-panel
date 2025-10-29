@@ -8,6 +8,8 @@
         @edit="openUpdateDialog"
         @assign="openAssignDialog"
         @delete="removeDataDialog"
+        @report="getReport"
+        @sheet="getReportSheet"
       />
       <ClassAssignUserModa
         v-model="assignDialog"
@@ -21,7 +23,7 @@
     </v-col>
   </v-row>
 
-  <ClassUpdateDialog
+  <ClassUserUpdateDialog
     v-model="updateDialog"
     :edit-item="editItem"
     @submit="onAttendanceUpdate"
@@ -36,7 +38,7 @@ import { storeToRefs } from "pinia";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ClassUsersTable from "@/components/classes/ClassUsersTable.vue";
 import ClassAssignUserModa from "@/components/classes/ClassAssignUserModa.vue";
-import ClassUpdateDialog from "@/components/classes/ClassUpdateDialog.vue";
+import ClassUserUpdateDialog from "@/components/classes/ClassUserUpdateDialog.vue";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 
 import { useClassDetailsPageStore } from "@/stores/views/classDetailsPage";
@@ -58,6 +60,8 @@ const {
   openUpdateDialog,
   onAttendanceUpdate,
   onRemoveAttendance,
+  getReport,
+  getReportSheet,
 } = useClassDetailsPageStore();
 
 const confirmationDialog = ref();
