@@ -74,7 +74,7 @@
                 {{
                   dialogData.attendance.status === "LATE"
                     ? "Retardo"
-                    : "Presente"
+                    : "A tiempo"
                 }}
               </v-chip>
 
