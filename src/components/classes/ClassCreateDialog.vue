@@ -2,7 +2,7 @@
   <v-dialog
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
-    max-width="700px"
+    max-width="760px"
     @keydown.stop.esc="close"
     :persistent="true"
   >
@@ -18,7 +18,6 @@
 
         <v-card-text>
           <v-row>
-            <!-- Nombre -->
             <v-col cols="12" md="12">
               <v-text-field
                 v-model="class_name"
@@ -27,23 +26,15 @@
               ></v-text-field>
             </v-col>
 
-            <!-- Fecha -->
             <v-col cols="12" md="12">
               <DatePickerInput v-model="class_date" :input-text="'Fecha'" />
             </v-col>
 
             <v-col cols="12">
-              <p
-                style="
-                  padding-bottom: -10px;
-                  padding-top: 0px;
-                  font-weight: 600;
-                "
+              <span class="font-weight-bold"
+                >Seleccione la hora de inicio:</span
               >
-                Hora de inicio:
-              </p>
             </v-col>
-            <!-- Hora de inicio -->
             <v-col cols="6" md="6">
               <v-select
                 v-model="startHour"
@@ -60,13 +51,10 @@
             </v-col>
 
             <v-col cols="12">
-              <p
-                style="padding-bottom: 0px; padding-top: 0px; font-weight: 600"
-              >
-                Hora de término:
-              </p>
+              <span class="font-weight-bold">
+                Seleccione la hora de término:
+              </span>
             </v-col>
-            <!-- Hora fin -->
             <v-col cols="6" md="6">
               <v-select
                 v-model="endHour"
@@ -80,6 +68,30 @@
                 :items="minutes"
                 label="Minutos"
               ></v-select>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-select
+                clearable
+                :items="adminCampus"
+                v-model="campus"
+                item-title="text"
+                item-value="value"
+                label="Sede"
+                v-bind="campusProps"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-select
+                clearable
+                :items="filteredGenerations"
+                v-model="generation_id"
+                item-title="generation_name"
+                item-value="id"
+                label="Generación"
+                v-bind="generation_idProps"
+              />
             </v-col>
           </v-row>
         </v-card-text>
@@ -112,7 +124,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
 import { PublicPathState, useForm } from "vee-validate";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, nextTick } from "vue"; // <-- Importar nextTick
 import DatePickerInput from "@/components/shared/DatePickerInput.vue";
 import * as yup from "yup";
 import * as validations from "@/validations";
@@ -121,6 +133,11 @@ import dayjs from "dayjs";
 const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
+  adminCampus: { type: Array, default: () => [] },
+  generations: {
+    type: Array<{ id: number; campus: string }>,
+    default: () => [],
+  },
 });
 
 const vuetifyConfig = (state: PublicPathState) => ({
@@ -132,24 +149,39 @@ const vuetifyConfig = (state: PublicPathState) => ({
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const minutes = ["00", "15", "30", "45"];
 
-const startHour = ref(null);
-const startMinute = ref(null);
-const endHour = ref(null);
-const endMinute = ref(null);
+const startHour = ref("09");
+const startMinute = ref("00");
+const endHour = ref("14");
+const endMinute = ref("00");
+
+const filteredGenerations = computed(() =>
+  props.generations.filter((g) => g.campus === campus.value)
+);
 
 const { defineField, meta, values, resetForm, setFieldValue } = useForm({
   validationSchema: toTypedSchema(
     yup.object({
+      campus: validations.campus(),
       class_name: validations.class_name(),
       class_date: validations.class_date(),
       class_start_time: validations.class_start_time(),
       class_end_time: validations.class_end_time(),
+      generation_id: validations.generation_id(),
     })
   ),
+  initialValues: {
+    class_start_time: "09:00",
+    class_end_time: "14:00",
+  },
 });
 
+const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [class_name, class_nameProps] = defineField("class_name", vuetifyConfig);
-const [class_date, class_dateProps] = defineField("class_date");
+const [class_date] = defineField("class_date");
+const [generation_id, generation_idProps] = defineField(
+  "generation_id",
+  vuetifyConfig
+);
 
 defineField("class_start_time");
 defineField("class_end_time");
@@ -175,13 +207,22 @@ const emit = defineEmits<{
 watch(
   () => props.modelValue,
   (value) => {
-    startHour.value = "09";
-    startMinute.value = "00";
-    endHour.value = "14";
-    endMinute.value = "00";
-    if (!value) resetForm();
+    if (value) {
+      startHour.value = "09";
+      startMinute.value = "00";
+      endHour.value = "14";
+      endMinute.value = "00";
+
+      nextTick(() => {
+        setFieldValue("class_start_time", class_start_time.value);
+        setFieldValue("class_end_time", class_end_time.value);
+      });
+    } else {
+      resetForm();
+    }
   }
 );
+// ----------------------------------------------------------------------
 
 const close = () => {
   emit("update:modelValue", false);
@@ -190,6 +231,7 @@ const close = () => {
 const save = () => {
   if (meta.value.valid) {
     emit("submit", {
+      ...values,
       name: values.class_name,
       date: dayjs(values.class_date).format("YYYY-MM-DD"),
       start_time: values.class_start_time,

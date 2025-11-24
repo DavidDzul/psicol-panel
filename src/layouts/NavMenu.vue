@@ -89,8 +89,8 @@ const links = ref([
     group: true,
     key: "PS_GROUP_CONFIG",
     links: [
-      { text: "Generaciones", link: "/generaciones" },
-      { text: "Roles", link: "/roles" },
+      { text: "Generaciones", link: "/generaciones", key: "PS_GENERATIONS" },
+      // { text: "Roles", link: "/roles" key: "PS_ROLES" },
       { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
     ],
   },

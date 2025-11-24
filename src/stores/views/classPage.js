@@ -3,11 +3,15 @@ import { useClassStore } from "@/stores/api/classStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref } from "vue";
 import { useRoute, useRouter } from "vue-router"
+import { useAuthStore } from "@/stores/api/authStore";
+import { useGenerationsStore } from "@/stores/api/generationStore";
 
 export const useClassPageStore = defineStore("classPage", () => {
     const { setLoading } = useAppStore();
     const { classMap } = storeToRefs(useClassStore())
     const { fetchClasses, createClass, updateClass, deleteClass } = useClassStore()
+    const { filteredCampus } = storeToRefs(useAuthStore())
+    const { resGenerations } = storeToRefs(useGenerationsStore());
 
     const router = useRouter()
     const loading = ref(false)
@@ -45,6 +49,7 @@ export const useClassPageStore = defineStore("classPage", () => {
     };
 
     const classes = computed(() => [...classMap.value.values()])
+    const generations = computed(() => [...resGenerations.value.values()])
 
     const onCreateClass = async (form) => {
         loading.value = true
@@ -84,6 +89,8 @@ export const useClassPageStore = defineStore("classPage", () => {
         editClass,
         createDialog,
         updateDialog,
+        generations,
+        filteredCampus,
         onCreateClass,
         openCreateDialog,
         openUpdateDialog,

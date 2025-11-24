@@ -2,13 +2,37 @@ import { storeToRefs } from "pinia";
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/api/authStore";
 
+// 💡 FUNCIÓN DE MANEJO DE ERROR DE CARGA DE CHUNK (IMPLEMENTACIÓN)
+const catchReload = (importPromise) => {
+  return importPromise.catch((error) => {
+    const isChunkLoadError =
+      /Failed to fetch dynamically imported module|chunk load failed/i.test(error.message) ||
+      error.name === 'ChunkLoadError';
+
+    if (isChunkLoadError) {
+      console.warn("Versión antigua detectada. Forzando recarga controlada.");
+
+      // Retrasar la recarga y detener la navegación de Vue Router.
+      // 1. Mostrar un mensaje de consola
+      // 2. Usar setTimeout para garantizar que la pila de JS se limpie antes de recargar.
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 100);
+      return new Promise(() => { });
+    }
+
+    throw error;
+  });
+};
+
 const routes = [
   {
     path: "/auth",
     name: "AuthLayout",
-    component: () => import("@/layouts/AuthLayout.vue"),
+    component: () => catchReload(import("@/layouts/AuthLayout.vue")), // Aplicar aquí también
     redirect: "auth/login",
     beforeEnter: async (to, from, next) => {
+      // ... (Lógica de beforeEnter original)
       const { getProfile } = useAuthStore()
       const { loggedUser } = storeToRefs(useAuthStore())
       const token = localStorage.getItem("token")
@@ -22,101 +46,105 @@ const routes = [
       return next()
     },
     children: [
-      { path: "login", name: "Login", component: () => import("@/views/auth/LoginView.vue") },
+      {
+        path: "login",
+        name: "Login",
+        component: () => catchReload(import("@/views/auth/LoginView.vue"))
+      },
     ],
   },
   {
     path: "/",
     name: "home",
-    component: () => import("@/layouts/AdminLayout.vue"),
+    component: () => catchReload(import("@/layouts/AdminLayout.vue")), // Aplicar aquí
     meta: { requiresAuth: true },
     children: [
       {
         path: "/",
         name: "Inicio",
-        component: () => import("@/views/HomeView.vue"),
+        component: () => catchReload(import("@/views/HomeView.vue")), // Aplicar
       },
       {
         path: "/generaciones",
         name: "GenerationView",
-        component: () => import("@/views/generations/GenerationView.vue"),
+        component: () => catchReload(import("@/views/generations/GenerationView.vue")), // Aplicar
       },
       {
         path: "/roles",
         name: "RolesView",
-        component: () => import("@/views/roles/RolesView.vue"),
+        component: () => catchReload(import("@/views/roles/RolesView.vue")), // Aplicar
       },
       {
         path: "/becarios",
         name: "UsersView",
-        component: () => import("@/views/users/UsersView.vue"),
+        component: () => catchReload(import("@/views/users/UsersView.vue")), // Aplicar
       },
       {
         path: "/becarios/:id",
         name: "UserDetailsView",
-        component: () => import("@/views/users/UserDetailsView.vue"),
+        component: () => catchReload(import("@/views/users/UserDetailsView.vue")), // Aplicar
       },
       {
         path: "/egresados",
         name: "GraduatesView",
-        component: () => import("@/views/users/GraduatesView.vue"),
+        component: () => catchReload(import("@/views/users/GraduatesView.vue")), // Aplicar
       },
       {
         path: "/egresados/:id",
         name: "GraduateDetailsView",
-        component: () => import("@/views/users/GraduateDetailsView.vue"),
+        component: () => catchReload(import("@/views/users/GraduateDetailsView.vue")), // Aplicar
       },
       {
         path: "/empresas",
         name: "BusinessView",
-        component: () => import("@/views/users/BusinessView.vue"),
+        component: () => catchReload(import("@/views/users/BusinessView.vue")), // Aplicar
       },
       {
         path: "/empresas/:id",
         name: "BusinessDetailsView",
-        component: () => import("@/views/users/BusinessDetailsView.vue"),
+        component: () => catchReload(import("@/views/users/BusinessDetailsView.vue")), // Aplicar
       },
       {
         path: "/vacantes",
         name: "VacantPositionView",
-        component: () => import("@/views/vacantPosition/VacantPositionView.vue"),
+        component: () => catchReload(import("@/views/vacantPosition/VacantPositionView.vue")), // Aplicar
       },
       {
         path: "/vacantes/:id",
         name: "VacantDetailsView",
-        component: () => import("@/views/vacantPosition/VacantDetailsView.vue"),
+        component: () => catchReload(import("@/views/vacantPosition/VacantDetailsView.vue")), // Aplicar
       },
       {
         path: "/postulaciones",
         name: "JobApplicationsView",
-        component: () => import("@/views/jobApplications/JobApplicationsView.vue"),
+        component: () => catchReload(import("@/views/jobApplications/JobApplicationsView.vue")), // Aplicar
       },
       {
         path: "/datos",
         name: "DataView",
-        component: () => import("@/views/data/DataView.vue"),
+        component: () => catchReload(import("@/views/data/DataView.vue")), // Aplicar
       },
       {
         path: "/checador",
         name: "CreateAttendanceView",
-        component: () => import("@/views/attendance/CreateAttendanceView.vue"),
+        component: () => catchReload(import("@/views/attendance/CreateAttendanceView.vue")), // Aplicar
       },
       {
         path: "/clases",
         name: "ClassView",
-        component: () => import("@/views/classes/ClassView.vue"),
+        component: () => catchReload(import("@/views/classes/ClassView.vue")), // Aplicar
       },
       {
         path: "/clases/:id",
         name: "ClassDetailsView",
-        component: () => import("@/views/classes/ClassDetailsView.vue"),
+        component: () => catchReload(import("@/views/classes/ClassDetailsView.vue")), // Aplicar
       },
     ],
   },
   {
     path: "/404",
     name: "NotFound",
-    component: () => import("@/views/NotFound.vue"),
+    component: () => catchReload(import("@/views/NotFound.vue")), // Aplicar
   },
   {
     path: "/:catchAll(.*)",
@@ -128,7 +156,6 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });
-
 // Guard global para manejar autenticación
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();

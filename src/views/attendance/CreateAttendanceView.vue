@@ -170,7 +170,7 @@ async function startScanner() {
             dialogData.value = null;
             await html5QrCode?.resume();
             isProcessing = false;
-          }, 3000);
+          }, 6000);
         }
       },
       () => {}

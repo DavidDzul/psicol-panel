@@ -60,7 +60,7 @@ export const useClassStore = defineStore("classStore", () => {
                 });
 
                 classMap.value.set(param.data.data.id, param.data.data)
-                return param.data.res
+                return param.data
             }
         } catch (error) {
             console.error(error);
@@ -84,7 +84,7 @@ export const useClassStore = defineStore("classStore", () => {
                 });
 
                 classMap.value.set(param.data.data.id, param.data.data)
-                return param.data.res
+                return param.data
             }
         } catch (error) {
             console.error(error);
@@ -107,7 +107,7 @@ export const useClassStore = defineStore("classStore", () => {
                     status: "success",
                 });
                 classMap.value.delete(id)
-                return param.data.res
+                return param.data
             }
         } catch (error) {
             console.error(error);
@@ -147,7 +147,7 @@ export const useClassStore = defineStore("classStore", () => {
                 const updatedMap = new Map(param.data.data.map(m => [m.id, m]));
                 attendanceMap.value = updatedMap;
 
-                return param.data.res;
+                return param.data;
             }
         } catch (error) {
             console.error(error);
@@ -171,7 +171,7 @@ export const useClassStore = defineStore("classStore", () => {
                 });
 
                 attendanceMap.value.set(param.data.data.id, param.data.data)
-                return param.data.res
+                return param.data
             }
         } catch (error) {
             console.error(error);
@@ -194,7 +194,7 @@ export const useClassStore = defineStore("classStore", () => {
                     status: "success",
                 });
                 attendanceMap.value.delete(id)
-                return param.data.res
+                return param.data
             }
         } catch (error) {
             console.error(error);
