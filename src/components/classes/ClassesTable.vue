@@ -62,6 +62,9 @@
     <template #[`item.campus`]="{ item }">
       {{ campusMap.get(item.campus).text }}
     </template>
+    <template #[`item.date`]="{ item }">
+      {{ dayjs(item.date).format("DD-MM-YYYY") }}
+    </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
         <v-tooltip text="Visualizar" location="bottom">
@@ -151,6 +154,14 @@ const headers = computed(() => [
   {
     title: "H. Fin",
     key: "end_time",
+  },
+  // {
+  //   title: "Sede",
+  //   key: "campus",
+  // },
+  {
+    title: "Generación",
+    key: "generation_name",
   },
   {
     title: "",

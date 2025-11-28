@@ -3,7 +3,9 @@
     <v-col cols="12" md="6" v-if="classData">
       <h3 class="font-weight-bold mb-1">{{ classData.name }}</h3>
 
-      <p class="text-body-2 text-grey-darken-1 mb-2">📅 {{ classData.date }}</p>
+      <p class="text-body-2 text-grey-darken-1 mb-2">
+        📅 {{ dayjs(classData.date).format("DD-MM-YYYY") }}
+      </p>
 
       <h3 class="text-subtitle-1 text-primary font-weight-medium">
         Asistencias generadas
@@ -117,6 +119,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { attendanceStatusMap } from "@/constants";
+import dayjs from "dayjs";
 
 const props = defineProps({
   classData: { type: Object, default: () => {} },

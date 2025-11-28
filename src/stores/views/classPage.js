@@ -9,7 +9,7 @@ import { useGenerationsStore } from "@/stores/api/generationStore";
 export const useClassPageStore = defineStore("classPage", () => {
     const { setLoading } = useAppStore();
     const { classMap } = storeToRefs(useClassStore())
-    const { fetchClasses, createClass, updateClass, deleteClass } = useClassStore()
+    const { fetchClasses, createClass, updateClass, deleteClass, reportByPeriod } = useClassStore()
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
 
@@ -30,6 +30,7 @@ export const useClassPageStore = defineStore("classPage", () => {
     const createDialog = ref(false)
     const editClass = ref(undefined)
     const updateDialog = ref(false)
+    const reportModal = ref(false)
 
     onBeforeMount(async () => {
         loading.value = true
@@ -82,6 +83,31 @@ export const useClassPageStore = defineStore("classPage", () => {
         router.push("clases/" + id);
     };
 
+    const openReportModal = () => {
+        reportModal.value = true
+    };
+
+    const createReport = async (form) => {
+        loading.value = true
+        if (form) {
+            const res = await reportByPeriod(form);
+            if (res) {
+                reportModal.value = false
+            }
+        }
+    }
+
+    const classTable = computed(() => {
+        return classes.value.map(c => {
+            const gen = resGenerations.value.get(c.generation_id);
+
+            return {
+                ...c,
+                generation_name: gen ? gen.generation_name : "—"
+            };
+        });
+    });
+
     return {
         links,
         loading,
@@ -91,11 +117,16 @@ export const useClassPageStore = defineStore("classPage", () => {
         updateDialog,
         generations,
         filteredCampus,
+        reportModal,
+        classTable,
         onCreateClass,
         openCreateDialog,
         openUpdateDialog,
         onUpdateClass,
         onRemoveClass,
-        openClassDetail
+        openClassDetail,
+        createReport,
+        openReportModal
+
     };
 });

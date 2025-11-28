@@ -249,7 +249,20 @@ export const useClassStore = defineStore("classStore", () => {
         }
     };
 
+    const reportByPeriod = async (form) => {
+        try {
+            const res = await axios.post(`api/admin/class/report`, form, {
+                responseType: "blob",
+                headers: { Accept: "application/pdf" },
+            });
 
+            const fileURL = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+
+            window.open(fileURL, "_blank");
+        } catch (error) {
+            console.error("Error al generar el reporte:", error);
+        }
+    };
 
 
     return {
@@ -268,6 +281,7 @@ export const useClassStore = defineStore("classStore", () => {
         updateAttendance,
         deleteAttendance,
         generateReportPDF,
-        generateReportSheet
+        generateReportSheet,
+        reportByPeriod
     };
 });

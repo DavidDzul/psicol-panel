@@ -199,6 +199,18 @@ watch(
   { immediate: true }
 );
 
+watch(class_status, (val) => {
+  if (val === "ABSENT" || val === "JUSTIFIED_ABSENCE") {
+    startHour.value = "00";
+    startMinute.value = "00";
+    endHour.value = "00";
+    endMinute.value = "00";
+
+    setFieldValue("class_start_time", "00:00");
+    setFieldValue("class_end_time", "00:00");
+  }
+});
+
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const close = () => emit("update:modelValue", false);

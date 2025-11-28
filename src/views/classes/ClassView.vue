@@ -2,13 +2,13 @@
   <BreadCrumbs :items="links" />
   <v-row>
     <v-col cols="12" class="d-flex justify-end align-center gap-2">
-      <v-btn class="mx-3" color="grey" @click="reportModal = !reportModal">
+      <v-btn class="mx-3" color="grey" @click="openReportModal">
         REPORTE POR PERIODO
       </v-btn>
     </v-col>
     <v-col cols="12">
       <ClassesTable
-        :classes="classes"
+        :classes="classTable"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @delete="removeDialog"
@@ -40,6 +40,7 @@
     v-model="reportModal"
     :admin-campus="filteredCampus"
     :generations="generations"
+    @submit="createReport"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
@@ -55,8 +56,6 @@ import ClassCreateDialog from "@/components/classes/ClassCreateDialog.vue";
 import ClassUpdateDialog from "@/components/classes/ClassUpdateDialog.vue";
 import ReportByGenerationModal from "@/components/classes/ReportByGenerationModal.vue";
 
-const reportModal = ref(false);
-
 const {
   links,
   loading,
@@ -66,6 +65,8 @@ const {
   editClass,
   generations,
   filteredCampus,
+  reportModal,
+  classTable,
 } = storeToRefs(useClassPageStore());
 const {
   openCreateDialog,
@@ -74,6 +75,8 @@ const {
   onUpdateClass,
   onRemoveClass,
   openClassDetail,
+  createReport,
+  openReportModal,
 } = useClassPageStore();
 
 const confirmationDialog = ref();
