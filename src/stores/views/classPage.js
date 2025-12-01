@@ -32,11 +32,11 @@ export const useClassPageStore = defineStore("classPage", () => {
     const updateDialog = ref(false)
     const reportModal = ref(false)
 
-    onBeforeMount(async () => {
-        loading.value = true
-        await fetchClasses();
-        loading.value = false
-    });
+    // onBeforeMount(async () => {
+    //     loading.value = true
+    //     await fetchClasses();
+    //     loading.value = false
+    // });
 
     const openCreateDialog = () => {
         createDialog.value = true
@@ -108,6 +108,16 @@ export const useClassPageStore = defineStore("classPage", () => {
         });
     });
 
+    const searchData = async (form) => {
+        loading.value = true
+        if (form) {
+            const res = await fetchClasses(form);
+            if (res) {
+                reportModal.value = false
+            }
+        }
+    }
+
     return {
         links,
         loading,
@@ -126,7 +136,7 @@ export const useClassPageStore = defineStore("classPage", () => {
         onRemoveClass,
         openClassDetail,
         createReport,
-        openReportModal
-
+        openReportModal,
+        searchData
     };
 });

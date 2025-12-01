@@ -19,36 +19,6 @@
           label="Buscar"
           :clearable="true"
         ></v-text-field>
-        <v-menu min-width="300px" :close-on-content-click="false">
-          <template v-slot:activator="{ props }">
-            <v-tooltip location="top">
-              <template v-slot:activator="{ props: tooltip }">
-                <v-btn
-                  color="warning"
-                  v-bind="mergeProps(props, tooltip)"
-                  variant="text"
-                  icon="mdi-filter"
-                />
-              </template>
-              <span>Filtros</span>
-            </v-tooltip>
-          </template>
-
-          <v-card>
-            <v-card-title> <small>Seleccionar filtros</small> </v-card-title>
-            <v-divider></v-divider>
-            <!-- <v-list style="max-height: 300px; overflow-y: auto">
-                    <v-list-item v-for="layer in layers" :key="layer.id" @click="toggleLayer(layer.id)">
-                      <template v-slot:prepend>
-                        <v-checkbox v-model="selectedLayers" :value="layer.id" hide-details />
-                      </template>
-                      <v-list-item-title>{{ layer.name }}</v-list-item-title>
-                    </v-list-item>
-                  </v-list> -->
-          </v-card>
-        </v-menu>
-
-        <v-spacer></v-spacer>
 
         <v-btn prepend-icon="mdi-plus" color="primary" @click="$emit('create')">
           Agregar
@@ -159,10 +129,10 @@ const headers = computed(() => [
   //   title: "Sede",
   //   key: "campus",
   // },
-  {
-    title: "Generación",
-    key: "generation_name",
-  },
+  // {
+  //   title: "Generación",
+  //   key: "generation_name",
+  // },
   {
     title: "",
     key: "actions",

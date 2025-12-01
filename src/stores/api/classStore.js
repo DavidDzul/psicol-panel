@@ -12,9 +12,10 @@ export const useClassStore = defineStore("classStore", () => {
     const classDetail = ref(null)
     const usersByFilters = ref(new Map())
 
-    const fetchClasses = async () => {
+    const fetchClasses = async (form) => {
         try {
             const res = await axios.get("api/admin/class", {
+                params: form,
                 headers: { 'accept': 'application/json' }
             });
             classMap.value = new Map(res.data.data.map((m) => [m.id, m]))

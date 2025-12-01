@@ -1,11 +1,49 @@
 <template>
   <BreadCrumbs :items="links" />
   <v-row>
-    <v-col cols="12" class="d-flex justify-end align-center gap-2">
-      <v-btn class="mx-3" color="grey" @click="openReportModal">
-        REPORTE POR PERIODO
+    <v-col cols="12" class="pb-0">
+      <span style="color: gray">Buscar por:</span>
+    </v-col>
+    <v-col cols="12" md="4">
+      <v-select
+        clearable
+        :items="filteredCampus"
+        v-model="campus"
+        item-title="text"
+        item-value="value"
+        label="Sede"
+        density="compact"
+        prepend-icon="mdi-map-marker"
+      />
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-select
+        clearable
+        :items="filteredGenerations"
+        v-model="generation_id"
+        item-title="generation_name"
+        item-value="id"
+        label="Generación"
+        density="compact"
+        prepend-icon="mdi-account-group"
+      />
+    </v-col>
+    <v-col cols="12" md="2" class="d-flex align-center pt-md-0 pb-3">
+      <v-btn color="grey" block @click="search">
+        <v-icon>mdi-file-search</v-icon> BUSCAR
       </v-btn>
     </v-col>
+    <v-spacer></v-spacer>
+
+    <v-col cols="12" md="2" class="d-flex align-center pt-md-0 pb-3">
+      <v-btn color="warning" block @click="openReportModal">
+        <v-icon start>mdi-file-download</v-icon>
+        REPORTE
+      </v-btn>
+    </v-col>
+  </v-row>
+  <v-row>
     <v-col cols="12">
       <ClassesTable
         :classes="classTable"
@@ -46,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useClassPageStore } from "@/stores/views/classPage";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
@@ -77,9 +115,32 @@ const {
   openClassDetail,
   createReport,
   openReportModal,
+  searchData,
 } = useClassPageStore();
 
 const confirmationDialog = ref();
+const campus = ref(null);
+const generation_id = ref(null);
+
+const filteredGenerations = computed(() =>
+  generations.value.filter((g) => g.campus === campus.value)
+);
+
+watch(
+  filteredCampus,
+  (newCampusList) => {
+    if (newCampusList && newCampusList.length > 0) {
+      campus.value = newCampusList[0].value;
+    }
+  },
+  { immediate: true }
+);
+
+watch(campus, (newCampusValue, oldCampusValue) => {
+  if (newCampusValue !== oldCampusValue) {
+    generation_id.value = null;
+  }
+});
 
 const removeDialog = async (id) => {
   if (!id) return;
@@ -89,5 +150,12 @@ const removeDialog = async (id) => {
   });
   if (!response) return;
   await onRemoveClass(id);
+};
+
+const search = () => {
+  if (campus.value && generation_id.value) {
+    const form = { campus: campus.value, generation_id: generation_id.value };
+    searchData(form);
+  }
 };
 </script>
