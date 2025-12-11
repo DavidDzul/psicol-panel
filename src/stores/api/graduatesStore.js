@@ -95,11 +95,21 @@ export const useGraduateStore = defineStore("graduateStore", () => {
 
             const { id: graduateId, user_type } = updatedGraduate;
 
+
             if (user_type === "BEC_ACTIVE") {
-                resUsers.value.set(graduateId, updatedGraduate);
-                resGraduates.value.delete(graduateId);
+                // Verificar que resGraduates.value existe antes de usar .set()
+                if (resUsers.value) {
+                    resUsers.value.set(graduateId, updatedGraduate);
+                }
+                // Verificar que resUsers.value existe antes de usar .delete()
+                if (resGraduates.value) {
+                    resGraduates.value.delete(graduateId);
+                }
             } else {
-                resGraduates.value.set(graduateId, updatedGraduate);
+                // Verificar que resUsers.value existe antes de usar .set()
+                if (resGraduates.value) {
+                    resGraduates.value.set(graduateId, updatedGraduate);
+                }
             }
 
             if (resGraduateDetails.value?.id === id) {

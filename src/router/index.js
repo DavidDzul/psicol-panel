@@ -139,6 +139,11 @@ const routes = [
         name: "ClassDetailsView",
         component: () => catchReload(import("@/views/classes/ClassDetailsView.vue")), // Aplicar
       },
+      {
+        path: "/avisos",
+        name: "NoticesView",
+        component: () => catchReload(import("@/views/notices/NoticesView.vue")), // Aplicar
+      },
     ],
   },
   {

@@ -74,6 +74,7 @@
             color="primary"
             prepend-icon="mdi-file-chart"
             :disabled="!isValid"
+            :loading="loading"
             @click="submit"
           >
             Generar reporte
@@ -91,6 +92,7 @@ const props = defineProps({
   modelValue: Boolean,
   adminCampus: Array,
   generations: Array,
+  loading: Boolean,
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);

@@ -96,10 +96,19 @@ export const useUserStore = defineStore("userStore", () => {
             const { id: userId, user_type } = updatedUser;
 
             if (user_type === "BEC_INACTIVE") {
-                resGraduates.value.set(userId, updatedUser);
-                resUsers.value.delete(userId);
+                // 💡 Verificar que resGraduates.value existe antes de usar .set()
+                if (resGraduates.value) {
+                    resGraduates.value.set(userId, updatedUser);
+                }
+                // 💡 Verificar que resUsers.value existe antes de usar .delete()
+                if (resUsers.value) {
+                    resUsers.value.delete(userId);
+                }
             } else {
-                resUsers.value.set(userId, updatedUser);
+                // 💡 Verificar que resUsers.value existe antes de usar .set()
+                if (resUsers.value) {
+                    resUsers.value.set(userId, updatedUser);
+                }
             }
 
             if (resUserDetails.value?.id === id) {

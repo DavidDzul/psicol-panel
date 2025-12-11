@@ -135,16 +135,18 @@ export const useAuthStore = defineStore("authStore", () => {
 
     const userInitials = computed(() => `${userProfile?.value?.first_name.charAt(0) || ""}${userProfile?.value?.last_name.charAt(0) || ""}`)
     const fullName = computed(() => `${userProfile?.value?.first_name || ""} ${userProfile?.value?.last_name || ""}`)
+
     const isRoot = computed(() => {
-        const roles = userProfile.value?.roles || [];
-        return roles.some(r => r.name === 'ROOT' || r.name === 'ROOT_JOB');
+        return userProfile.value?.roles.some(r => r.name === 'ROOT');
     });
+
     const filteredCampus = computed(() => {
-        if (isRoot.value) {
+        if (userProfile.value?.roles.some(r => r.name === 'ROOT' || r.name === 'ROOT_JOB')) {
             return campusArray;
         }
         return campusArray.filter(c => c.value === userProfile.value?.campus);
     });
+
     const readUsers = computed(() => !!permissions.value.find((map) => map === "PS_READ_USERS"))
     const createUsers = computed(() => !!permissions.value.find((map) => map === "PS_CREATE_USERS"))
     const editUsers = computed(() => !!permissions.value.find((map) => map === "PS_EDIT_USERS"))
@@ -170,6 +172,7 @@ export const useAuthStore = defineStore("authStore", () => {
         updateUserProfile,
         getPermissions,
         token,
+        isRoot,
         fullName,
         loggedUser,
         userProfile,

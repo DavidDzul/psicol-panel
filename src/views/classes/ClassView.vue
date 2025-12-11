@@ -47,6 +47,7 @@
     <v-col cols="12">
       <ClassesTable
         :classes="classTable"
+        :loading="loading"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
         @delete="removeDialog"
@@ -78,6 +79,7 @@
     v-model="reportModal"
     :admin-campus="filteredCampus"
     :generations="generations"
+    :loading="loading"
     @submit="createReport"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
@@ -97,7 +99,6 @@ import ReportByGenerationModal from "@/components/classes/ReportByGenerationModa
 const {
   links,
   loading,
-  classes,
   createDialog,
   updateDialog,
   editClass,

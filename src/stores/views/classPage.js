@@ -95,6 +95,7 @@ export const useClassPageStore = defineStore("classPage", () => {
                 reportModal.value = false
             }
         }
+        loading.value = false
     }
 
     const classTable = computed(() => {
@@ -111,11 +112,9 @@ export const useClassPageStore = defineStore("classPage", () => {
     const searchData = async (form) => {
         loading.value = true
         if (form) {
-            const res = await fetchClasses(form);
-            if (res) {
-                reportModal.value = false
-            }
+            await fetchClasses(form);
         }
+        loading.value = false
     }
 
     return {

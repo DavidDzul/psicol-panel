@@ -261,6 +261,10 @@ export const useClassStore = defineStore("classStore", () => {
 
             window.open(fileURL, "_blank");
         } catch (error) {
+            showAlert({
+                title: "No se encontraron datos para este reporte, intente nuevamente.",
+                status: "error",
+            });
             console.error("Error al generar el reporte:", error);
         }
     };
