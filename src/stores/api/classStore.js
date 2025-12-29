@@ -250,9 +250,9 @@ export const useClassStore = defineStore("classStore", () => {
         }
     };
 
-    const reportByPeriod = async (form) => {
+    const reportSemesterPDF = async (form) => {
         try {
-            const res = await axios.post(`api/admin/class/report`, form, {
+            const res = await axios.post(`api/admin/class/reportPDF`, form, {
                 responseType: "blob",
                 headers: { Accept: "application/pdf" },
             });
@@ -263,6 +263,41 @@ export const useClassStore = defineStore("classStore", () => {
         } catch (error) {
             showAlert({
                 title: "No se encontraron datos para este reporte, intente nuevamente.",
+                status: "error",
+            });
+            console.error("Error al generar el reporte:", error);
+        }
+    };
+
+    const reportSemesterExcel = async (form) => {
+        try {
+            const res = await axios.post(`/api/admin/class/reportExcel`, form, {
+                responseType: "blob",
+                headers: {
+                    Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                },
+            });
+
+            // Crear URL temporal para descarga
+            const fileURL = window.URL.createObjectURL(
+                new Blob([res.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                })
+            );
+
+            // Crear link temporal y hacer click
+            const link = document.createElement("a");
+            link.href = fileURL;
+            link.setAttribute("download", `Asistencias_Clase.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+        } catch (error) {
+            // Tip: Cuando usas responseType: 'blob', el error también viene como blob.
+            // Si quieres leer el mensaje de error de Laravel, tendrías que procesarlo.
+            showAlert({
+                title: "No se pudo generar el reporte. Verifique que existan asistencias en el periodo seleccionado.",
                 status: "error",
             });
             console.error("Error al generar el reporte:", error);
@@ -287,6 +322,7 @@ export const useClassStore = defineStore("classStore", () => {
         deleteAttendance,
         generateReportPDF,
         generateReportSheet,
-        reportByPeriod
+        reportSemesterPDF,
+        reportSemesterExcel
     };
 });

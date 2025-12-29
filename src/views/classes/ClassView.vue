@@ -75,7 +75,7 @@
     :user-campus="filteredCampus"
     :loading="loadingCreate"
   /> -->
-  <ReportByGenerationModal
+  <ReportSemesterModal
     v-model="reportModal"
     :admin-campus="filteredCampus"
     :generations="generations"
@@ -94,7 +94,7 @@ import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ClassesTable from "@/components/classes/ClassesTable.vue";
 import ClassCreateDialog from "@/components/classes/ClassCreateDialog.vue";
 import ClassUpdateDialog from "@/components/classes/ClassUpdateDialog.vue";
-import ReportByGenerationModal from "@/components/classes/ReportByGenerationModal.vue";
+import ReportSemesterModal from "@/components/classes/ReportSemesterModal.vue";
 
 const {
   links,

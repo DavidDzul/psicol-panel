@@ -66,13 +66,21 @@
               label="Semestre"
             />
           </v-col>
+
+          <v-col cols="12">
+            <v-label class="mb-2 d-block">Formato del reporte:</v-label>
+            <v-radio-group v-model="format" inline hide-details>
+              <v-radio label="PDF" :value="1" color="red"></v-radio>
+              <v-radio label="Excel" :value="2" color="green"></v-radio>
+            </v-radio-group>
+          </v-col>
         </v-row>
 
         <!-- Botón -->
         <div class="text-center mt-6 mb-2">
           <v-btn
-            color="primary"
-            prepend-icon="mdi-file-chart"
+            :color="format == 1 ? 'error' : 'success'"
+            :prepend-icon="format == 1 ? 'mdi-file-pdf-box' : 'mdi-file-excel'"
             :disabled="!isValid"
             :loading="loading"
             @click="submit"
@@ -101,6 +109,7 @@ const campus = ref(null);
 const generation_id = ref(null);
 const year = ref(null);
 const semester = ref(null);
+const format = ref(1);
 
 const filteredGenerations = computed(() =>
   props.generations.filter((g) => g.campus === campus.value)
@@ -117,7 +126,13 @@ const selectSemester = [
 ];
 
 const isValid = computed(() => {
-  return campus.value && generation_id.value && year.value && semester.value;
+  return (
+    campus.value &&
+    generation_id.value &&
+    year.value &&
+    semester.value &&
+    format.value
+  );
 });
 
 const close = () => emit("update:modelValue", false);
@@ -128,6 +143,7 @@ const submit = () => {
     generation_id: generation_id.value,
     year: year.value,
     semester: semester.value,
+    format: format.value,
   });
 };
 </script>

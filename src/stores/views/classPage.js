@@ -9,7 +9,7 @@ import { useGenerationsStore } from "@/stores/api/generationStore";
 export const useClassPageStore = defineStore("classPage", () => {
     const { setLoading } = useAppStore();
     const { classMap } = storeToRefs(useClassStore())
-    const { fetchClasses, createClass, updateClass, deleteClass, reportByPeriod } = useClassStore()
+    const { fetchClasses, createClass, updateClass, deleteClass, reportSemesterPDF, reportSemesterExcel } = useClassStore()
     const { filteredCampus } = storeToRefs(useAuthStore())
     const { resGenerations } = storeToRefs(useGenerationsStore());
 
@@ -88,15 +88,27 @@ export const useClassPageStore = defineStore("classPage", () => {
     };
 
     const createReport = async (form) => {
-        loading.value = true
-        if (form) {
-            const res = await reportByPeriod(form);
-            if (res) {
-                reportModal.value = false
+        if (!form) return;
+
+        loading.value = true;
+        try {
+            let success = false;
+
+            if (form.format === 1) {
+                success = await reportSemesterPDF(form);
+            } else if (form.format === 2) {
+                success = await reportSemesterExcel(form);
             }
+
+            if (success) {
+                reportModal.value = false;
+            }
+        } catch (error) {
+            console.error("Error en la petición:", error);
+        } finally {
+            loading.value = false;
         }
-        loading.value = false
-    }
+    };
 
     const classTable = computed(() => {
         return classes.value.map(c => {

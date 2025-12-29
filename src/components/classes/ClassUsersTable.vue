@@ -31,7 +31,7 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-btn color="warning" @click="assignItem"> Asignar usuarios </v-btn>
+      <!-- <v-btn color="warning" @click="assignItem"> Asignar usuarios </v-btn> -->
     </v-col>
   </v-row>
 
