@@ -8,7 +8,6 @@ import { useGraduateStore } from "@/stores/api/graduatesStore";
 export const useUserStore = defineStore("userStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
-    const { resGraduates } = storeToRefs(useGraduateStore())
 
     const resUsers = ref(new Map())
     const resUserDetails = ref(null)
@@ -95,20 +94,20 @@ export const useUserStore = defineStore("userStore", () => {
 
             const { id: userId, user_type } = updatedUser;
 
+            const graduateStore = useGraduateStore();
+
             if (user_type === "BEC_INACTIVE") {
-                // 💡 Verificar que resGraduates.value existe antes de usar .set()
-                if (resGraduates.value) {
-                    resGraduates.value.set(userId, updatedUser);
-                }
-                // 💡 Verificar que resUsers.value existe antes de usar .delete()
-                if (resUsers.value) {
-                    resUsers.value.delete(userId);
-                }
+                const newGradsMap = new Map(graduateStore.resGraduates);
+                newGradsMap.set(userId, updatedUser);
+                graduateStore.resGraduates = newGradsMap;
+
+                const newUsersMap = new Map(resUsers.value);
+                newUsersMap.delete(userId);
+                resUsers.value = newUsersMap;
             } else {
-                // 💡 Verificar que resUsers.value existe antes de usar .set()
-                if (resUsers.value) {
-                    resUsers.value.set(userId, updatedUser);
-                }
+                const newUsersMap = new Map(resUsers.value);
+                newUsersMap.set(userId, updatedUser);
+                resUsers.value = newUsersMap;
             }
 
             if (resUserDetails.value?.id === id) {
@@ -117,14 +116,9 @@ export const useUserStore = defineStore("userStore", () => {
 
             return response.data.res;
         } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                "Error de red, intenta más tarde.";
-
-            showAlert({
-                title: errorMessage,
-                status: "error",
-            });
-
+            console.error("Error en updateUser:", error);
+            const errorMessage = error.response?.data?.message || "Error de red, intenta más tarde.";
+            showAlert({ title: errorMessage, status: "error" });
             throw error;
         }
     };

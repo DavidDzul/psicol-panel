@@ -1,6 +1,20 @@
+// @font-face {
+//   font-family: "RoobertPRO";
+//   src: url("@/assets/fonts/RoobertPRO-Regular.ttf") format("truetype");
+//   font-weight: normal;
+//   font-style: normal;
+//   font-display: swap;
+// }
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+
 html {
   overflow-y: auto;
   background-color: #f1f5f8;
+
+  font-family: "Geist", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .full-width {

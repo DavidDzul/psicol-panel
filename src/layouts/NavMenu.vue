@@ -90,7 +90,7 @@ const links = ref([
     key: "PS_GROUP_CONFIG",
     links: [
       { text: "Generaciones", link: "/generaciones", key: "PS_GENERATIONS" },
-      // { text: "Roles", link: "/roles" key: "PS_ROLES" },
+      { text: "Roles", link: "/roles", key: "PS_ROLES" },
       { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
       { text: "Avisos", link: "/avisos", key: "PS_NOTICES" },
     ],

@@ -107,8 +107,8 @@ export const lineBusiness = [
 ]
 
 export const becTypeArray = [
-    { value: "BEC_ACTIVE", text: "Becario" },
-    { value: "BEC_INACTIVE", text: "Egresado" },
+    { value: "BEC_ACTIVE", text: "Becario/a" },
+    { value: "BEC_INACTIVE", text: "Egresado/a" },
 ]
 
 export const becTypeMap = new Map([
@@ -116,14 +116,14 @@ export const becTypeMap = new Map([
         'BEC_ACTIVE',
         {
             value: 'BEC_ACTIVE',
-            text: "Becario",
+            text: "Becario/a",
         },
     ],
     [
         'BEC_INACTIVE',
         {
             value: 'BEC_INACTIVE',
-            text: "Egresado",
+            text: "Egresado/a",
         },
     ],
 ])

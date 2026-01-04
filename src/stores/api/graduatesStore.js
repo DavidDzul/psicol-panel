@@ -8,7 +8,6 @@ import { useUserStore } from "@/stores/api/usersStore";
 export const useGraduateStore = defineStore("graduateStore", () => {
     const router = useRouter();
     const { showAlert } = useAlertStore()
-    const { resUsers } = storeToRefs(useUserStore())
 
     const resGraduates = ref(new Map())
     const resGraduateDetails = ref(null)
@@ -84,32 +83,26 @@ export const useGraduateStore = defineStore("graduateStore", () => {
             });
 
             const updatedGraduate = response?.data?.updateGraduate;
-            if (!updatedGraduate) {
-                throw new Error("Respuesta inválida del servidor.");
-            }
+            if (!updatedGraduate) throw new Error("Respuesta inválida");
 
-            showAlert({
-                title: "Información actualizada exitosamente.",
-                status: "success",
-            });
+            const userStore = useUserStore();
+            const graduateId = updatedGraduate.id;
+            const userType = updatedGraduate.user_type;
 
-            const { id: graduateId, user_type } = updatedGraduate;
+            showAlert({ title: "Actualizado con éxito", status: "success" });
 
+            if (userType === "BEC_ACTIVE") {
+                const newUsersMap = new Map(userStore.resUsers);
+                newUsersMap.set(graduateId, updatedGraduate);
+                userStore.resUsers = newUsersMap;
 
-            if (user_type === "BEC_ACTIVE") {
-                // Verificar que resGraduates.value existe antes de usar .set()
-                if (resUsers.value) {
-                    resUsers.value.set(graduateId, updatedGraduate);
-                }
-                // Verificar que resUsers.value existe antes de usar .delete()
-                if (resGraduates.value) {
-                    resGraduates.value.delete(graduateId);
-                }
+                const newGradsMap = new Map(resGraduates.value);
+                newGradsMap.delete(graduateId);
+                resGraduates.value = newGradsMap;
             } else {
-                // Verificar que resUsers.value existe antes de usar .set()
-                if (resGraduates.value) {
-                    resGraduates.value.set(graduateId, updatedGraduate);
-                }
+                const newGradsMap = new Map(resGraduates.value);
+                newGradsMap.set(graduateId, updatedGraduate);
+                resGraduates.value = newGradsMap;
             }
 
             if (resGraduateDetails.value?.id === id) {
@@ -118,14 +111,8 @@ export const useGraduateStore = defineStore("graduateStore", () => {
 
             return response.data.res;
         } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                "Error de red, intenta más tarde.";
-
-            showAlert({
-                title: errorMessage,
-                status: "error",
-            });
-
+            console.error("Error en updateGraduate:", error);
+            showAlert({ title: "Error al actualizar", status: "error" });
             throw error;
         }
     };

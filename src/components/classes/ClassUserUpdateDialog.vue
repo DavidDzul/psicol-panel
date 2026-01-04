@@ -29,26 +29,34 @@
             </v-col>
 
             <!-- Hora de inicio -->
-            <v-col cols="12"><strong>Hora de entrada:</strong></v-col>
-            <v-col cols="6">
-              <v-select v-model="startHour" :items="hours" label="Hora" />
-            </v-col>
-            <v-col cols="6">
-              <v-select
-                v-model="startMinute"
-                :items="minutes"
-                label="Minutos"
-              />
-            </v-col>
+            <template v-if="showTimes">
+              <v-col cols="12"><strong>Hora de entrada:</strong></v-col>
+              <v-col cols="6">
+                <v-select v-model="startHour" :items="hours" label="Hora" />
+              </v-col>
+              <v-col cols="6">
+                <v-select
+                  v-model="startMinute"
+                  :items="minutes"
+                  label="Minutos"
+                />
+              </v-col>
+            </template>
 
             <!-- Hora fin -->
-            <v-col cols="12"><strong>Hora de salida:</strong></v-col>
-            <v-col cols="6">
-              <v-select v-model="endHour" :items="hours" label="Hora" />
-            </v-col>
-            <v-col cols="6">
-              <v-select v-model="endMinute" :items="minutes" label="Minutos" />
-            </v-col>
+            <template v-if="showTimes">
+              <v-col cols="12"><strong>Hora de salida:</strong></v-col>
+              <v-col cols="6">
+                <v-select v-model="endHour" :items="hours" label="Hora" />
+              </v-col>
+              <v-col cols="6">
+                <v-select
+                  v-model="endMinute"
+                  :items="minutes"
+                  label="Minutos"
+                />
+              </v-col>
+            </template>
 
             <v-col cols="12">
               <v-textarea
@@ -116,6 +124,7 @@ const startHour = ref(null);
 const startMinute = ref(null);
 const endHour = ref(null);
 const endMinute = ref(null);
+const showTimes = ref(false);
 
 // Formulario vee-validate
 const { defineField, meta, values, setFieldValue, setValues, resetForm } =
@@ -208,6 +217,9 @@ watch(class_status, (val) => {
 
     setFieldValue("class_start_time", "00:00");
     setFieldValue("class_end_time", "00:00");
+    showTimes.value = false;
+  } else {
+    showTimes.value = true;
   }
 });
 

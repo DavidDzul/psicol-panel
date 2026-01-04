@@ -61,28 +61,65 @@
     <template #[`item.num_visualizations`]="{ item }">
       {{
         item?.configuration?.unlimited
-          ? ""
+          ? "---"
           : item?.configuration?.num_visualizations
       }}
     </template>
     <template #[`item.num_vacancies`]="{ item }">
       {{
-        item?.configuration?.unlimited ? "" : item?.configuration?.num_vacancies
+        item?.configuration?.unlimited
+          ? "---"
+          : item?.configuration?.num_vacancies
       }}
     </template>
     <template #[`item.permissions`]="{ item }">
-      <ul v-if="item.permissions.length">
-        <li v-for="permission in item.permissions" :key="permission.name">
-          {{ getPermissionName(permission.name) }}
-        </li>
-      </ul>
-      <span v-else>Sin permisos adicionales</span>
+      <v-tooltip location="top" v-if="item.permissions.length">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            size="x-small"
+            rounded="lg"
+            color="secondary"
+          >
+            {{ item.permissions.length }} permisos
+          </v-btn>
+        </template>
+
+        <div class="pa-1">
+          <div v-for="p in item.permissions" :key="p.id" class="text-caption">
+            • {{ getPermissionName(p.name) }}
+          </div>
+        </div>
+      </v-tooltip>
+
+      <span v-else class="text-caption text-grey-disabled">Ninguno</span>
     </template>
     <template #[`item.unlimited`]="{ item }">
       <v-icon v-if="item?.configuration?.unlimited" color="success"
         >mdi-check</v-icon
       >
       <v-icon v-else color="error">mdi-close</v-icon>
+    </template>
+
+    <template #[`item.actions`]="{ item }">
+      <div style="width: 100%; text-align: right">
+        <v-tooltip text="Editar" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="text"
+              color="warning"
+              density="comfortable"
+              icon="mdi-pencil"
+              class="mr-2"
+              size="small"
+              @click="editItem(item)"
+            >
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </div>
     </template>
     <template #no-data> No existen datos registrados </template>
   </v-data-table>
@@ -102,7 +139,7 @@ const props = defineProps({
 const search = ref("");
 const groupBy = ref(undefined);
 
-const emit = defineEmits(["create"]);
+const emit = defineEmits(["create", "edit"]);
 
 const headers = computed(() => [
   {
@@ -130,14 +167,18 @@ const headers = computed(() => [
     key: "unlimited",
   },
 
-  // {
-  //   title: "",
-  //   key: "actions",
-  // },
+  {
+    title: "",
+    key: "actions",
+  },
 ]);
 
 const getPermissionName = (permissionName) => {
   return permissionsMap.get(permissionName)?.text || permissionName;
+};
+
+const editItem = (item) => {
+  emit("edit", item.id);
 };
 
 const filterRoles = computed(() => {
