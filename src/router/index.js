@@ -29,7 +29,7 @@ const routes = [
   {
     path: "/auth",
     name: "AuthLayout",
-    component: () => catchReload(import("@/layouts/AuthLayout.vue")), // Aplicar aquí también
+    component: () => catchReload(import("@/layouts/AuthLayout.vue")),
     redirect: "auth/login",
     beforeEnter: async (to, from, next) => {
       // ... (Lógica de beforeEnter original)
@@ -56,100 +56,105 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: () => catchReload(import("@/layouts/AdminLayout.vue")), // Aplicar aquí
+    component: () => catchReload(import("@/layouts/AdminLayout.vue")),
     meta: { requiresAuth: true },
     children: [
       {
         path: "/",
         name: "Inicio",
-        component: () => catchReload(import("@/views/HomeView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/HomeView.vue")),
       },
       {
         path: "/generaciones",
         name: "GenerationView",
-        component: () => catchReload(import("@/views/generations/GenerationView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/generations/GenerationView.vue")),
       },
       {
         path: "/roles",
         name: "RolesView",
-        component: () => catchReload(import("@/views/roles/RolesView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/roles/RolesView.vue")),
       },
       {
         path: "/becarios",
         name: "UsersView",
-        component: () => catchReload(import("@/views/users/UsersView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/UsersView.vue")),
       },
       {
         path: "/becarios/:id",
         name: "UserDetailsView",
-        component: () => catchReload(import("@/views/users/UserDetailsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/UserDetailsView.vue")),
       },
       {
         path: "/egresados",
         name: "GraduatesView",
-        component: () => catchReload(import("@/views/users/GraduatesView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/GraduatesView.vue")),
       },
       {
         path: "/egresados/:id",
         name: "GraduateDetailsView",
-        component: () => catchReload(import("@/views/users/GraduateDetailsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/GraduateDetailsView.vue")),
       },
       {
         path: "/empresas",
         name: "BusinessView",
-        component: () => catchReload(import("@/views/users/BusinessView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/BusinessView.vue")),
       },
       {
         path: "/empresas/:id",
         name: "BusinessDetailsView",
-        component: () => catchReload(import("@/views/users/BusinessDetailsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/users/BusinessDetailsView.vue")),
       },
       {
         path: "/vacantes",
         name: "VacantPositionView",
-        component: () => catchReload(import("@/views/vacantPosition/VacantPositionView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/vacantPosition/VacantPositionView.vue")),
       },
       {
         path: "/vacantes/:id",
         name: "VacantDetailsView",
-        component: () => catchReload(import("@/views/vacantPosition/VacantDetailsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/vacantPosition/VacantDetailsView.vue")),
       },
       {
         path: "/postulaciones",
         name: "JobApplicationsView",
-        component: () => catchReload(import("@/views/jobApplications/JobApplicationsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/jobApplications/JobApplicationsView.vue")),
       },
       {
         path: "/datos",
         name: "DataView",
-        component: () => catchReload(import("@/views/data/DataView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/data/DataView.vue")),
       },
       {
         path: "/checador",
         name: "CreateAttendanceView",
-        component: () => catchReload(import("@/views/attendance/CreateAttendanceView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/attendance/CreateAttendanceView.vue")),
       },
       {
         path: "/clases",
         name: "ClassView",
-        component: () => catchReload(import("@/views/classes/ClassView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/classes/ClassView.vue")),
       },
       {
         path: "/clases/:id",
         name: "ClassDetailsView",
-        component: () => catchReload(import("@/views/classes/ClassDetailsView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/classes/ClassDetailsView.vue")),
       },
       {
         path: "/avisos",
         name: "NoticesView",
-        component: () => catchReload(import("@/views/notices/NoticesView.vue")), // Aplicar
+        component: () => catchReload(import("@/views/notices/NoticesView.vue")),
+      },
+      {
+        path: "/4dm1n",
+        name: "RolesAdminView",
+        component: () => catchReload(import("@/views/roles/RolesAdminView.vue")),
       },
     ],
   },
   {
     path: "/404",
     name: "NotFound",
-    component: () => catchReload(import("@/views/NotFound.vue")), // Aplicar
+    component: () => catchReload(import("@/views/NotFound.vue")),
   },
   {
     path: "/:catchAll(.*)",
