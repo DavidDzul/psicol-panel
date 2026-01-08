@@ -210,7 +210,7 @@ watch(
           active: props.editItem.active ? true : false,
           user_type: props.editItem.user_type,
           campus: props.editItem.campus,
-          generation_id: props.editItem.generation_id,
+          generation_id: Number(props.editItem.generation_id),
         });
       }
     } else {
