@@ -44,8 +44,12 @@ export const useGraduatesPageStore = defineStore("graduatesPage", () => {
     ]);
 
     const graduates = computed(() => [...resGraduates.value.values()]);
-    const generations = computed(() => [...resGenerations.value.values()]);
-
+    // const generations = computed(() => [...resGenerations.value.values()]);
+    const generations = computed(() => {
+        return [...resGenerations.value.values()].filter((gen) =>
+            !gen.generation_active
+        );
+    });
     const openCreateDialog = () => {
         createDialog.value = true;
     };

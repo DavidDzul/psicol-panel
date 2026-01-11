@@ -45,9 +45,34 @@ export const useGenerationsStore = defineStore("generationsStore", () => {
         }
     }
 
+    const updateGeneration = async (form, id) => {
+        try {
+            const param = await axios.put(`api/admin/generations/${id}`, form, {
+                headers: { 'accept': 'application/json' }
+            });
+            if (param) {
+                showAlert({
+                    title: "Información actualizada exitosamente.",
+                    status: "success",
+                });
+
+                resGenerations.value.set(param.data.data.id, param.data.data)
+                return param.data
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert({
+                title: "Error al actualizar la información, intente nuevamente.",
+                status: "error",
+            });
+            throw error;
+        }
+    }
+
     return {
         resGenerations,
         fetchGenerations,
         createGeneration,
+        updateGeneration
     };
 });

@@ -2,7 +2,11 @@
   <BreadCrumbs :items="links" />
   <v-row>
     <v-col cols="12">
-      <GenerationsTable :generations="generations" @create="openCreateDialog" />
+      <GenerationsTable
+        :generations="generations"
+        @create="openCreateDialog"
+        @edit="openUpdateDialog"
+      />
     </v-col>
   </v-row>
 
@@ -11,6 +15,11 @@
     @submit="onSaveGeneration"
     :user-campus="filteredCampus"
     :loading="loadingCreate"
+  />
+  <GenerationUpdateDialog
+    v-model="updateDialog"
+    :edit-item="editItem"
+    @submit="onUpdateGeneration"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
@@ -23,10 +32,23 @@ import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import GenerationsTable from "@/components/generations/GenerationsTable.vue";
 import GenerationCreateDialog from "@/components/generations/GenerationCreateDialog.vue";
+import GenerationUpdateDialog from "@/components/generations/GenerationUpdateDialog.vue";
 
-const { generations, links, createDialog, loadingCreate, filteredCampus } =
-  storeToRefs(useGenerationsPageStore());
-const { openCreateDialog, onSaveGeneration } = useGenerationsPageStore();
+const {
+  generations,
+  links,
+  createDialog,
+  loadingCreate,
+  filteredCampus,
+  editItem,
+  updateDialog,
+} = storeToRefs(useGenerationsPageStore());
+const {
+  openCreateDialog,
+  onSaveGeneration,
+  openUpdateDialog,
+  onUpdateGeneration,
+} = useGenerationsPageStore();
 
 const confirmationDialog = ref();
 </script>

@@ -74,6 +74,7 @@
               icon="mdi-pencil"
               class="mr-2"
               size="small"
+              @click="editItem(item)"
             >
             </v-btn>
           </template>
@@ -98,7 +99,7 @@ const props = defineProps({
 const search = ref("");
 const groupBy = ref(undefined);
 
-const emit = defineEmits(["create"]);
+const emit = defineEmits(["create", "edit"]);
 
 const headers = computed(() => [
   {
@@ -122,4 +123,8 @@ const headers = computed(() => [
     key: "actions",
   },
 ]);
+
+const editItem = (item) => {
+  emit("edit", item.id);
+};
 </script>

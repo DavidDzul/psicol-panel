@@ -43,7 +43,11 @@ export const useUserPageStore = defineStore("userPage", () => {
     ])
 
     const users = computed(() => [...resUsers.value.values()])
-    const generations = computed(() => [...resGenerations.value.values()])
+    const generations = computed(() => {
+        return [...resGenerations.value.values()].filter((gen) =>
+            gen.generation_active
+        );
+    });
     const loadingUsers = computed(() => loading.value)
 
     const openCreateDialog = () => {
