@@ -50,7 +50,12 @@ export const useClassPageStore = defineStore("classPage", () => {
     };
 
     const classes = computed(() => [...classMap.value.values()])
-    const generations = computed(() => [...resGenerations.value.values()])
+    // const generations = computed(() => [...resGenerations.value.values()])
+    const generations = computed(() => {
+        return [...resGenerations.value.values()].filter((gen) =>
+            gen.generation_active
+        );
+    });
 
     const onCreateClass = async (form) => {
         loading.value = true

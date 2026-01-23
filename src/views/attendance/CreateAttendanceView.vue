@@ -25,8 +25,8 @@
                   ? 'red-lighten-5'
                   : 'green-lighten-5'
                 : dialogData?.type === 'success'
-                ? 'green-lighten-5'
-                : 'red-lighten-5'
+                  ? 'green-lighten-5'
+                  : 'red-lighten-5'
             "
             class="pa-4"
           >
@@ -51,8 +51,8 @@
                     dialogData?.attendance?.status === 'LATE'
                       ? 'orange'
                       : dialogData?.type === 'success'
-                      ? 'green'
-                      : 'red',
+                        ? 'green'
+                        : 'red',
                 }"
               >
                 {{ dialogData?.message }}
@@ -170,10 +170,10 @@ async function startScanner() {
             dialogData.value = null;
             await html5QrCode?.resume();
             isProcessing = false;
-          }, 6000);
+          }, 13000);
         }
       },
-      () => {}
+      () => {},
     );
 
     isScanning.value = true;
