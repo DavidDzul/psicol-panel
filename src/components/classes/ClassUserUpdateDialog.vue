@@ -116,7 +116,7 @@ const vuetifyConfig = (state) => ({
 // Horas y minutos
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const minutes = Array.from({ length: 60 }, (_, i) =>
-  String(i).padStart(2, "0")
+  String(i).padStart(2, "0"),
 );
 
 // Selects de hora
@@ -135,17 +135,17 @@ const { defineField, meta, values, setFieldValue, setValues, resetForm } =
         class_observation: validations.class_observation(),
         class_start_time: validations.class_start_time(),
         class_end_time: validations.class_end_time(),
-      })
+      }),
     ),
   });
 
 const [class_status, class_statusProps] = defineField(
   "class_status",
-  vuetifyConfig
+  vuetifyConfig,
 );
 const [class_observation, class_observationProps] = defineField(
   "class_observation",
-  vuetifyConfig
+  vuetifyConfig,
 );
 
 defineField("class_start_time");
@@ -176,11 +176,12 @@ watch(
   (value) => {
     if (value) {
       if (props.editItem) {
+        console.log(props.editItem);
         setValues({
           class_status: props.editItem.status,
           class_start_time: props.editItem.check_in,
           class_end_time: props.editItem.check_out,
-          class_observation: props.editItem.observation,
+          class_observation: props.editItem.observations,
         });
 
         if (props.editItem.check_in) {
@@ -205,7 +206,7 @@ watch(
       resetForm();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(class_status, (val) => {

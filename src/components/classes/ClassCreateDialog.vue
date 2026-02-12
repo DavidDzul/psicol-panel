@@ -35,18 +35,25 @@
                 >Seleccione la hora de inicio:</span
               >
             </v-col>
-            <v-col cols="6" md="6">
+            <v-col cols="4" md="4">
               <v-select
                 v-model="startHour"
                 :items="hours"
                 label="Hora"
               ></v-select>
             </v-col>
-            <v-col cols="6" md="6">
+            <v-col cols="4" md="4">
               <v-select
                 v-model="startMinute"
                 :items="minutes"
                 label="Minutos"
+              ></v-select>
+            </v-col>
+            <v-col cols="4" md="4">
+              <v-select
+                v-model="startSeconds"
+                :items="seconds"
+                label="Segundos"
               ></v-select>
             </v-col>
 
@@ -55,18 +62,25 @@
                 Seleccione la hora de término:
               </span>
             </v-col>
-            <v-col cols="6" md="6">
+            <v-col cols="4" md="4">
               <v-select
                 v-model="endHour"
                 :items="hours"
                 label="Hora"
               ></v-select>
             </v-col>
-            <v-col cols="6" md="6">
+            <v-col cols="4" md="4">
               <v-select
                 v-model="endMinute"
                 :items="minutes"
                 label="Minutos"
+              ></v-select>
+            </v-col>
+            <v-col cols="4" md="4">
+              <v-select
+                v-model="endSeconds"
+                :items="seconds"
+                label="Segundos"
               ></v-select>
             </v-col>
 
@@ -147,15 +161,22 @@ const vuetifyConfig = (state: PublicPathState) => ({
 });
 
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const minutes = ["00", "15", "30", "45"];
+const minutes = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
+const seconds = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
 
 const startHour = ref("09");
 const startMinute = ref("00");
+const startSeconds = ref("59");
 const endHour = ref("14");
 const endMinute = ref("00");
+const endSeconds = ref("00");
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((g) => g.campus === campus.value)
+  props.generations.filter((g) => g.campus === campus.value),
 );
 
 const { defineField, meta, values, resetForm, setFieldValue } = useForm({
@@ -167,11 +188,11 @@ const { defineField, meta, values, resetForm, setFieldValue } = useForm({
       class_start_time: validations.class_start_time(),
       class_end_time: validations.class_end_time(),
       generation_id: validations.generation_id(),
-    })
+    }),
   ),
   initialValues: {
-    class_start_time: "09:00",
-    class_end_time: "14:00",
+    class_start_time: "09:00:59",
+    class_end_time: "14:00:00",
   },
 });
 
@@ -180,16 +201,19 @@ const [class_name, class_nameProps] = defineField("class_name", vuetifyConfig);
 const [class_date] = defineField("class_date");
 const [generation_id, generation_idProps] = defineField(
   "generation_id",
-  vuetifyConfig
+  vuetifyConfig,
 );
 
 defineField("class_start_time");
 defineField("class_end_time");
 
 const class_start_time = computed(
-  () => `${startHour.value}:${startMinute.value}`
+  () => `${startHour.value}:${startMinute.value}:${startSeconds.value}`,
 );
-const class_end_time = computed(() => `${endHour.value}:${endMinute.value}`);
+
+const class_end_time = computed(
+  () => `${endHour.value}:${endMinute.value}:${endSeconds.value}`,
+);
 
 watch(class_start_time, (val) => {
   setFieldValue("class_start_time", val);
@@ -210,8 +234,10 @@ watch(
     if (value) {
       startHour.value = "09";
       startMinute.value = "00";
+      startSeconds.value = "59";
       endHour.value = "14";
       endMinute.value = "00";
+      endSeconds.value = "00";
 
       nextTick(() => {
         setFieldValue("class_start_time", class_start_time.value);
@@ -220,7 +246,7 @@ watch(
     } else {
       resetForm();
     }
-  }
+  },
 );
 // ----------------------------------------------------------------------
 
