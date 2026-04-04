@@ -56,24 +56,57 @@
       </v-toolbar>
     </template>
     <template #[`item.name`]="{ item }">
-      {{ rolesMap.get(item?.name)?.text }}
+      <span class="font-weight-bold">{{
+        rolesMap.get(item?.name)?.text || item.name
+      }}</span>
     </template>
+
     <template #[`item.num_visualizations`]="{ item }">
-      {{
-        item?.configuration?.unlimited
-          ? "---"
-          : item?.configuration?.num_visualizations
-      }}
+      <v-chip
+        v-if="item.configuration?.unlimited_visualizations"
+        size="x-small"
+        color="success"
+        >Ilimitado</v-chip
+      >
+      <span v-else>{{ item.configuration?.num_visualizations ?? 0 }}</span>
     </template>
-    <template #[`item.num_vacancies`]="{ item }">
-      {{
-        item?.configuration?.unlimited
-          ? "---"
-          : item?.configuration?.num_vacancies
-      }}
+
+    <template #[`item.vacancies_summary`]="{ item }">
+      <div class="d-flex flex-column py-2" style="gap: 4px">
+        <div class="text-caption">
+          <strong>Laborales: </strong>
+          <span
+            v-if="item.configuration?.unlimited_jobs"
+            class="text-success text-uppercase"
+            >Ilimitado</span
+          >
+          <span v-else>{{ item.configuration?.num_job_vacancies }}</span>
+        </div>
+        <div class="text-caption">
+          <strong>Profs: </strong>
+          <span
+            v-if="item.configuration?.unlimited_professionals"
+            class="text-success text-uppercase"
+            >Ilimitado</span
+          >
+          <span v-else>{{
+            item.configuration?.num_professional_vacancies
+          }}</span>
+        </div>
+        <div class="text-caption">
+          <strong>Jr: </strong>
+          <span
+            v-if="item.configuration?.unlimited_jr"
+            class="text-success text-uppercase"
+            >Ilimitado</span
+          >
+          <span v-else>{{ item.configuration?.num_jr_vacancies }}</span>
+        </div>
+      </div>
     </template>
+
     <template #[`item.permissions`]="{ item }">
-      <v-tooltip location="top" v-if="item.permissions.length">
+      <v-tooltip location="top" v-if="item.permissions?.length">
         <template v-slot:activator="{ props }">
           <v-btn
             v-bind="props"
@@ -85,42 +118,25 @@
             {{ item.permissions.length }} permisos
           </v-btn>
         </template>
-
         <div class="pa-1">
           <div v-for="p in item.permissions" :key="p.id" class="text-caption">
             • {{ getPermissionName(p.name) }}
           </div>
         </div>
       </v-tooltip>
-
-      <span v-else class="text-caption text-grey-disabled">Ninguno</span>
-    </template>
-    <template #[`item.unlimited`]="{ item }">
-      <v-icon v-if="item?.configuration?.unlimited" color="success"
-        >mdi-check</v-icon
-      >
-      <v-icon v-else color="error">mdi-close</v-icon>
+      <span v-else class="text-caption text-grey">Ninguno</span>
     </template>
 
     <template #[`item.actions`]="{ item }">
-      <div style="width: 100%; text-align: right">
-        <v-tooltip text="Editar" location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              v-bind="props"
-              variant="text"
-              color="warning"
-              density="comfortable"
-              icon="mdi-pencil"
-              class="mr-2"
-              size="small"
-              @click="editItem(item)"
-            >
-            </v-btn>
-          </template>
-        </v-tooltip>
-      </div>
+      <v-btn
+        variant="text"
+        color="warning"
+        icon="mdi-pencil"
+        size="small"
+        @click="editItem(item)"
+      />
     </template>
+
     <template #no-data> No existen datos registrados </template>
   </v-data-table>
 </template>
@@ -142,35 +158,13 @@ const groupBy = ref(undefined);
 const emit = defineEmits(["create", "edit"]);
 
 const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Nombre",
-    key: "name",
-  },
-  {
-    title: "Permisos",
-    key: "permissions",
-  },
-  {
-    title: "N. de visualizaciones",
-    key: "num_visualizations",
-  },
-  {
-    title: "N. de vacantes",
-    key: "num_vacancies",
-  },
-  {
-    title: "Ilimitado",
-    key: "unlimited",
-  },
+  { title: "ID", key: "id", width: "70px" },
+  { title: "Nombre del Rol", key: "name" },
+  { title: "Permisos", key: "permissions", sortable: false },
+  { title: "Capacidad de Vacantes", key: "vacancies_summary", sortable: false },
+  { title: "Visualizaciones", key: "num_visualizations" },
 
-  {
-    title: "",
-    key: "actions",
-  },
+  { title: "Acciones", key: "actions", align: "end", sortable: false },
 ]);
 
 const getPermissionName = (permissionName) => {
@@ -183,7 +177,7 @@ const editItem = (item) => {
 
 const filterRoles = computed(() => {
   return props.roles.filter(
-    (map) => !["ROOT", "CAMPUS", "YUCATAN"].includes(map.name)
+    (map) => !["ROOT", "CAMPUS", "YUCATAN"].includes(map.name),
   );
 });
 </script>
