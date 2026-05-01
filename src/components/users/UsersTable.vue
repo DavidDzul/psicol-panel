@@ -134,19 +134,21 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps, watch } from "vue";
+<script setup lang="ts">
+import { computed, ref, mergeProps, watch, PropType } from "vue";
+import type { User } from "@/interfaces/user";
+import type { Generation } from "@/interfaces/generation";
 import dayjs from "dayjs";
 
 import { campusMap } from "@/constants";
 
 const props = defineProps({
-  users: { type: Array, default: () => [] },
+  users: { type: Array as PropType<User[]>, default: () => [] },
   loading: { type: Boolean, default: () => false },
   read: { type: Boolean, default: () => false },
   create: { type: Boolean, default: () => false },
   edit: { type: Boolean, default: () => false },
-  generations: { type: Array, default: () => [] },
+  generations: { type: Array as PropType<Generation[]>, default: () => [] },
   userCampus: { type: Array, default: () => [] },
 });
 
@@ -190,11 +192,10 @@ const headers = computed(() => [
 ]);
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((map) => map.campus === campus.value)
+  props.generations.filter((map) => map.campus === campus.value),
 );
 
 const filteredUsers = computed(() => {
-  console.log(generation_id.value);
   return props.users.filter((user) => {
     const campusMatch = campus.value ? user.campus === campus.value : true;
     const generationMatch = generation_id.value
@@ -208,11 +209,11 @@ watch(campus, () => {
   generation_id.value = null;
 });
 
-const editItem = (item) => {
+const editItem = (item: User) => {
   emit("edit", item.id);
 };
 
-const showItem = (item) => {
+const showItem = (item: User) => {
   emit("show", item.id);
 };
 </script>

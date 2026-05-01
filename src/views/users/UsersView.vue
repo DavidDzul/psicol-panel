@@ -34,7 +34,7 @@
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserPageStore } from "@/stores/views/usersPage";
@@ -43,6 +43,8 @@ import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import UsersTable from "@/components/users/UsersTable.vue";
 import UserCreateDialog from "@/components/users/UserCreateDialog.vue";
 import UserUpdateDialog from "@/components/users/UserUpdateDialog.vue";
+
+const confirmationDialog = ref();
 
 const {
   links,
@@ -66,6 +68,4 @@ const {
   onUpdateUser,
   openUserDetail,
 } = useUserPageStore();
-
-const confirmationDialog = ref();
 </script>

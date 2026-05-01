@@ -124,24 +124,26 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { FieldState, useForm } from "vee-validate";
+import { computed, PropType, watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
 import { becTypeArray } from "@/constants";
+import { Generation } from "@/interfaces/generation";
+import type { User } from "@/interfaces/user";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: () => false },
   loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+  editItem: { type: Object as PropType<User>, default: () => null },
   userCampus: { type: Array, default: () => [] },
-  generations: { type: Array, default: () => [] },
+  generations: { type: Array as PropType<Generation[]>, default: () => [] },
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState) => ({
   props: {
     "error-messages": state.errors,
   },
@@ -159,23 +161,26 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
       generation_id: validations.generation_id(),
       active: validations.user_active(),
       user_type: validations.user_type(),
-    })
+    }),
   ),
 });
 
 const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
+  required: (value: unknown): true | string =>
+    !!value || "Este campo es obligatorio",
+
+  validYear: (value: string): true | string =>
+    /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+
+  validPhone: (value: string): true | string =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
+
+  maxLength: (value: string): true | string =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
-const onlyNumbers = (event) => {
-  const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
-  if (charCode < 48 || charCode > 57) {
+const onlyNumbers = (event: KeyboardEvent) => {
+  if (!/^\d$/.test(event.key)) {
     event.preventDefault();
   }
 };
@@ -189,7 +194,7 @@ const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
 const [generation_id, generation_idProps] = defineField(
   "generation_id",
-  vuetifyConfig
+  vuetifyConfig,
 );
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
@@ -201,8 +206,7 @@ watch(
     if (value) {
       if (props.editItem) {
         setValues({
-          id: props.editItem.id,
-          enrollment: props.editItem.enrollment,
+          enrollment: props.editItem.enrollment || "",
           first_name: props.editItem.first_name,
           last_name: props.editItem.last_name,
           email: props.editItem.email,
@@ -216,17 +220,17 @@ watch(
     } else {
       resetForm();
     }
-  }
+  },
 );
 
 watch(enrollment, (newValue) => {
-  if (newValue) {
+  if (typeof newValue === "string") {
     enrollment.value = newValue.toUpperCase();
   }
 });
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((map) => map.campus === campus.value)
+  props.generations.filter((map) => map.campus === campus.value),
 );
 
 const close = () => {
