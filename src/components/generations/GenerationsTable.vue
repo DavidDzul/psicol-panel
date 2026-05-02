@@ -85,21 +85,32 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, mergeProps } from "vue";
 import dayjs from "dayjs";
 
+import type { Generation } from "@/interfaces/generation";
 import { campusMap } from "@/constants";
 
-const props = defineProps({
-  generations: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  generations: Generation[]
+  loading: boolean
+}
+
+interface Emits {
+  (e: "create"): void
+  (e: "edit", id: number): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  generations: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
+const groupBy = ref<undefined>(undefined);
 
-const emit = defineEmits(["create", "edit"]);
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => [
   {
@@ -124,7 +135,7 @@ const headers = computed(() => [
   },
 ]);
 
-const editItem = (item) => {
+const editItem = (item: Generation) => {
   emit("edit", item.id);
 };
 </script>

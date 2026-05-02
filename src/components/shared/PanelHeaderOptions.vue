@@ -36,18 +36,25 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
-  modelValue: { type: String },
-  expanded: { type: Boolean, default: () => false },
-  title: { type: String, default: () => "" },
-  buttonText: { type: String, default: () => "" },
-  search: { type: Boolean, default: () => false },
-});
+interface Props {
+  modelValue?: string
+  expanded?: boolean
+  title?: string
+  buttonText?: string
+  search?: boolean
+}
+
+withDefaults(defineProps<Props>(), {
+  expanded: false,
+  title: "",
+  buttonText: "",
+  search: false,
+})
 
 defineEmits<{
-  "update:modelValue": [value: string];
-  buttonClick: [];
-}>();
+  "update:modelValue": [value: string]
+  buttonClick: []
+}>()
 </script>
 <style lang="scss" scoped>
 .panel-title {

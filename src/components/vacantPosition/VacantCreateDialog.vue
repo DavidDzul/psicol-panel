@@ -701,7 +701,8 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
 import { useBusinessSearchStore } from "@/stores/views/businessSearch";
 
@@ -710,22 +711,33 @@ import * as yup from "yup";
 import * as validations from "@/validations";
 
 import { daysValue, modeArray } from "@/constants";
+import type { VacantForm } from "@/interfaces/vacant";
 
 const { businessList } = storeToRefs(useBusinessSearchStore());
 const { getBusiness } = useBusinessSearchStore();
 
-const vuetifyConfig = (state: PublicPathState) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  modelValue: boolean;
+  loading: boolean;
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: VacantForm & { id: string }): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
 });
 
-const { defineField, meta, values, errors, setValues, resetForm } = useForm({
+const { defineField, meta, values, errors, setValues, resetForm } = useForm<VacantForm>({
   validationSchema: toTypedSchema(
     yup.object({
       mode: validations.mode(),
@@ -918,7 +930,7 @@ const validateStep3 = computed(() => {
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [value: Object];
+  submit: [value: VacantForm & { id: string }];
 }>();
 
 watch(
@@ -956,9 +968,8 @@ const minutes = computed(() => {
   return Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 });
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
   }
@@ -970,8 +981,8 @@ const endHourError = computed(() => errors.value.end_hour);
 const endMinuteError = computed(() => errors.value.end_minute);
 
 const searchQuery = ref("");
-const selectedBusiness = ref(null);
-let timeout = null;
+const selectedBusiness = ref<string | null>(null);
+let timeout: ReturnType<typeof setTimeout> | null = null;
 
 watch(searchQuery, (newQuery) => {
   clearTimeout(timeout);

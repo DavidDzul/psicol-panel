@@ -136,26 +136,33 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
-
 import { lineBusiness } from "@/constants";
+import type { BusinessData, BusinessDataForm } from "@/interfaces/business";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: BusinessData | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state: PublicPathState) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+const { defineField, meta, values, setValues, resetForm } = useForm<BusinessDataForm>({
   validationSchema: toTypedSchema(
     yup.object({
       id: validations.id(),
@@ -203,10 +210,12 @@ const [bs_description, bs_descriptionProps] = defineField(
   vuetifyConfig
 );
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: BusinessDataForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -241,7 +250,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as BusinessDataForm);
   }
 };
 </script>

@@ -141,43 +141,53 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
-
 import { rolesMap, permissionsMap } from "@/constants";
+import type { Role } from "@/interfaces/role";
 
-const props = defineProps({
-  roles: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  roles?: Role[];
+  loading?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  roles: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
 
-const emit = defineEmits(["create", "edit"]);
+interface DataTableHeader {
+  title: string;
+  key: string;
+  width?: string;
+  sortable?: boolean;
+  align?: string;
+}
 
-const headers = computed(() => [
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+}
+
+const emit = defineEmits<Emits>();
+
+const headers: DataTableHeader[] = [
   { title: "ID", key: "id", width: "70px" },
   { title: "Nombre del Rol", key: "name" },
   { title: "Permisos", key: "permissions", sortable: false },
   { title: "Capacidad de Vacantes", key: "vacancies_summary", sortable: false },
   { title: "Visualizaciones", key: "num_visualizations" },
-
   { title: "Acciones", key: "actions", align: "end", sortable: false },
-]);
+];
 
-const getPermissionName = (permissionName) => {
-  return permissionsMap.get(permissionName)?.text || permissionName;
-};
+const getPermissionName = (permissionName: string): string =>
+  permissionsMap.get(permissionName)?.text ?? permissionName;
 
-const editItem = (item) => {
-  emit("edit", item.id);
-};
+const editItem = (item: Role) => emit("edit", item.id);
 
-const filterRoles = computed(() => {
-  return props.roles.filter(
-    (map) => !["ROOT", "CAMPUS", "YUCATAN"].includes(map.name),
-  );
-});
+const filterRoles = computed(() =>
+  props.roles.filter((r) => !["ROOT", "CAMPUS", "YUCATAN"].includes(r.name)),
+);
 </script>

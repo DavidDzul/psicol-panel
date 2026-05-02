@@ -495,30 +495,36 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
-import { modeArray } from "@/constants";
-
-import { daysValue } from "@/constants";
+import { modeArray, daysValue } from "@/constants";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
+import type { VacantPracticeForm } from "@/interfaces/vacant";
 
-const vuetifyConfig = (state: PublicPathState) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: VacantPracticeForm | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const { defineField, meta, values, setValues, resetForm } = useForm({
+const { defineField, meta, values, setValues, resetForm } = useForm<VacantPracticeForm>({
   validationSchema: toTypedSchema(
     yup.object({
       id: validations.id(),
@@ -672,7 +678,7 @@ const validateStep2 = computed(() => {
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [value: Object];
+  submit: [value: VacantPracticeForm];
 }>();
 
 watch(
@@ -748,9 +754,8 @@ const minutes = computed(() => {
   return Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 });
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
   }
@@ -767,7 +772,7 @@ watch(
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as VacantPracticeForm);
   }
 };
 </script>

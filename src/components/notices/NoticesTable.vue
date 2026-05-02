@@ -89,58 +89,45 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
-
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import type { Notice } from "@/interfaces/notice";
 import { campusMap } from "@/constants";
 
-const props = defineProps({
-  notices: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  notices: Notice[];
+  loading: boolean;
+}
+
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+  (e: "delete", id: number): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  notices: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
 
-const emit = defineEmits(["create", "edit", "delete"]);
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Mensaje",
-    key: "message",
-  },
-  {
-    title: "Global",
-    key: "global",
-  },
-  {
-    title: "Activo",
-    key: "active",
-  },
-  {
-    title: "Sede",
-    key: "campus",
-  },
-  {
-    title: "",
-    key: "actions",
-  },
+  { title: "ID", key: "id" },
+  { title: "Mensaje", key: "message" },
+  { title: "Global", key: "global" },
+  { title: "Activo", key: "active" },
+  { title: "Sede", key: "campus" },
+  { title: "", key: "actions" },
 ]);
 
-const editItem = (item) => {
+const editItem = (item: Notice): void => {
   emit("edit", item.id);
 };
 
-const deleteItem = (item) => {
+const deleteItem = (item: Notice): void => {
   emit("delete", item.id);
-};
-
-const showItem = (item) => {
-  emit("show", item.id);
 };
 </script>

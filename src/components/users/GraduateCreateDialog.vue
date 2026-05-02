@@ -113,27 +113,45 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { useForm } from "vee-validate";
+import { type FieldState, useForm } from "vee-validate";
 import { computed, watch } from "vue";
 import * as yup from "yup";
 
+import type { Generation } from "@/interfaces/generation";
+import type { GraduateCreateForm } from "@/interfaces/graduate";
+import type { SelectOption } from "@/constants";
 import * as validations from "@/validations";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  generations: { type: Array, default: () => [] },
-  userCampus: { type: Array, default: () => [] },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  generations?: Generation[];
+  userCampus?: SelectOption[];
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", values: GraduateCreateForm): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  generations: () => [],
+  userCampus: () => [],
 });
 
-const vuetifyConfig = (state) => ({
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+
+const { defineField, meta, values, resetForm } = useForm<GraduateCreateForm>({
   validationSchema: toTypedSchema(
     yup.object({
       campus: validations.campus(),
@@ -149,17 +167,16 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
 });
 
 const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
+  required: (value: string) => !!value || "Este campo es obligatorio",
+  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+  validPhone: (value: string) =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
+  maxLength: (value: string) =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
   }
@@ -176,8 +193,6 @@ const [generation_id, generation_idProps] = defineField(
   vuetifyConfig
 );
 const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
-
-const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
   () => props.modelValue,
@@ -197,7 +212,7 @@ watch(enrollment, (newValue) => {
 });
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((map) => map.campus === campus.value)
+  props.generations.filter((gen) => gen.campus === campus.value)
 );
 
 const close = () => {
@@ -206,7 +221,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as GraduateCreateForm);
   }
 };
 </script>

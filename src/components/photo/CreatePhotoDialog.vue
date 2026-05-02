@@ -36,21 +36,24 @@
 </template>
 
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { PropType, ref } from "vue";
-import * as yup from "yup";
+interface Props {
+  modelValue: boolean
+  loading: boolean
+  previewUrl: string
+}
 
-defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  previewUrl: { type: String, default: () => "" },
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit"): void
+}
+
+withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  previewUrl: "",
 });
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [];
-}>();
+const emit = defineEmits<Emits>();
 
 const close = () => {
   emit("update:modelValue", false);

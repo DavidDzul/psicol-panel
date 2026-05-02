@@ -29,11 +29,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
+import type { User } from "@/interfaces/user";
 import { campusMap, becTypeMap } from "@/constants";
 
-const props = defineProps({
-  user: { type: Object, required: false, default: {} },
+interface Props {
+  user?: User;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  user: () => ({} as User),
 });
 </script>
 

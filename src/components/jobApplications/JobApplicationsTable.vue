@@ -124,54 +124,46 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from "vue";
 import dayjs from "dayjs";
 
 import { statusApplicationMap, rejectedReasonMap } from "@/constants";
+import type { JobApplication } from "@/interfaces/jobApplication";
 
-const props = defineProps({
-  applications: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
-  read: { type: Boolean, default: () => false },
-  edit: { type: Boolean, default: () => false },
+interface Props {
+  applications?: JobApplication[];
+  loading?: boolean;
+  read?: boolean;
+  edit?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  applications: () => [],
+  loading: false,
+  read: false,
+  edit: false,
 });
 
 const search = ref("");
-const groupBy = ref(undefined);
 
-const emit = defineEmits(["submit", "rejected", "accepted"]);
+interface Emits {
+  (e: "submit", userId: number): void;
+  (e: "rejected", id: number): void;
+  (e: "accepted", id: number): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => {
   const baseHeaders = [
-    {
-      title: "ID",
-      key: "id",
-    },
-    {
-      title: "Vacante",
-      key: "vacant_id",
-    },
-    {
-      title: "Usuario",
-      key: "user_id",
-    },
-    {
-      title: "Curriculum Vitae",
-      key: "view_cv",
-    },
-    {
-      title: "Estatus",
-      key: "status",
-    },
-    {
-      title: "Fecha",
-      key: "created_at",
-    },
-    {
-      title: "",
-      key: "actions",
-    },
+    { title: "ID", key: "id" },
+    { title: "Vacante", key: "vacant_id" },
+    { title: "Usuario", key: "user_id" },
+    { title: "Curriculum Vitae", key: "view_cv" },
+    { title: "Estatus", key: "status" },
+    { title: "Fecha", key: "created_at" },
+    { title: "", key: "actions" },
   ];
 
   if (props.applications.some((item) => item.status === "REJECTED")) {
@@ -184,15 +176,15 @@ const headers = computed(() => {
   return baseHeaders;
 });
 
-const rejectedItem = (item) => {
+const rejectedItem = (item: JobApplication) => {
   emit("rejected", item.id);
 };
 
-const acceptedItem = (item) => {
+const acceptedItem = (item: JobApplication) => {
   emit("accepted", item.id);
 };
 
-const openCV = (item) => {
+const openCV = (item: JobApplication) => {
   emit("submit", item.user_id);
 };
 </script>

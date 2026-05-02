@@ -112,25 +112,41 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
 
 import { roleMap } from "@/constants";
+import type { SelectOption } from "@/constants";
+import type { Business } from "@/interfaces/business";
 
-const props = defineProps({
-  business: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
-  read: { type: Boolean, default: () => false },
-  create: { type: Boolean, default: () => false },
-  edit: { type: Boolean, default: () => false },
-  userCampus: { type: Array, default: () => [] },
+interface Props {
+  business: Business[];
+  loading: boolean;
+  read: boolean;
+  create: boolean;
+  edit: boolean;
+  userCampus: SelectOption[];
+}
+
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+  (e: "show", id: number): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  business: () => [],
+  loading: false,
+  read: false,
+  create: false,
+  edit: false,
+  userCampus: () => [],
 });
 
-const search = ref("");
-const campus = ref(null);
+const search = ref<string>("");
+const campus = ref<string | null>(null);
 
-const emit = defineEmits(["create", "edit", "show"]);
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => [
   {
@@ -174,11 +190,11 @@ const filteredTable = computed(() => {
   });
 });
 
-const editItem = (item) => {
+const editItem = (item: Business) => {
   emit("edit", item.id);
 };
 
-const showItem = (item) => {
+const showItem = (item: Business) => {
   emit("show", item.id);
 };
 </script>

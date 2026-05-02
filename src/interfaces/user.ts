@@ -11,7 +11,7 @@ export interface User {
   workstation: string | null;
   user_type: UserType;
   campus: string;
-  generation_id: string | null;
+  generation_id: number | null;
   active: boolean;
   created_at: string | null;
   updated_at: string;
@@ -37,4 +37,17 @@ export interface UserForm {
   generation_id: number | null;
   enrollment: string | null;
   password: string;
+}
+
+export interface UserUpdateForm {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  campus: string;
+  generation_id: number | null;
+  enrollment: string | null;
+  password?: string;
+  active: boolean;
+  user_type: UserType;
 }

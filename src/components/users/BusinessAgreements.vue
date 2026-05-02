@@ -50,20 +50,32 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import dayjs from "dayjs";
 
-const props = defineProps({
-  agreements: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+import type { BusinessAgreement } from "@/interfaces/business";
+
+interface Props {
+  agreements: BusinessAgreement[];
+  loading: boolean;
+}
+
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+  (e: "show", id: number): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  agreements: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
 const today = dayjs().format("YYYY-MM-DD");
 
-const emit = defineEmits(["create", "edit", "show"]);
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => [
   {
@@ -84,11 +96,11 @@ const headers = computed(() => [
   },
 ]);
 
-const editItem = (item) => {
+const editItem = (item: BusinessAgreement) => {
   emit("edit", item.id);
 };
 
-const showItem = (item) => {
+const showItem = (item: BusinessAgreement) => {
   emit("show", item.id);
 };
 </script>

@@ -263,25 +263,38 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
+import { useForm } from "vee-validate";
+import type { FieldState } from "vee-validate";
 import { computed, ref, watch } from "vue";
-import dayjs from "dayjs";
 
 import * as yup from "yup";
 import * as validations from "@/validations";
 import { lineBusiness, roleArray } from "@/constants";
+import type { SelectOption } from "@/constants";
 import DatePickerInput from "@/components/shared/DatePickerInput.vue";
+import type { BusinessCreateForm } from "@/interfaces/business";
 
-const vuetifyConfig = (state: PublicPathState) => ({
+interface Props {
+  modelValue: boolean;
+  loading: boolean;
+  userCampus: SelectOption[];
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: BusinessCreateForm): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  userCampus: () => [],
+});
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
-});
-
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  userCampus: { type: Array, default: () => [] },
 });
 
 const { defineField, meta, values, setValues, resetForm } = useForm({
@@ -386,10 +399,11 @@ const validateStep2 = computed(() => {
     : true;
 });
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+const emit = defineEmits<Emits>();
+
+const step = ref<number>(1);
+// const today = dayjs().format("YYYY-MM-DD");
+// const nextYear = dayjs().add(1, "year").format("YYYY-MM-DD");
 
 watch(
   () => props.modelValue,
@@ -405,10 +419,6 @@ watch(
   }
 );
 
-const step = ref(1);
-// const today = dayjs().format("YYYY-MM-DD");
-// const nextYear = dayjs().add(1, "year").format("YYYY-MM-DD");
-
 const close = () => {
   emit("update:modelValue", false);
 };
@@ -422,15 +432,15 @@ const back = () => {
 };
 
 const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
+  required: (value: string) => !!value || "Este campo es obligatorio",
+  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+  validPhone: (value: string) =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
+  maxLength: (value: string) =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
@@ -439,7 +449,7 @@ const onlyNumbers = (event) => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as BusinessCreateForm);
   }
 };
 </script>

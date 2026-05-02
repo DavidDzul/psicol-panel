@@ -122,27 +122,42 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { type FieldState, useForm } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
+import type { Graduate, GraduateUpdateForm } from "@/interfaces/graduate";
 import * as validations from "@/validations";
 import { becTypeArray } from "@/constants";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: Graduate | null;
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", values: GraduateUpdateForm): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state) => ({
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+
+const { defineField, meta, values, setValues, resetForm } = useForm<GraduateUpdateForm>({
   validationSchema: toTypedSchema(
     yup.object({
       first_name: validations.first_name(),
@@ -160,17 +175,16 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
 });
 
 const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
+  required: (value: string) => !!value || "Este campo es obligatorio",
+  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+  validPhone: (value: string) =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
+  maxLength: (value: string) =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
   }
@@ -189,7 +203,6 @@ const [phone, phoneProps] = defineField("phone", vuetifyConfig);
 // );
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
-const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
   () => props.modelValue,
@@ -197,8 +210,7 @@ watch(
     if (value) {
       if (props.editItem) {
         setValues({
-          id: props.editItem.id,
-          enrollment: props.editItem.enrollment,
+          enrollment: props.editItem.enrollment ?? "",
           first_name: props.editItem.first_name,
           last_name: props.editItem.last_name,
           email: props.editItem.email,
@@ -219,7 +231,7 @@ watch(enrollment, (newValue) => {
   }
 });
 // const filteredGenerations = computed(() =>
-//   props.generations.filter((map) => map.campus === campus.value)
+//   props.generations.filter((gen) => gen.campus === campus.value)
 // );
 
 const close = () => {
@@ -228,7 +240,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as GraduateUpdateForm);
   }
 };
 </script>

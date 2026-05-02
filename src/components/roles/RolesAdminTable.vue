@@ -88,40 +88,40 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
+<script setup lang="ts">
+import { ref } from "vue";
+import type { Role } from "@/interfaces/role";
 
-const props = defineProps({
-  roles: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  roles?: Role[];
+  loading?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  roles: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
 
-const emit = defineEmits(["create", "edit"]);
+interface DataTableHeader {
+  title: string;
+  key: string;
+}
 
-const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Nombre",
-    key: "name",
-  },
-  {
-    title: "Permisos",
-    key: "permissions",
-  },
-  {
-    title: "",
-    key: "actions",
-  },
-]);
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+}
 
-const editItem = (item) => {
-  emit("edit", item.id);
-};
+const emit = defineEmits<Emits>();
+
+const headers: DataTableHeader[] = [
+  { title: "ID", key: "id" },
+  { title: "Nombre", key: "name" },
+  { title: "Permisos", key: "permissions" },
+  { title: "", key: "actions" },
+];
+
+const editItem = (item: Role) => emit("edit", item.id);
 </script>

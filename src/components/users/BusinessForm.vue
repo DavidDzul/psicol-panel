@@ -24,11 +24,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
 import { campusMap } from "@/constants";
+import type { Business } from "@/interfaces/business";
 
-const props = defineProps({
-  business: { type: Object, required: false, default: {} },
+interface Props {
+  business: Business | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  business: null,
 });
 </script>
 

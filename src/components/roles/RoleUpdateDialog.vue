@@ -161,21 +161,34 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { watch } from "vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import { rolesMap, permissionsMap } from "@/constants";
+import type { Role, Permission, RoleForm } from "@/interfaces/role";
 
-const props = defineProps({
-  modelValue: Boolean,
-  loading: Boolean,
-  editItem: { type: Object, default: null },
-  permissions: { type: Array, default: () => [] },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: Role | null;
+  permissions?: Permission[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
+  permissions: () => [],
 });
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: RoleForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const schema = yup.object({
   unlimited_jobs: yup.boolean(),
@@ -189,7 +202,7 @@ const schema = yup.object({
   permissions_ids: yup.array().of(yup.number()).default([]),
 });
 
-const { defineField, setValues, resetForm, handleSubmit } = useForm({
+const { defineField, setValues, resetForm, handleSubmit } = useForm<RoleForm>({
   validationSchema: toTypedSchema(schema),
   initialValues: {
     unlimited_jobs: false,
@@ -204,7 +217,6 @@ const { defineField, setValues, resetForm, handleSubmit } = useForm({
   },
 });
 
-// Definición de campos
 const [unlimited_jobs] = defineField("unlimited_jobs");
 const [num_job_vacancies] = defineField("num_job_vacancies");
 const [unlimited_professionals] = defineField("unlimited_professionals");
@@ -219,7 +231,7 @@ watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen && props.editItem) {
-      const config = props.editItem.configuration || {};
+      const config = props.editItem.configuration ?? {};
       setValues({
         unlimited_jobs: config.unlimited_jobs ?? false,
         num_job_vacancies: config.num_job_vacancies ?? 0,
@@ -229,7 +241,7 @@ watch(
         num_jr_vacancies: config.num_jr_vacancies ?? 0,
         unlimited_visualizations: config.unlimited_visualizations ?? false,
         num_visualizations: config.num_visualizations ?? 0,
-        permissions_ids: props.editItem.permissions?.map((p) => p.id) || [],
+        permissions_ids: props.editItem.permissions?.map((p) => p.id) ?? [],
       });
     } else if (!isOpen) {
       resetForm();
@@ -237,7 +249,7 @@ watch(
   },
 );
 
-const getPermissionText = (name) => permissionsMap.get(name)?.text || name;
+const getPermissionText = (name: string): string => permissionsMap.get(name)?.text ?? name;
 const close = () => emit("update:modelValue", false);
 const save = handleSubmit((values) => emit("submit", values));
 </script>

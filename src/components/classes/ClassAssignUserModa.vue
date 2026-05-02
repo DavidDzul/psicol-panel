@@ -117,23 +117,42 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import type { SelectOption } from "@/constants";
+import type { Generation } from "@/interfaces/generation";
+import type { User } from "@/interfaces/user";
+import type { AssignedUserId, AssignUsersFilter } from "@/interfaces/class";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  loading: { type: Boolean, default: false },
-  users: { type: Array, default: () => [] },
-  assignedUserIds: { type: Array, default: () => [] },
-  userCampus: { type: Array, default: () => [] },
-  generations: { type: Array, default: () => [] },
+interface Props {
+  modelValue: boolean
+  loading: boolean
+  users: User[]
+  assignedUserIds: AssignedUserId[]
+  userCampus: SelectOption[]
+  generations: Generation[]
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit", ids: number[]): void
+  (e: "findUsers", filter: AssignUsersFilter): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  users: () => [],
+  assignedUserIds: () => [],
+  userCampus: () => [],
+  generations: () => [],
 });
 
-const emit = defineEmits(["update:modelValue", "submit", "findUsers"]);
+const emit = defineEmits<Emits>();
 
-const generation_id = ref(null);
-const campus = ref(null);
-const usersMap = ref({});
+const generation_id = ref<number | null>(null);
+const campus = ref<string | null>(null);
+const usersMap = ref<Record<number, true>>({});
 
 const headers = [
   { title: "ID", key: "id" },
@@ -141,21 +160,17 @@ const headers = [
   { title: "Apellidos", key: "last_name" },
 ];
 
-const filteredGenerations = computed(() =>
+const filteredGenerations = computed<Generation[]>(() =>
   props.generations.filter((g) => g.campus === campus.value)
 );
 
-const assignedIds = computed(() =>
-  props.assignedUserIds.map((a) => Number(a.user_id))
-);
-
 watch(
-  () => [props.modelValue, props.assignedUserIds],
+  () => [props.modelValue, props.assignedUserIds] as const,
   ([open, assigned]) => {
     if (open && assigned.length) {
       usersMap.value = Object.assign(
         {},
-        ...assigned.map((a) => ({ [Number(a.user_id)]: true }))
+        ...assigned.map((a) => ({ [Number(a.user_id)]: true as const }))
       );
     } else if (!open) {
       usersMap.value = {};
@@ -164,16 +179,16 @@ watch(
   { immediate: true }
 );
 
-const selectedUsers = computed(() => Object.keys(usersMap.value).map(Number));
+const selectedUsers = computed<number[]>(() => Object.keys(usersMap.value).map(Number));
 
-const toggleAll = (checked) => {
+const toggleAll = (checked: boolean | null): void => {
   if (checked) {
     usersMap.value = Object.assign(
       {},
-      ...props.users.map((u) => ({ [u.id]: true }))
+      ...props.users.map((u) => ({ [u.id]: true as const }))
     );
   } else {
-    const clone = { ...usersMap.value };
+    const clone: Record<number, true> = { ...usersMap.value };
     props.users.forEach((u) => {
       delete clone[u.id];
     });
@@ -181,26 +196,25 @@ const toggleAll = (checked) => {
   }
 };
 
-const toggleUser = (checked, id) => {
+const toggleUser = (checked: boolean | null, id: number): void => {
   if (checked) {
     usersMap.value = { ...usersMap.value, [id]: true };
   } else {
-    const { [id]: _, ...rest } = usersMap.value;
-    usersMap.value = rest;
+    const { [id]: _removed, ...rest } = usersMap.value;
+    usersMap.value = rest as Record<number, true>;
   }
 };
 
-const close = () => emit("update:modelValue", false);
+const close = (): void => emit("update:modelValue", false);
 
-const applyFilters = () => {
+const applyFilters = (): void => {
   emit("findUsers", {
     campus: campus.value,
     generation_id: generation_id.value,
   });
 };
 
-const save = () => {
-  console.log(selectedUsers.value);
+const save = (): void => {
   emit("submit", selectedUsers.value);
 };
 </script>

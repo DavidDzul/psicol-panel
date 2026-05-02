@@ -25,30 +25,31 @@
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
+import type { ConfirmationOptionsInterface } from "@/interfaces";
 
-import { ConfirmationOptionsInterface } from "@/interfaces";
+const dialog = ref<boolean>(false);
+const options = ref<ConfirmationOptionsInterface | undefined>(undefined);
+const resolve = ref<((value: boolean) => void) | null>(null);
 
-const dialog = ref(false);
-const options = ref<ConfirmationOptionsInterface>();
-const resolve = ref();
-const open: (opt: ConfirmationOptionsInterface) => Promise<boolean> = (
-  opt: ConfirmationOptionsInterface
-) => {
+const open = (opt: ConfirmationOptionsInterface): Promise<boolean> => {
   options.value = { ...opt };
   dialog.value = true;
   return new Promise((res) => {
     resolve.value = res;
   });
 };
-const confirm = () => {
+
+const confirm = (): void => {
   resolve.value?.(true);
   close();
 };
-const cancel = () => {
+
+const cancel = (): void => {
   resolve.value?.(false);
   close();
 };
-const close = () => {
+
+const close = (): void => {
   dialog.value = false;
 };
 

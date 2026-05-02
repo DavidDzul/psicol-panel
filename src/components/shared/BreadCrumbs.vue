@@ -10,9 +10,13 @@
 </template>
 
 <script setup lang="ts">
-import { PropType } from "vue"
+import type { LinkInterface } from "@/interfaces"
 
-import { LinkInterface } from "@/interfaces"
+interface Props {
+  items?: LinkInterface[]
+}
 
-defineProps({ items: { type: Array as PropType<LinkInterface[]>, default: () => [] } })
+withDefaults(defineProps<Props>(), {
+  items: () => [],
+})
 </script>

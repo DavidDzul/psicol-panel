@@ -88,66 +88,53 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import dayjs from "dayjs";
-
 import { campusMap } from "@/constants";
+import type { ClassEntity } from "@/interfaces/class";
 
-const props = defineProps({
-  classes: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  classes: ClassEntity[]
+  loading: boolean
+}
+
+interface Emits {
+  (e: "create"): void
+  (e: "edit", id: number): void
+  (e: "delete", id: number): void
+  (e: "show", id: number): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  classes: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const emit = defineEmits<Emits>();
 
-const emit = defineEmits(["create", "edit", "delete", "show"]);
+const search = ref<string>("");
 
 const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Nombre",
-    key: "name",
-  },
-  {
-    title: "Fecha",
-    key: "date",
-  },
-  {
-    title: "H. Inicio",
-    key: "start_time",
-  },
-  {
-    title: "H. Fin",
-    key: "end_time",
-  },
-  // {
-  //   title: "Sede",
-  //   key: "campus",
-  // },
-  // {
-  //   title: "Generación",
-  //   key: "generation_name",
-  // },
-  {
-    title: "",
-    key: "actions",
-  },
+  { title: "ID", key: "id" },
+  { title: "Nombre", key: "name" },
+  { title: "Fecha", key: "date" },
+  { title: "H. Inicio", key: "start_time" },
+  { title: "H. Fin", key: "end_time" },
+  // { title: "Sede", key: "campus" },
+  // { title: "Generación", key: "generation_name" },
+  { title: "", key: "actions" },
 ]);
 
-const editItem = (item) => {
+const editItem = (item: ClassEntity): void => {
   emit("edit", item.id);
 };
 
-const deleteItem = (item) => {
+const deleteItem = (item: ClassEntity): void => {
   emit("delete", item.id);
 };
 
-const showItem = (item) => {
+const showItem = (item: ClassEntity): void => {
   emit("show", item.id);
 };
 </script>

@@ -96,20 +96,27 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import * as validations from "@/validations";
-import dayjs from "dayjs";
 import { classStatus } from "@/constants";
+import type { ClassAttendance, ClassUserForm } from "@/interfaces/class";
 
-const props = defineProps({
-  modelValue: Boolean,
-  loading: Boolean,
-  editItem: { type: Object, default: null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: ClassAttendance | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: { "error-messages": state.errors },
 });
 
@@ -119,16 +126,15 @@ const minutes = Array.from({ length: 60 }, (_, i) =>
   String(i).padStart(2, "0"),
 );
 
-// Selects de hora
-const startHour = ref(null);
-const startMinute = ref(null);
-const endHour = ref(null);
-const endMinute = ref(null);
-const showTimes = ref(false);
+const startHour = ref<string>("");
+const startMinute = ref<string>("");
+const endHour = ref<string>("");
+const endMinute = ref<string>("");
+const showTimes = ref<boolean>(false);
 
 // Formulario vee-validate
 const { defineField, meta, values, setFieldValue, setValues, resetForm } =
-  useForm({
+  useForm<ClassUserForm>({
     validationSchema: toTypedSchema(
       yup.object({
         class_status: validations.class_status(),
@@ -224,7 +230,12 @@ watch(class_status, (val) => {
   }
 });
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: { status: string; check_in: string | null | undefined; check_out: string | null | undefined; observations: string | undefined }): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const close = () => emit("update:modelValue", false);
 

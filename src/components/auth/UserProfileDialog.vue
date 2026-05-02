@@ -88,26 +88,46 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { type FieldState, useForm } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
+import type { User } from "@/interfaces/user";
 import * as validations from "@/validations";
 
-import { lineBusiness } from "@/constants";
+interface UserProfileForm {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  password: string
+  confirmation: string
+  phone: string
+}
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, required: true, default: () => ({}) },
+interface Props {
+  modelValue: boolean
+  loading: boolean
+  editItem: User
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit", value: UserProfileForm): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
 });
 
-const vuetifyConfig = (state: PublicPathState) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+
+const { defineField, meta, values, setValues, resetForm } = useForm<UserProfileForm>({
   validationSchema: toTypedSchema(
     yup.object({
       id: validations.id(),
@@ -122,15 +142,15 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
 });
 
 const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
+  required: (value: string) => !!value || "Este campo es obligatorio",
+  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+  validPhone: (value: string) =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
+  maxLength: (value: string) =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
   // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
@@ -148,10 +168,7 @@ const [confirmation, confirmationProps] = defineField(
 );
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -178,7 +195,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as UserProfileForm);
   }
 };
 </script>

@@ -117,27 +117,44 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, mergeProps, watch } from "vue";
-import dayjs from "dayjs";
 
-import { campusMap } from "@/constants";
+import type { Graduate } from "@/interfaces/graduate";
+import type { Generation } from "@/interfaces/generation";
+import type { SelectOption } from "@/constants";
 
-const props = defineProps({
-  graduates: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
-  read: { type: Boolean, default: () => false },
-  create: { type: Boolean, default: () => false },
-  edit: { type: Boolean, default: () => false },
-  userCampus: { type: Array, default: () => [] },
-  generations: { type: Array, default: () => [] },
+interface Props {
+  graduates?: Graduate[];
+  loading?: boolean;
+  read?: boolean;
+  create?: boolean;
+  edit?: boolean;
+  userCampus?: SelectOption[];
+  generations?: Generation[];
+}
+
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+  (e: "show", id: number): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  graduates: () => [],
+  loading: false,
+  read: false,
+  create: false,
+  edit: false,
+  userCampus: () => [],
+  generations: () => [],
 });
 
-const search = ref("");
-const generation_id = ref(null);
-const campus = ref(null);
+const search = ref<string>("");
+const generation_id = ref<number | null>(null);
+const campus = ref<string | null>(null);
 
-const emit = defineEmits(["create", "edit", "show"]);
+const emit = defineEmits<Emits>();
 
 const headers = computed(() => [
   {
@@ -167,14 +184,14 @@ const headers = computed(() => [
 ]);
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((map) => map.campus === campus.value)
+  props.generations.filter((gen) => gen.campus === campus.value)
 );
 
 const filteredGraduates = computed(() => {
-  return props.graduates.filter((map) => {
-    const campusMatch = campus.value ? map.campus === campus.value : true;
+  return props.graduates.filter((grad) => {
+    const campusMatch = campus.value ? grad.campus === campus.value : true;
     const generationMatch = generation_id.value
-      ? Number(map.generation_id) === Number(generation_id.value)
+      ? Number(grad.generation_id) === Number(generation_id.value)
       : true;
     return campusMatch && generationMatch;
   });
@@ -184,11 +201,11 @@ watch(campus, () => {
   generation_id.value = null;
 });
 
-const editItem = (item) => {
+const editItem = (item: Graduate) => {
   emit("edit", item.id);
 };
 
-const showItem = (item) => {
+const showItem = (item: Graduate) => {
   emit("show", item.id);
 };
 </script>

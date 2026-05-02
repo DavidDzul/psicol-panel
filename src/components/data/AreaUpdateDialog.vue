@@ -43,45 +43,46 @@
 </template>
 
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, watch, ref } from "vue";
+import { watch, ref } from "vue";
+import type { Area, AreaForm } from "@/interfaces/data";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: Area | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const areaName = ref("");
+const areaName = ref<string>("");
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: AreaForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
   (value) => {
     if (value) {
-      if (props.editItem) {
-        areaName.value = props.editItem.name;
-      }
+      areaName.value = props.editItem?.name ?? "";
     } else {
       areaName.value = "";
     }
-  }
+  },
 );
 
-const close = () => {
-  emit("update:modelValue", false);
-};
+const close = () => emit("update:modelValue", false);
 
 const save = () => {
   if (areaName.value) {
-    emit("submit", {
-      name: areaName.value,
-    });
+    emit("submit", { name: areaName.value });
   }
 };
 </script>

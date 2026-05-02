@@ -86,27 +86,35 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
+import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
 import { userTypeArray, campusArray, jobTypeArray } from "@/constants";
+import type { Area, CandidateDataForm } from "@/interfaces/data";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  areas: { type: Array, default: () => [] },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  areas?: Area[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  areas: () => [],
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+const { defineField, meta, values, resetForm } = useForm<CandidateDataForm>({
   validationSchema: toTypedSchema(
     yup.object({
       user_type: validations.user_type(),
@@ -118,21 +126,9 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
   ),
 });
 
-const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
-    /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
-    value.length <= 350 || "Máximo 350 caracteres permitidos",
-};
-
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
-  if (charCode < 48 || charCode > 57) {
-    event.preventDefault();
-  }
+  if (charCode < 48 || charCode > 57) event.preventDefault();
 };
 
 const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
@@ -141,7 +137,12 @@ const [area_id, area_idProps] = defineField("area_id", vuetifyConfig);
 const [count, countProps] = defineField("count", vuetifyConfig);
 const [campus, campusProps] = defineField("campus", vuetifyConfig);
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: CandidateDataForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -158,7 +159,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as CandidateDataForm);
   }
 };
 </script>

@@ -135,75 +135,70 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, mergeProps, watch, PropType } from "vue";
+import { computed, ref, mergeProps, watch } from "vue";
 import type { User } from "@/interfaces/user";
 import type { Generation } from "@/interfaces/generation";
-import dayjs from "dayjs";
+import type { SelectOption } from "@/constants";
 
-import { campusMap } from "@/constants";
+interface Props {
+  users?: User[];
+  loading?: boolean;
+  read?: boolean;
+  create?: boolean;
+  edit?: boolean;
+  generations?: Generation[];
+  userCampus?: SelectOption[];
+}
 
-const props = defineProps({
-  users: { type: Array as PropType<User[]>, default: () => [] },
-  loading: { type: Boolean, default: () => false },
-  read: { type: Boolean, default: () => false },
-  create: { type: Boolean, default: () => false },
-  edit: { type: Boolean, default: () => false },
-  generations: { type: Array as PropType<Generation[]>, default: () => [] },
-  userCampus: { type: Array, default: () => [] },
+const props = withDefaults(defineProps<Props>(), {
+  users: () => [],
+  loading: false,
+  read: false,
+  create: false,
+  edit: false,
+  generations: () => [],
+  userCampus: () => [],
 });
+
+interface Emits {
+  (e: "create"): void;
+  (e: "edit", id: number): void;
+  (e: "show", id: number): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const search = ref("");
-const generation_id = ref(null);
-const campus = ref(null);
+const generation_id = ref<number | null>(null);
+const campus = ref<string | null>(null);
 
-const groupBy = ref(undefined);
+interface DataTableHeader {
+  title: string;
+  key: string;
+}
 
-const emit = defineEmits(["create", "edit", "show"]);
-
-const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Matrícula",
-    key: "enrollment",
-  },
-  {
-    title: "Nombre(s)",
-    key: "first_name",
-  },
-  {
-    title: "Apellido(s)",
-    key: "last_name",
-  },
-  // {
-  //   title: "Generación",
-  //   key: "generation_id",
-  // },
-  {
-    title: "Activo",
-    key: "active",
-  },
-  {
-    title: "",
-    key: "actions",
-  },
-]);
+const headers: DataTableHeader[] = [
+  { title: "ID", key: "id" },
+  { title: "Matrícula", key: "enrollment" },
+  { title: "Nombre(s)", key: "first_name" },
+  { title: "Apellido(s)", key: "last_name" },
+  { title: "Activo", key: "active" },
+  { title: "", key: "actions" },
+];
 
 const filteredGenerations = computed(() =>
-  props.generations.filter((map) => map.campus === campus.value),
+  props.generations.filter((gen) => gen.campus === campus.value),
 );
 
-const filteredUsers = computed(() => {
-  return props.users.filter((user) => {
+const filteredUsers = computed(() =>
+  props.users.filter((user) => {
     const campusMatch = campus.value ? user.campus === campus.value : true;
     const generationMatch = generation_id.value
-      ? Number(user.generation_id) === Number(generation_id.value)
+      ? Number(user.generation_id) === generation_id.value
       : true;
     return campusMatch && generationMatch;
-  });
-});
+  }),
+);
 
 watch(campus, () => {
   generation_id.value = null;

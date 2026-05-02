@@ -116,20 +116,39 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from "vue";
 import { attendanceStatusMap } from "@/constants";
 import dayjs from "dayjs";
+import type { ClassEntity, ClassAttendance } from "@/interfaces/class";
 
-const props = defineProps({
-  classData: { type: Object, default: () => {} },
-  attendances: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
+interface AttendanceWithUserName extends ClassAttendance {
+  userName: string
+}
+
+interface Props {
+  classData: ClassEntity | null
+  attendances: ClassAttendance[]
+  loading: boolean
+}
+
+interface Emits {
+  (e: "assign"): void
+  (e: "edit", id: number): void
+  (e: "delete", id: number): void
+  (e: "report"): void
+  (e: "sheet"): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  classData: null,
+  attendances: () => [],
+  loading: false,
 });
 
-const emit = defineEmits(["assign", "edit", "delete", "report", "sheet"]);
+const emit = defineEmits<Emits>();
 
-const search = ref("");
+const search = ref<string>("");
 
 const headers = computed(() => [
   { title: "ID", key: "id" },
@@ -143,18 +162,18 @@ const headers = computed(() => [
   { title: "Acciones", key: "actions", sortable: false },
 ]);
 
-const itemsWithUserName = computed(() =>
+const itemsWithUserName = computed<AttendanceWithUserName[]>(() =>
   props.attendances.map((a) => ({
     ...a,
     userName: `${a.user.first_name} ${a.user.last_name}`,
   }))
 );
 
-const editItem = (item) => emit("edit", item.id);
-const deleteItem = (item) => emit("delete", item.id);
-const reportItem = (item) => emit("report");
-const reportSheet = (item) => emit("sheet");
-const assignItem = () => {
+const editItem = (item: AttendanceWithUserName): void => emit("edit", item.id);
+const deleteItem = (item: AttendanceWithUserName): void => emit("delete", item.id);
+const reportItem = (): void => emit("report");
+const reportSheet = (): void => emit("sheet");
+const assignItem = (): void => {
   emit("assign");
 };
 </script>

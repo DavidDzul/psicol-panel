@@ -26,19 +26,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, watch } from "vue";
 import dayjs from "dayjs";
 
-const props = defineProps({
-  modelValue: { type: String },
-  inputText: { type: String },
-});
+interface Props {
+  modelValue?: string
+  inputText?: string
+}
 
-const formMenuStart = ref(false);
-const fromDate = ref(null);
-const textDate = ref("");
+const props = defineProps<Props>();
 
-const getFormatDate = (date: string) => {
+const emit = defineEmits<{
+  "update:modelValue": [value: string]
+}>();
+
+const formMenuStart = ref<boolean>(false);
+const fromDate = ref<string | null>(null);
+const textDate = ref<string>("");
+
+const getFormatDate = (date: string): void => {
   fromDate.value = date;
   formMenuStart.value = false;
   textDate.value = dayjs(fromDate.value).format("DD-MM-YYYY");
@@ -57,9 +63,4 @@ watch(
   },
   { immediate: true }
 );
-
-const emit = defineEmits<{
-  "update:modelValue": [value: string];
-  buttonClick: [];
-}>();
 </script>

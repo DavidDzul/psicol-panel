@@ -115,22 +115,37 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { FieldState, useForm } from "vee-validate";
-import { computed, PropType, watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
+import { computed, watch } from "vue";
 import * as yup from "yup";
-
 import * as validations from "@/validations";
 import type { Generation } from "@/interfaces/generation";
 import type { UserForm } from "@/interfaces/user";
+import type { SelectOption } from "@/constants";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  generations: { type: Array as PropType<Generation[]>, default: () => [] },
-  userCampus: { type: Array, default: () => [] },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  generations?: Generation[];
+  userCampus?: SelectOption[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  generations: () => [],
+  userCampus: () => [],
 });
 
-const vuetifyConfig = (state: FieldState) => ({
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: UserForm): void;
+}
+
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
@@ -154,15 +169,8 @@ const { defineField, meta, values, resetForm } = useForm<UserForm>({
 const rules = {
   required: (value: unknown): true | string =>
     !!value || "Este campo es obligatorio",
-
-  validYear: (value: string): true | string =>
-    /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-
   validPhone: (value: string): true | string =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-
-  maxLength: (value: string): true | string =>
-    value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
 const onlyNumbers = (event: KeyboardEvent) => {
@@ -182,8 +190,6 @@ const [generation_id, generation_idProps] = defineField(
   vuetifyConfig,
 );
 const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
-
-const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
   () => props.modelValue,
@@ -212,7 +218,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as UserForm);
   }
 };
 </script>

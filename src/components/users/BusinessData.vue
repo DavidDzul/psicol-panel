@@ -47,12 +47,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
-
 import { lineBusinessMap } from "@/constants";
+import type { BusinessData } from "@/interfaces/business";
 
-const props = defineProps({
-  business: { type: Object, required: false, default: {} },
+interface Props {
+  business: BusinessData | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  business: null,
 });
 </script>
 

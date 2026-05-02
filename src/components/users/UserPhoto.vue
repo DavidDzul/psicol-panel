@@ -23,27 +23,26 @@
 </template>
 
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { PropType, ref } from "vue";
-import * as yup from "yup";
+import { ref } from "vue";
+import { API_URL } from "@/constants";
 
-import { API_URL } from "../../constants";
+interface PhotoItem {
+  url: string;
+}
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  photos: { type: Array, default: () => [] },
+interface Props {
+  photos?: PhotoItem[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  photos: () => [],
 });
 
-const corousel = ref(null);
 const carouselDialog = ref(false);
-const corouselFull = ref<null | number>(null);
-const fab = ref<{ items: boolean[] }>({ items: [] });
+const corouselFull = ref<number | null>(null);
 
-const photoUrl = (value) => {
-  const url = API_URL + "storage/" + value.url;
-  return url;
+const photoUrl = (value: PhotoItem): string => {
+  return API_URL + "storage/" + value.url;
 };
 
 const showPhoto = (index: number) => {

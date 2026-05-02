@@ -78,58 +78,42 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
-
+<script setup lang="ts">
+import { ref } from "vue";
+import type { CandidateData, Area } from "@/interfaces/data";
 import { campusMap, userTypeMap, jobTypeMap } from "@/constants";
 
-const props = defineProps({
-  candidates: { type: Array, default: () => [] },
-  areas: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  candidates?: CandidateData[];
+  areas?: Area[];
+  loading?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  candidates: () => [],
+  areas: () => [],
+  loading: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const search = ref<string>("");
 
-const getAreaName = (areaId) => {
-  const area = props.areas.find((area) => area.id === areaId);
+interface DataTableHeader {
+  title: string;
+  key: string;
+}
+
+const headers: DataTableHeader[] = [
+  { title: "ID", key: "id" },
+  { title: "Usuario", key: "user_type" },
+  { title: "Sede", key: "campus" },
+  { title: "Tipo de trabajo", key: "job_type" },
+  { title: "Área", key: "area_id" },
+  { title: "Total", key: "count" },
+  { title: "", key: "actions" },
+];
+
+const getAreaName = (areaId: number): string => {
+  const area = props.areas.find((a) => a.id === areaId);
   return area ? area.name : "Área no encontrada";
 };
-
-const emit = defineEmits(["remove", "edit"]);
-
-const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Usuario",
-    key: "user_type",
-  },
-  {
-    title: "Sede",
-    key: "campus",
-  },
-  {
-    title: "Tipo de trabajo",
-    key: "job_type",
-  },
-  {
-    title: "Área",
-    key: "area_id",
-  },
-  {
-    title: "Total",
-    key: "count",
-  },
-  {
-    title: "",
-    key: "actions",
-  },
-]);
-
-
 </script>

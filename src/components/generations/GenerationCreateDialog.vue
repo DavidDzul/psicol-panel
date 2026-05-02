@@ -66,20 +66,40 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { type FieldState, useForm } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
+import type { GenerationForm } from "@/interfaces/generation";
+import type { SelectOption } from "@/constants";
 import * as validations from "@/validations";
-import { campusArray } from "@/constants";
 
-const vuetifyConfig = (state: PublicPathState) => ({
+interface Props {
+  modelValue: boolean
+  loading: boolean
+  userCampus: SelectOption[]
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit", value: GenerationForm): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  userCampus: () => [],
+});
+
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
 
-const { defineField, meta, values, resetField, resetForm } = useForm({
+const { defineField, meta, values, resetForm } = useForm<GenerationForm>({
   validationSchema: toTypedSchema(
     yup.object({
       generation_name: validations.generation_name(),
@@ -99,17 +119,6 @@ const [generation_active, generation_activeProps] = defineField(
   vuetifyConfig
 );
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  userCampus: { type: Array, default: () => [] },
-});
-
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
-
 watch(
   () => props.modelValue,
   (value) => {
@@ -125,7 +134,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as GenerationForm);
   }
 };
 </script>

@@ -80,21 +80,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { watch } from "vue";
+import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import * as validations from "@/validations";
-import dayjs from "dayjs";
-import DatePickerInput from "@/components/shared/DatePickerInput.vue";
+import type { ClassEntity, ClassUpdateForm } from "@/interfaces/class";
 
-const props = defineProps({
-  modelValue: Boolean,
-  loading: Boolean,
-  editItem: { type: Object, default: null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: ClassEntity | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: { "error-messages": state.errors },
 });
 
@@ -109,15 +115,12 @@ const vuetifyConfig = (state) => ({
 // const endMinute = ref(null);
 
 // Formulario vee-validate
-const { defineField, meta, values, setFieldValue, setValues, resetForm } =
-  useForm({
+const { defineField, meta, values, setValues, resetForm } =
+  useForm<ClassUpdateForm>({
     validationSchema: toTypedSchema(
       yup.object({
         class_name: validations.class_name(),
-        // class_date: validations.class_date(),
-        // class_start_time: validations.class_start_time(),
-        // class_end_time: validations.class_end_time(),
-      })
+      }),
     ),
   });
 
@@ -177,7 +180,12 @@ watch(
   { immediate: true }
 );
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: { name: string }): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const close = () => emit("update:modelValue", false);
 

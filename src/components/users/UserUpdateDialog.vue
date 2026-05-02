@@ -126,57 +126,68 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { FieldState, useForm } from "vee-validate";
-import { computed, PropType, watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
+import { computed, watch } from "vue";
 import * as yup from "yup";
-
 import * as validations from "@/validations";
 import { becTypeArray } from "@/constants";
-import { Generation } from "@/interfaces/generation";
-import type { User } from "@/interfaces/user";
+import type { SelectOption } from "@/constants";
+import type { Generation } from "@/interfaces/generation";
+import type { User, UserUpdateForm } from "@/interfaces/user";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object as PropType<User>, default: () => null },
-  userCampus: { type: Array, default: () => [] },
-  generations: { type: Array as PropType<Generation[]>, default: () => [] },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: User | null;
+  userCampus?: SelectOption[];
+  generations?: Generation[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
+  userCampus: () => [],
+  generations: () => [],
 });
 
-const vuetifyConfig = (state: FieldState) => ({
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: UserUpdateForm): void;
+}
+
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
-  validationSchema: toTypedSchema(
-    yup.object({
-      first_name: validations.first_name(),
-      last_name: validations.last_name(),
-      email: validations.email(),
-      password: validations.updatePassword(),
-      enrollment: validations.enrollment(),
-      phone: validations.phone(),
-      campus: validations.campus(),
-      generation_id: validations.generation_id(),
-      active: validations.user_active(),
-      user_type: validations.user_type(),
-    }),
-  ),
-});
+
+const { defineField, meta, values, setValues, resetForm } =
+  useForm<UserUpdateForm>({
+    validationSchema: toTypedSchema(
+      yup.object({
+        first_name: validations.first_name(),
+        last_name: validations.last_name(),
+        email: validations.email(),
+        password: validations.updatePassword(),
+        enrollment: validations.enrollment(),
+        phone: validations.phone(),
+        campus: validations.campus(),
+        generation_id: validations.generation_id(),
+        active: validations.user_active(),
+        user_type: validations.user_type(),
+      }),
+    ),
+  });
 
 const rules = {
   required: (value: unknown): true | string =>
     !!value || "Este campo es obligatorio",
-
-  validYear: (value: string): true | string =>
-    /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-
   validPhone: (value: string): true | string =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-
-  maxLength: (value: string): true | string =>
-    value.length <= 350 || "Máximo 350 caracteres permitidos",
 };
 
 const onlyNumbers = (event: KeyboardEvent) => {
@@ -198,7 +209,6 @@ const [generation_id, generation_idProps] = defineField(
 );
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
-const emit = defineEmits(["update:modelValue", "submit"]);
 
 watch(
   () => props.modelValue,
@@ -206,12 +216,12 @@ watch(
     if (value) {
       if (props.editItem) {
         setValues({
-          enrollment: props.editItem.enrollment || "",
+          enrollment: props.editItem.enrollment ?? "",
           first_name: props.editItem.first_name,
           last_name: props.editItem.last_name,
           email: props.editItem.email,
           phone: props.editItem.phone,
-          active: props.editItem.active ? true : false,
+          active: props.editItem.active,
           user_type: props.editItem.user_type,
           campus: props.editItem.campus,
           generation_id: Number(props.editItem.generation_id),
@@ -239,7 +249,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as UserUpdateForm);
   }
 };
 </script>

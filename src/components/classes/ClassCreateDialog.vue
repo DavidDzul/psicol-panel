@@ -137,24 +137,39 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, ref, watch, nextTick } from "vue"; // <-- Importar nextTick
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
+import { computed, ref, watch, nextTick } from "vue";
 import DatePickerInput from "@/components/shared/DatePickerInput.vue";
 import * as yup from "yup";
 import * as validations from "@/validations";
 import dayjs from "dayjs";
+import type { SelectOption } from "@/constants";
+import type { Generation } from "@/interfaces/generation";
+import type { ClassForm } from "@/interfaces/class";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  adminCampus: { type: Array, default: () => [] },
-  generations: {
-    type: Array<{ id: number; campus: string }>,
-    default: () => [],
-  },
+interface Props {
+  modelValue: boolean
+  loading: boolean
+  adminCampus: SelectOption[]
+  generations: Generation[]
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit", value: ClassForm): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  adminCampus: () => [],
+  generations: () => [],
 });
 
-const vuetifyConfig = (state: PublicPathState) => ({
+const emit = defineEmits<Emits>();
+
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
@@ -168,14 +183,14 @@ const seconds = Array.from({ length: 60 }, (_, i) =>
   String(i).padStart(2, "0"),
 );
 
-const startHour = ref("09");
-const startMinute = ref("00");
-const startSeconds = ref("59");
-const endHour = ref("14");
-const endMinute = ref("00");
-const endSeconds = ref("00");
+const startHour = ref<string>("09");
+const startMinute = ref<string>("00");
+const startSeconds = ref<string>("59");
+const endHour = ref<string>("14");
+const endMinute = ref<string>("00");
+const endSeconds = ref<string>("00");
 
-const filteredGenerations = computed(() =>
+const filteredGenerations = computed<Generation[]>(() =>
   props.generations.filter((g) => g.campus === campus.value),
 );
 
@@ -207,11 +222,11 @@ const [generation_id, generation_idProps] = defineField(
 defineField("class_start_time");
 defineField("class_end_time");
 
-const class_start_time = computed(
+const class_start_time = computed<string>(
   () => `${startHour.value}:${startMinute.value}:${startSeconds.value}`,
 );
 
-const class_end_time = computed(
+const class_end_time = computed<string>(
   () => `${endHour.value}:${endMinute.value}:${endSeconds.value}`,
 );
 
@@ -222,11 +237,6 @@ watch(class_start_time, (val) => {
 watch(class_end_time, (val) => {
   setFieldValue("class_end_time", val);
 });
-
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
 
 watch(
   () => props.modelValue,
@@ -248,21 +258,14 @@ watch(
     }
   },
 );
-// ----------------------------------------------------------------------
 
-const close = () => {
+const close = (): void => {
   emit("update:modelValue", false);
 };
 
-const save = () => {
+const save = (): void => {
   if (meta.value.valid) {
-    emit("submit", {
-      ...values,
-      name: values.class_name,
-      date: dayjs(values.class_date).format("YYYY-MM-DD"),
-      start_time: values.class_start_time,
-      end_time: values.class_end_time,
-    });
+    emit("submit", { ...values } as ClassForm);
   }
 };
 </script>

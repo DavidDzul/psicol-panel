@@ -155,31 +155,41 @@
   </v-data-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, mergeProps } from "vue";
 import dayjs from "dayjs";
 
 import { vacantTypeMap } from "@/constants";
+import type { VacantPosition } from "@/interfaces/vacant";
 
-const props = defineProps({
-  positions: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
-  read: { type: Boolean, default: () => false },
-  create: { type: Boolean, default: () => false },
-  edit: { type: Boolean, default: () => false },
+interface Props {
+  positions: VacantPosition[];
+  loading: boolean;
+  read: boolean;
+  create: boolean;
+  edit: boolean;
+}
+
+interface Emits {
+  (e: "show", id: number): void;
+  (e: "disabled", id: number): void;
+  (e: "laboral"): void;
+  (e: "junior"): void;
+  (e: "practice"): void;
+  (e: "enable", id: number): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  positions: () => [],
+  loading: false,
+  read: false,
+  create: false,
+  edit: false,
 });
 
-const search = ref("");
-const groupBy = ref(undefined);
+const emit = defineEmits<Emits>();
 
-const emit = defineEmits([
-  "show",
-  "disabled",
-  "laboral",
-  "junior",
-  "practice",
-  "enable",
-]);
+const search = ref<string>("");
 
 const headers = computed(() => [
   {
@@ -212,20 +222,20 @@ const headers = computed(() => [
   },
 ]);
 
-const formattedHistory = (time) => {
+const formattedHistory = (time: string): string => {
   const date = dayjs(time);
   return dayjs().to(date);
 };
 
-const showItem = (item) => {
+const showItem = (item: VacantPosition): void => {
   emit("show", item.id);
 };
 
-const disabledItem = (item) => {
+const disabledItem = (item: VacantPosition): void => {
   emit("disabled", item.id);
 };
 
-const enableItem = (item) => {
+const enableItem = (item: VacantPosition): void => {
   emit("enable", item.id);
 };
 </script>

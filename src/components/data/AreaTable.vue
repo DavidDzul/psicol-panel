@@ -64,42 +64,40 @@
   </v-data-table>
 </template>
 
-<script setup>
-import { computed, ref, mergeProps } from "vue";
-import dayjs from "dayjs";
+<script setup lang="ts">
+import { ref } from "vue";
+import type { Area } from "@/interfaces/data";
 
-import { campusMap } from "@/constants";
+interface Props {
+  areas?: Area[];
+  loading?: boolean;
+}
 
-const props = defineProps({
-  areas: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: () => false },
+const props = withDefaults(defineProps<Props>(), {
+  areas: () => [],
+  loading: false,
 });
 
 const search = ref("");
-const groupBy = ref(undefined);
 
-const emit = defineEmits(["delete", "edit"]);
+interface Emits {
+  (e: "delete", id: number): void;
+  (e: "edit", id: number): void;
+}
 
-const headers = computed(() => [
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "Nombre",
-    key: "name",
-  },
-  {
-    title: "",
-    key: "actions",
-  },
-]);
+const emit = defineEmits<Emits>();
 
-const editItem = (item) => {
-  emit("edit", item.id);
-};
+interface DataTableHeader {
+  title: string;
+  key: string;
+}
 
-const deleteItem = (item) => {
-  emit("delete", item.id);
-};
+const headers: DataTableHeader[] = [
+  { title: "ID", key: "id" },
+  { title: "Nombre", key: "name" },
+  { title: "", key: "actions" },
+];
+
+const editItem = (item: Area) => emit("edit", item.id);
+const deleteItem = (item: Area) => emit("delete", item.id);
 </script>

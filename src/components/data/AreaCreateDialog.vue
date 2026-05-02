@@ -43,40 +43,40 @@
 </template>
 
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
-import { PublicPathState, useForm } from "vee-validate";
-import { computed, watch, ref } from "vue";
+import { watch, ref } from "vue";
+import type { AreaForm } from "@/interfaces/data";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
 });
 
-const areaName = ref("");
+const areaName = ref<string>("");
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: AreaForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
   (value) => {
-    if (!value) {
-      areaName.value = "";
-    }
-  }
+    if (!value) areaName.value = "";
+  },
 );
 
-const close = () => {
-  emit("update:modelValue", false);
-};
+const close = () => emit("update:modelValue", false);
 
 const save = () => {
   if (areaName.value) {
-    emit("submit", {
-      name: areaName.value,
-    });
+    emit("submit", { name: areaName.value });
   }
 };
 </script>

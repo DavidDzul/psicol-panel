@@ -6,8 +6,7 @@ import { computed, onBeforeMount, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/api/authStore";
 
-import type { User } from "@/interfaces/user";
-import type { UserForm } from "@/interfaces/user";
+import type { User, UserForm, UserUpdateForm } from "@/interfaces/user";
 import type { Generation } from "@/interfaces/generation";
 
 export const useUserPageStore = defineStore("userPage", () => {
@@ -90,7 +89,7 @@ export const useUserPageStore = defineStore("userPage", () => {
     loadingCreate.value = false;
   };
 
-  const onUpdateUser = async (form: UserForm): Promise<void> => {
+  const onUpdateUser = async (form: UserUpdateForm): Promise<void> => {
     if (!editUser.value) return;
 
     loadingUpdate.value = true;

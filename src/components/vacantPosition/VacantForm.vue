@@ -220,12 +220,14 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from "vue";
 import { modeVacantMap, vacantTypeMap, candidateTypeMap } from "@/constants";
+import type { VacantPosition } from "@/interfaces/vacant";
 
-const props = defineProps({
-  vacant: { type: Object, required: true },
-});
+interface Props {
+  vacant: VacantPosition & Record<string, unknown>;
+}
+
+const props = defineProps<Props>();
 </script>
 
 <style scoped>

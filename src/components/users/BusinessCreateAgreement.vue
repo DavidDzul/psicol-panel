@@ -53,26 +53,39 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
 import DatePickerInput from "@/components/shared/DatePickerInput.vue";
+import type { AgreementForm } from "@/interfaces/business";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
+interface Props {
+  modelValue: boolean;
+  loading: boolean;
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: AgreementForm): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+
+const { defineField, meta, values, resetForm } = useForm({
   validationSchema: toTypedSchema(
     yup.object({
       start_date: validations.start_date(),
@@ -84,7 +97,7 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
 const [start_date, start_dateProps] = defineField("start_date");
 const [end_date, end_dateProps] = defineField("end_date");
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -101,7 +114,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as AgreementForm);
   }
 };
 </script>

@@ -122,29 +122,36 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
+import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import * as yup from "yup";
 
 import * as validations from "@/validations";
 import { roleArray } from "@/constants";
+import type { Business, BusinessUpdateForm } from "@/interfaces/business";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  generations: { type: Array, default: () => [] },
-  userCampus: { type: Array, default: () => [] },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+  editItem?: Business | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
-const { defineField, meta, values, setValues, resetForm } = useForm({
+
+const { defineField, meta, values, setValues, resetForm } = useForm<BusinessUpdateForm>({
   validationSchema: toTypedSchema(
     yup.object({
       first_name: validations.first_name(),
@@ -152,7 +159,6 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
       email: validations.email(),
       password: validations.updatePassword(),
       phone: validations.phone(),
-      // campus: validations.campus(),
       workstation: validations.workstation(),
       role: validations.role(),
       active: validations.user_active(),
@@ -160,18 +166,8 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
   ),
 });
 
-const rules = {
-  required: (value) => !!value || "Este campo es obligatorio",
-  validYear: (value) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value) =>
-    /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value) =>
-    value.length <= 350 || "Máximo 350 caracteres permitidos",
-};
-
-const onlyNumbers = (event) => {
+const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
-  // Permite solo números (0-9)
   if (charCode < 48 || charCode > 57) {
     event.preventDefault();
   }
@@ -181,16 +177,17 @@ const [first_name, first_nameProps] = defineField("first_name", vuetifyConfig);
 const [last_name, last_nameProps] = defineField("last_name", vuetifyConfig);
 const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
-// const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
-const [workstation, workstationProps] = defineField(
-  "workstation",
-  vuetifyConfig
-);
+const [workstation, workstationProps] = defineField("workstation", vuetifyConfig);
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [role, roleProps] = defineField("role", vuetifyConfig);
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: BusinessUpdateForm): void;
+}
+
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -198,13 +195,12 @@ watch(
     if (value) {
       if (props.editItem) {
         setValues({
-          id: props.editItem.id,
           first_name: props.editItem.first_name,
           last_name: props.editItem.last_name,
           email: props.editItem.email,
           phone: props.editItem.phone,
-          workstation: props.editItem.workstation,
-          active: props.editItem.active ? true : false,
+          workstation: props.editItem.workstation ?? "",
+          active: !!props.editItem.active,
           role: props.editItem.role.name,
         });
       }
@@ -214,17 +210,13 @@ watch(
   }
 );
 
-// const filteredGenerations = computed(() =>
-//   props.generations.filter((map) => map.campus === campus.value)
-// );
-
 const close = () => {
   emit("update:modelValue", false);
 };
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as BusinessUpdateForm);
   }
 };
 </script>

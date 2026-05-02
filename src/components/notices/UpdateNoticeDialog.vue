@@ -73,52 +73,61 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { watch } from "vue";
 import * as yup from "yup";
 
+import type { SelectOption } from "@/constants";
+import type { Notice, NoticeForm } from "@/interfaces/notice";
 import * as validations from "@/validations";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  adminCampus: { type: Array, default: () => [] },
-  root: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: null },
+interface Props {
+  modelValue: boolean;
+  loading: boolean;
+  adminCampus: SelectOption[];
+  root: boolean;
+  editItem: Notice | null;
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: NoticeForm): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  adminCampus: () => [],
+  root: false,
+  editItem: null,
 });
 
-const vuetifyConfig = (state) => ({
+const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
     "error-messages": state.errors,
   },
 });
 
-const { defineField, meta, values, resetField, resetForm, setValues } = useForm(
-  {
-    validationSchema: toTypedSchema(
-      yup.object({
-        message: validations.message(),
-        campus: validations.campus(),
-        active: validations.notice_active(),
-        global: validations.notice_global(),
-      })
-    ),
-  }
-);
+const { defineField, meta, values, resetForm, setValues } = useForm({
+  validationSchema: toTypedSchema(
+    yup.object({
+      message: validations.message(),
+      campus: validations.campus(),
+      active: validations.notice_active(),
+      global: validations.notice_global(),
+    })
+  ),
+});
 
 const [message, messageProps] = defineField("message", vuetifyConfig);
-const [campus, campusProps] = defineField("campus", vuetifyConfig);
+const [campus] = defineField("campus", vuetifyConfig);
 const [active, activeProps] = defineField("active", vuetifyConfig);
 const [global, globalProps] = defineField("global", vuetifyConfig);
 
-// const emit = defineEmits<{
-//   "update:modelValue": [value: boolean];
-//   submit: [value: Object];
-// }>();
-
-const emit = defineEmits(["update:modelValue", "submit"]);
+const emit = defineEmits<Emits>();
 
 watch(
   () => props.modelValue,
@@ -139,13 +148,13 @@ watch(
   { immediate: true }
 );
 
-const close = () => {
+const close = (): void => {
   emit("update:modelValue", false);
 };
 
-const save = () => {
+const save = (): void => {
   if (meta.value.valid) {
-    emit("submit", values);
+    emit("submit", { ...values } as NoticeForm);
   }
 };
 </script>

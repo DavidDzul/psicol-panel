@@ -1,4 +1,14 @@
 export interface Notice {
   id: number
-  [key: string]: any
+  message: string
+  campus: string
+  active: boolean
+  global: boolean
+}
+
+export interface NoticeForm {
+  message: string
+  campus: string
+  active: boolean
+  global: boolean
 }

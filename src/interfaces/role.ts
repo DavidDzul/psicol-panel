@@ -4,6 +4,23 @@ export interface RolePivot {
   model_type: string;
 }
 
+export interface RoleConfiguration {
+  unlimited_jobs: boolean;
+  num_job_vacancies: number;
+  unlimited_professionals: boolean;
+  num_professional_vacancies: number;
+  unlimited_jr: boolean;
+  num_jr_vacancies: number;
+  unlimited_visualizations: boolean;
+  num_visualizations: number;
+}
+
+export interface Permission {
+  id: number;
+  name: string;
+  type?: string;
+}
+
 export interface Role {
   id: number;
   name: string;
@@ -12,10 +29,18 @@ export interface Role {
   updated_at: string;
   type: string;
   pivot: RolePivot;
+  configuration?: RoleConfiguration;
+  permissions?: Permission[];
 }
 
-export interface Permission {
-  id: number;
-  type?: string;
-  [key: string]: any;
+export interface RoleForm {
+  unlimited_jobs: boolean;
+  num_job_vacancies: number;
+  unlimited_professionals: boolean;
+  num_professional_vacancies: number;
+  unlimited_jr: boolean;
+  num_jr_vacancies: number;
+  unlimited_visualizations: boolean;
+  num_visualizations: number;
+  permissions_ids: number[];
 }

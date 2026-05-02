@@ -50,23 +50,29 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onBeforeMount, ref } from "vue";
-
+import { ref } from "vue";
 import { bsRejectedArray } from "@/constants";
+import type { RejectedApplicationForm } from "@/interfaces/jobApplication";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue?: boolean;
+  loading?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
 });
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: RejectedApplicationForm): void;
+}
 
-const rejectedType = ref(null);
-const otherValue = ref("");
+const emit = defineEmits<Emits>();
+
+const rejectedType = ref<string | null>(null);
+const otherValue = ref<string>("");
 
 const close = () => {
   emit("update:modelValue", false);
@@ -76,7 +82,7 @@ const close = () => {
 const save = () => {
   emit("submit", {
     rejected_reason: rejectedType.value,
-    rejected_other: otherValue.value ? otherValue.value : "",
+    rejected_other: otherValue.value || "",
     status: "REJECTED",
   });
 };

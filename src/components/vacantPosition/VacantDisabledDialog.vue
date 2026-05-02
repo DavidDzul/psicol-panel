@@ -48,27 +48,36 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onBeforeMount, ref } from "vue";
+import { ref } from "vue";
+import type { VacantPosition, CandidateType, VacantDisabledPayload } from "@/interfaces/vacant";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: () => false },
-  loading: { type: Boolean, default: () => false },
-  editItem: { type: Object, default: () => null },
+interface Props {
+  modelValue: boolean;
+  loading: boolean;
+  editItem: VacantPosition | null;
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: VacantDisabledPayload): void;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  loading: false,
+  editItem: null,
 });
 
-const emit = defineEmits<{
-  "update:modelValue": [value: boolean];
-  submit: [value: Object];
-}>();
+const emit = defineEmits<Emits>();
 
-const selectedCandidateType = ref(null);
-const otherValue = ref("");
+const selectedCandidateType = ref<CandidateType | null>(null);
+const otherValue = ref<string>("");
 
-const close = () => {
+const close = (): void => {
   emit("update:modelValue", false);
 };
 
-const save = () => {
+const save = (): void => {
   emit("submit", {
     candidate_type: selectedCandidateType.value,
     candidate_other: otherValue.value ? otherValue.value : "",

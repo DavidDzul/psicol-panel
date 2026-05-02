@@ -93,51 +93,66 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from "vue";
+import type { SelectOption } from "@/constants";
+import type { Generation } from "@/interfaces/generation";
+import type { ReportSemesterForm } from "@/interfaces/class";
 
-const props = defineProps({
-  modelValue: Boolean,
-  adminCampus: Array,
-  generations: Array,
-  loading: Boolean,
+interface SemesterOption {
+  title: string
+  value: number
+}
+
+interface Props {
+  modelValue: boolean
+  adminCampus: SelectOption[]
+  generations: Generation[]
+  loading: boolean
+}
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void
+  (e: "submit", form: ReportSemesterForm): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  adminCampus: () => [],
+  generations: () => [],
+  loading: false,
 });
 
-const emit = defineEmits(["update:modelValue", "submit"]);
+const emit = defineEmits<Emits>();
 
-const campus = ref(null);
-const generation_id = ref(null);
-const year = ref(null);
-const semester = ref(null);
-const format = ref(1);
+const campus = ref<string | null>(null);
+const generation_id = ref<number | null>(null);
+const year = ref<number | null>(null);
+const semester = ref<number | null>(null);
+const format = ref<number>(1);
 
-const filteredGenerations = computed(() =>
+const filteredGenerations = computed<Generation[]>(() =>
   props.generations.filter((g) => g.campus === campus.value)
 );
 
-const selectYear = computed(() => {
+const selectYear = computed<number[]>(() => {
   const current = new Date().getFullYear();
   return [current - 1, current, current + 1];
 });
 
-const selectSemester = [
+const selectSemester: SemesterOption[] = [
   { title: "Enero - Junio", value: 1 },
   { title: "Agosto - Diciembre", value: 2 },
 ];
 
-const isValid = computed(() => {
-  return (
-    campus.value &&
-    generation_id.value &&
-    year.value &&
-    semester.value &&
-    format.value
-  );
-});
+const isValid = computed<boolean>(() =>
+  !!(campus.value && generation_id.value && year.value && semester.value && format.value)
+);
 
-const close = () => emit("update:modelValue", false);
+const close = (): void => emit("update:modelValue", false);
 
-const submit = () => {
+const submit = (): void => {
+  if (!campus.value || !generation_id.value || !year.value || !semester.value) return;
   emit("submit", {
     campus: campus.value,
     generation_id: generation_id.value,
