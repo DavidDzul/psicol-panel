@@ -1,6 +1,6 @@
 <template>
   <v-layout id="app">
-    <v-app-bar color="primary" :order="0">
+    <v-app-bar color="black" :order="0">
       <v-app-bar-nav-icon @click="onClick"></v-app-bar-nav-icon>
       <v-toolbar-title>Impulso Universitario A.C.</v-toolbar-title>
 
@@ -87,7 +87,7 @@ watch(
     } else if (!mobile.value) {
       drawer.value = true;
     }
-  }
+  },
 );
 </script>
 <style lang="scss" scoped>

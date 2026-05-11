@@ -13,6 +13,7 @@ import type { Role, Permission } from './role'
 export interface UsersResponse { users: User[] }
 export interface UserResponse { user: User }
 export interface CreateUserResponse { createUser: User; res: unknown }
+export interface CreatePersonResponse { createPerson: User; res: unknown }
 export interface UpdateUserResponse { updateUser: User; res: unknown }
 
 // Auth

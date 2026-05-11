@@ -7,7 +7,7 @@
           <v-expansion-panel-title color="#f8f8f8">
             <template #default="{ expanded }">
               <PanelHeaderOptions
-                v-if="selectedGraduate"
+                v-if="selectedPerson"
                 title="Información de usuario"
                 button-text="Actualizar"
                 :expanded="expanded"
@@ -16,39 +16,53 @@
             </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <UserForm v-if="selectedGraduate" :user="selectedGraduate" />
+            <UserForm v-if="selectedPerson" :user="selectedPerson" />
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
     </v-col>
   </v-row>
 
-  <GraduateUpdateDialog
-    v-if="selectedGraduate"
+  <UserUpdateDialog
+    v-if="selectedPerson"
     v-model="updateDialog"
-    :edit-item="selectedGraduate"
+    :title="dialogTitle"
+    :edit-item="selectedPerson"
     :loading="loadingUpdate"
-    @submit="onUpdateGraduate"
+    :user-campus="filteredCampus"
+    :generations="generations"
+    @submit="onUpdate"
   />
-  <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
+  <ConfirmationDialog ref="confirmationDialog" />
 </template>
 
-<script setup>
-import { ref, reactive, watch } from "vue";
-import { storeToRefs } from "pinia";
-import { useGraduateDetailsPageStore } from "@/stores/views/graduateDetailsPage";
+<script setup lang="ts">
+import { ref } from "vue";
+import { usePersonDetailsPage } from "@/composables/usePersonDetailsPage";
+import type { PersonsMode } from "@/composables/usePersonsPage";
+
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import PanelHeaderOptions from "@/components/shared/PanelHeaderOptions.vue";
-
-import GraduateUpdateDialog from "@/components/users/GraduateUpdateDialog.vue";
+import UserUpdateDialog from "@/components/users/UserUpdateDialog.vue";
 import UserForm from "@/components/users/UserForm.vue";
 
-const { links, selectedGraduate, updateDialog, loadingUpdate } = storeToRefs(
-  useGraduateDetailsPageStore()
-);
-const { openUpdateDialog, onUpdateGraduate } = useGraduateDetailsPageStore();
+const props = defineProps<{
+  mode: PersonsMode;
+}>();
 
-const panel = ref([0]);
 const confirmationDialog = ref();
+const panel = ref([0]);
+
+const {
+  links,
+  selectedPerson,
+  updateDialog,
+  loadingUpdate,
+  generations,
+  filteredCampus,
+  dialogTitle,
+  openUpdateDialog,
+  onUpdate,
+} = usePersonDetailsPage(props.mode);
 </script>

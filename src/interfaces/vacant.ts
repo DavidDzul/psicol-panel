@@ -2,7 +2,6 @@ import type { Business } from "./business";
 
 export type JobCategory =
   | "JOB_POSITION"
-  | "PROFESSIONAL_PRACTICE"
   | "PROFESSIONAL_PRACTICE";
 
 export interface VacantPosition {

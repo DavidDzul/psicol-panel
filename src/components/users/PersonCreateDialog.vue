@@ -9,7 +9,7 @@
     <v-card>
       <v-form>
         <v-toolbar dark>
-          <v-toolbar-title>Actualizar egresado/a</v-toolbar-title>
+          <v-toolbar-title>{{ title }}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-toolbar-items>
             <v-btn icon @click="close"><v-icon>mdi-close</v-icon></v-btn>
@@ -18,6 +18,16 @@
         <v-card-text>
           <v-form>
             <v-row>
+              <v-col cols="12" md="6">
+                <v-select
+                  :items="userTypeOptions"
+                  v-model="user_type"
+                  v-bind="user_typeProps"
+                  item-title="title"
+                  item-value="value"
+                  label="Tipo de usuario"
+                ></v-select>
+              </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="first_name"
@@ -44,12 +54,10 @@
                   v-model="phone"
                   v-bind="phoneProps"
                   label="Número de celular"
-                  :rules="[rules.required, rules.validPhone]"
-                  required
                   @keypress="onlyNumbers"
                 ></v-text-field>
               </v-col>
-              <!-- <v-col cols="12" md="6">
+              <v-col cols="12" md="6">
                 <v-select
                   :items="userCampus"
                   v-model="campus"
@@ -68,7 +76,7 @@
                   item-value="id"
                   label="Generación"
                 ></v-select>
-              </v-col> -->
+              </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="enrollment"
@@ -81,25 +89,8 @@
                   v-model="password"
                   v-bind="passwordProps"
                   label="Contraseña"
+                  readonly
                 ></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  :items="becTypeArray"
-                  v-model="user_type"
-                  v-bind="user_typeProps"
-                  item-title="text"
-                  item-value="value"
-                  label="Tipo de usuario"
-                ></v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-checkbox
-                  v-model="active"
-                  v-bind="activeProps"
-                  label="¿Permitir acceso a la plataforma?"
-                  density="comfortable"
-                ></v-checkbox>
               </v-col>
             </v-row>
           </v-form>
@@ -114,8 +105,8 @@
             :loading="loading"
             @click="save"
           >
-            Actualizar</v-btn
-          >
+            Guardar
+          </v-btn>
         </v-card-actions>
       </v-form>
     </v-card>
@@ -124,125 +115,105 @@
 
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
-import { type FieldState, useForm } from "vee-validate";
-import { watch } from "vue";
+import type { FieldState } from "vee-validate";
+import { useForm } from "vee-validate";
+import { computed, watch } from "vue";
 import * as yup from "yup";
-
-import type { Graduate, GraduateUpdateForm } from "@/interfaces/graduate";
 import * as validations from "@/validations";
-import { becTypeArray } from "@/constants";
+import type { Generation } from "@/interfaces/generation";
+import type { UserForm, UserType } from "@/interfaces/user";
+import type { SelectOption } from "@/constants";
 
 interface Props {
   modelValue?: boolean;
   loading?: boolean;
-  editItem?: Graduate | null;
-}
-
-interface Emits {
-  (e: "update:modelValue", value: boolean): void;
-  (e: "submit", values: GraduateUpdateForm): void;
+  generations?: Generation[];
+  userCampus?: SelectOption[];
+  title?: string;
+  defaultUserType?: UserType;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   loading: false,
-  editItem: null,
+  generations: () => [],
+  userCampus: () => [],
+  title: "Nueva persona",
+  defaultUserType: "BEC_ACTIVE",
 });
+
+interface Emits {
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: UserForm): void;
+}
 
 const emit = defineEmits<Emits>();
 
+const userTypeOptions = [
+  { title: "Becario/a", value: "BEC_ACTIVE" },
+  { title: "Egresado/a", value: "BEC_INACTIVE" },
+];
+
 const vuetifyConfig = (state: FieldState<unknown>) => ({
-  props: {
-    "error-messages": state.errors,
-  },
+  props: { "error-messages": state.errors },
 });
 
-const { defineField, meta, values, setValues, resetForm } = useForm<GraduateUpdateForm>({
+const { defineField, meta, values, resetForm } = useForm<UserForm>({
   validationSchema: toTypedSchema(
     yup.object({
+      user_type: yup
+        .string()
+        .required("Campo requerido")
+        .oneOf(["BEC_ACTIVE", "BEC_INACTIVE"] as const),
+      campus: validations.campus(),
       first_name: validations.first_name(),
       last_name: validations.last_name(),
       email: validations.email(),
       password: validations.updatePassword(),
       enrollment: validations.enrollment(),
       phone: validations.phone(),
-      // campus: validations.campus(),
-      // generation_id: validations.generation_id(),
-      active: validations.user_active(),
-      user_type: validations.user_type(),
-    })
+      generation_id: validations.generation_id(),
+    }),
   ),
 });
 
-const rules = {
-  required: (value: string) => !!value || "Este campo es obligatorio",
-  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value: string) =>
-    /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
-  maxLength: (value: string) =>
-    value.length <= 350 || "Máximo 350 caracteres permitidos",
-};
-
 const onlyNumbers = (event: KeyboardEvent) => {
-  const charCode = event.which ? event.which : event.keyCode;
-  if (charCode < 48 || charCode > 57) {
-    event.preventDefault();
-  }
+  if (!/^\d$/.test(event.key)) event.preventDefault();
 };
 
-const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
+const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
 const [first_name, first_nameProps] = defineField("first_name", vuetifyConfig);
 const [last_name, last_nameProps] = defineField("last_name", vuetifyConfig);
 const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
-// const [campus, campusProps] = defineField("campus", vuetifyConfig);
+const [campus, campusProps] = defineField("campus", vuetifyConfig);
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
-// const [generation_id, generation_idProps] = defineField(
-//   "generation_id",
-//   vuetifyConfig
-// );
-const [active, activeProps] = defineField("active", vuetifyConfig);
-const [user_type, user_typeProps] = defineField("user_type", vuetifyConfig);
+const [generation_id, generation_idProps] = defineField("generation_id", vuetifyConfig);
+const [enrollment, enrollmentProps] = defineField("enrollment", vuetifyConfig);
 
 watch(
   () => props.modelValue,
-  (value) => {
-    if (value) {
-      if (props.editItem) {
-        setValues({
-          enrollment: props.editItem.enrollment ?? "",
-          first_name: props.editItem.first_name,
-          last_name: props.editItem.last_name,
-          email: props.editItem.email,
-          phone: props.editItem.phone,
-          active: props.editItem.active ? true : false,
-          user_type: props.editItem.user_type,
-        });
-      }
-    } else {
+  (open) => {
+    if (!open) {
       resetForm();
+    } else {
+      user_type.value = props.defaultUserType;
+      password.value = "Agentedecambio";
     }
-  }
+  },
 );
 
-watch(enrollment, (newValue) => {
-  if (newValue) {
-    enrollment.value = newValue.toUpperCase();
-  }
-});
-// const filteredGenerations = computed(() =>
-//   props.generations.filter((gen) => gen.campus === campus.value)
-// );
+const filteredGenerations = computed(() =>
+  props.generations.filter((g) => g.campus === campus.value),
+);
 
-const close = () => {
-  emit("update:modelValue", false);
-};
+watch(enrollment, (val) => {
+  if (typeof val === "string") enrollment.value = val.toUpperCase();
+});
+
+const close = () => emit("update:modelValue", false);
 
 const save = () => {
-  if (meta.value.valid) {
-    emit("submit", { ...values } as GraduateUpdateForm);
-  }
+  if (meta.value.valid) emit("submit", { ...values } as UserForm);
 };
 </script>
-
-<style scoped></style>

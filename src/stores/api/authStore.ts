@@ -8,12 +8,13 @@ import { useGenerationsStore } from "@/stores/api/generationStore";
 import { useRolesStore } from "@/stores/api/rolesStore";
 import { campusArray } from "@/constants";
 import type { SelectOption } from "@/constants";
-import type { UserProfile } from "@/interfaces/user";
+import type { UserProfile, UserProfileForm } from "@/interfaces/user";
 import type {
   LoginResponse,
   PermissionsListResponse,
   UpdateProfileResponse,
 } from "@/interfaces/api";
+import { isAxiosError } from "axios";
 
 export const useAuthStore = defineStore("authStore", () => {
   const router = useRouter();
@@ -23,7 +24,7 @@ export const useAuthStore = defineStore("authStore", () => {
 
   const token = ref<string>("");
   const loggedUser = ref<boolean>(false);
-  const userProfile = ref<UserProfile | null>(null);
+  const userProfile = ref<UserProfile>();
   const openUserProfileDialog = ref<boolean>(false);
   const permissions = ref<string[]>([]);
 
@@ -52,7 +53,7 @@ export const useAuthStore = defineStore("authStore", () => {
       await fetchGenerations();
       await getPermissions(token.value);
       await router.push({ path: "/" });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error en login:", error);
       showAlert({
         title: "Error al iniciar sesión, verifica tu usuario y/o contraseña.",
@@ -66,7 +67,7 @@ export const useAuthStore = defineStore("authStore", () => {
       .post("api/admin/logout")
       .then(async () => {
         loggedUser.value = false;
-        userProfile.value = null;
+        userProfile.value = undefined;
         token.value = "";
         localStorage.removeItem("token");
         window.location.href = "/auth/login";
@@ -91,7 +92,7 @@ export const useAuthStore = defineStore("authStore", () => {
         await fetchRoles();
         await fetchGenerations();
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         console.error("Error al obtener el perfil:", error);
       });
   };
@@ -109,13 +110,13 @@ export const useAuthStore = defineStore("authStore", () => {
 
       permissions.value = response.data.permissions;
       return permissions;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching user permissions:", error);
       return [];
     }
   };
 
-  const updateUserProfile = async (form: unknown): Promise<unknown> => {
+  const updateUserProfile = async (form: UserProfileForm): Promise<void> => {
     try {
       const param = await axios.post<UpdateProfileResponse>(
         "api/admin/updateProfile",
@@ -124,23 +125,20 @@ export const useAuthStore = defineStore("authStore", () => {
           headers: { accept: "application/json" },
         },
       );
-      if (param) {
-        showAlert({
-          title: "Información guardada exitosamente.",
-          status: "success",
-        });
-        userProfile.value = {
-          ...(userProfile.value as object),
-          first_name: param.data.user.first_name,
-          last_name: param.data.user.last_name,
-          email: param.data.user.email,
-          phone: param.data.user.phone,
-          workstation: param.data.user.workstation,
-        } as UserProfile;
-        openUserProfileDialog.value = false;
-        return param.data.res;
-      }
-    } catch (error: any) {
+      showAlert({
+        title: "Información guardada exitosamente.",
+        status: "success",
+      });
+      userProfile.value = {
+        ...(userProfile.value ?? ({} as UserProfile)),
+        first_name: param.data.user.first_name,
+        last_name: param.data.user.last_name,
+        email: param.data.user.email,
+        phone: param.data.user.phone,
+        workstation: param.data.user.workstation ?? undefined,
+      };
+      openUserProfileDialog.value = false;
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al guardar la información, intente nuevamente.",

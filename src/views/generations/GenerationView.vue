@@ -4,6 +4,7 @@
     <v-col cols="12">
       <GenerationsTable
         :generations="generations"
+        :loading="false"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
       />

@@ -60,7 +60,7 @@
       <v-icon v-else color="error">mdi-close</v-icon>
     </template>
     <template #[`item.campus`]="{ item }">
-      {{ campusMap.get(item.campus).text }}
+      {{ campusMap.get(item.campus)?.text }}
     </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
@@ -93,13 +93,13 @@ import type { Generation } from "@/interfaces/generation";
 import { campusMap } from "@/constants";
 
 interface Props {
-  generations: Generation[]
-  loading: boolean
+  generations: Generation[];
+  loading: boolean;
 }
 
 interface Emits {
-  (e: "create"): void
-  (e: "edit", id: number): void
+  (e: "create"): void;
+  (e: "edit", id: number): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {

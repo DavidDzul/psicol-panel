@@ -6,6 +6,7 @@
     :loading="loading"
     :search="search"
     item-value="id"
+    density="compact"
   >
     <template #top>
       <v-toolbar :flat="true">
@@ -158,14 +159,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const search = ref<string>("");
 
-interface DataTableHeader {
-  title: string;
-  key: string;
-  width?: string;
-  sortable?: boolean;
-  align?: string;
-}
-
 interface Emits {
   (e: "create"): void;
   (e: "edit", id: number): void;
@@ -173,13 +166,13 @@ interface Emits {
 
 const emit = defineEmits<Emits>();
 
-const headers: DataTableHeader[] = [
-  { title: "ID", key: "id", width: "70px" },
+const headers = [
+  { title: "ID", key: "id" },
   { title: "Nombre del Rol", key: "name" },
-  { title: "Permisos", key: "permissions", sortable: false },
-  { title: "Capacidad de Vacantes", key: "vacancies_summary", sortable: false },
+  { title: "Permisos", key: "permissions" },
+  { title: "Capacidad de Vacantes", key: "vacancies_summary" },
   { title: "Visualizaciones", key: "num_visualizations" },
-  { title: "Acciones", key: "actions", align: "end", sortable: false },
+  { title: "Acciones", key: "actions" },
 ];
 
 const getPermissionName = (permissionName: string): string =>

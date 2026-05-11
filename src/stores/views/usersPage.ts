@@ -1,6 +1,6 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useGenerationsStore } from "@/stores/api/generationStore";
-import { useUserStore } from "@/stores/api/usersStore";
+import { usePersonsStore } from "@/stores/api/personsStore";
 import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref } from "vue";
 import { useRouter } from "vue-router";
@@ -11,20 +11,18 @@ import type { Generation } from "@/interfaces/generation";
 
 export const useUserPageStore = defineStore("userPage", () => {
   const { loading } = storeToRefs(useAppStore());
-
   const { filteredCampus, readUsers, createUsers, editUsers } =
     storeToRefs(useAuthStore());
-
   const { resGenerations } = storeToRefs(useGenerationsStore());
-  const { resUsers } = storeToRefs(useUserStore());
 
-  const { fetchUsers, createUser, updateUser } = useUserStore();
+  const personsStore = usePersonsStore();
+  const { allPersons } = storeToRefs(personsStore);
+  const { fetchPersons, createPerson, updatePerson } = personsStore;
 
   const router = useRouter();
 
   const createDialog = ref<boolean>(false);
   const updateDialog = ref<boolean>(false);
-
   const editUser = ref<User>();
 
   const loadingTable = ref<boolean>(false);
@@ -33,27 +31,20 @@ export const useUserPageStore = defineStore("userPage", () => {
 
   onBeforeMount(async () => {
     loadingTable.value = true;
-    await fetchUsers();
+    await fetchPersons();
     loadingTable.value = false;
   });
 
   const links = computed(() => [
-    {
-      title: "Inicio",
-      disabled: false,
-      href: "/",
-    },
-    {
-      title: "Becarios",
-      disabled: true,
-      href: "/becarios",
-    },
+    { title: "Inicio", disabled: false, href: "/" },
+    { title: "Usuarios", disabled: true, href: "/becarios" },
   ]);
 
-  const users = computed<User[]>(() => [...resUsers.value.values()]);
+  // All persons passed to the table; the table filters by user_type internally
+  const users = computed<User[]>(() => [...allPersons.value.values()]);
 
   const generations = computed<Generation[]>(() =>
-    [...resGenerations.value.values()].filter((gen) => gen.generation_active),
+    [...resGenerations.value.values()],
   );
 
   const loadingUsers = computed<boolean>(() => loading.value);
@@ -63,9 +54,8 @@ export const useUserPageStore = defineStore("userPage", () => {
   };
 
   const openUpdateDialog = (id: number): void => {
-    const user = resUsers.value.get(id);
+    const user = allPersons.value.get(id);
     if (!user) return;
-
     editUser.value = { ...user };
     updateDialog.value = true;
   };
@@ -76,33 +66,24 @@ export const useUserPageStore = defineStore("userPage", () => {
 
   const onSaveUser = async (form: UserForm): Promise<void> => {
     loadingCreate.value = true;
-
     try {
-      const res = await createUser(form);
-      if (res) {
-        createDialog.value = false;
-      }
+      const res = await createPerson(form);
+      if (res) createDialog.value = false;
     } catch (error) {
       console.error(error);
     }
-
     loadingCreate.value = false;
   };
 
   const onUpdateUser = async (form: UserUpdateForm): Promise<void> => {
     if (!editUser.value) return;
-
     loadingUpdate.value = true;
-
     try {
-      const res = await updateUser(form, editUser.value.id);
-      if (res) {
-        updateDialog.value = false;
-      }
+      const res = await updatePerson(form, editUser.value.id);
+      if (res) updateDialog.value = false;
     } catch (error) {
       console.error(error);
     }
-
     loadingUpdate.value = false;
   };
 

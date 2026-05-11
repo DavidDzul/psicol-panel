@@ -109,7 +109,7 @@ const vuetifyConfig = (state: FieldState<unknown>) => ({
   },
 });
 
-const { defineField, meta, values, resetForm, setValues } = useForm({
+const { defineField, meta, values, resetForm, setValues } = useForm<NoticeForm>({
   validationSchema: toTypedSchema(
     yup.object({
       message: validations.message(),

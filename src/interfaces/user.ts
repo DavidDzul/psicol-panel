@@ -17,18 +17,34 @@ export interface User {
   updated_at: string;
 }
 
+export interface UserRole {
+  id: number;
+  name: string;
+}
+
 export interface UserProfile {
+  id: number;
   first_name: string;
   last_name: string;
   email: string;
   phone?: string;
   workstation?: string;
   campus?: string;
-  roles: Array<{ id: number; name: string; [key: string]: any }>;
-  [key: string]: any;
+  roles: UserRole[];
+}
+
+export interface UserProfileForm {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmation: string;
 }
 
 export interface UserForm {
+  user_type: UserType;
   first_name: string;
   last_name: string;
   email: string;

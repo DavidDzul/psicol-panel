@@ -9,7 +9,7 @@
     <v-card>
       <v-form>
         <v-toolbar dark>
-          <v-toolbar-title>Actualizar becario/a</v-toolbar-title>
+          <v-toolbar-title>{{ title }}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-toolbar-items>
             <v-btn icon @click="close"><v-icon>mdi-close</v-icon></v-btn>
@@ -142,6 +142,7 @@ interface Props {
   editItem?: User | null;
   userCampus?: SelectOption[];
   generations?: Generation[];
+  title?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -150,6 +151,7 @@ const props = withDefaults(defineProps<Props>(), {
   editItem: null,
   userCampus: () => [],
   generations: () => [],
+  title: "Actualizar becario/a",
 });
 
 interface Emits {

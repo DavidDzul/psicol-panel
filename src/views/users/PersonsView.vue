@@ -3,69 +3,78 @@
   <v-row>
     <v-col cols="12">
       <UsersTable
-        :users="users"
+        :users="persons"
         :loading="loadingTable"
+        :default-user-type="defaultUserType"
         @create="openCreateDialog"
         @edit="openUpdateDialog"
-        @show="openUserDetail"
-        :read="readUsers"
-        :create="createUsers"
-        :edit="editUsers"
+        @show="openDetail"
+        :read="canRead"
+        :create="canCreate"
+        :edit="canEdit"
         :user-campus="filteredCampus"
         :generations="generations"
       />
     </v-col>
   </v-row>
-  <UserCreateDialog
+  <PersonCreateDialog
     v-model="createDialog"
+    :title="createTitle"
     :user-campus="filteredCampus"
     :loading="loadingCreate"
     :generations="generations"
-    @submit="onSaveUser"
+    :default-user-type="createDefaultUserType"
+    @submit="onSave"
   />
   <UserUpdateDialog
     v-model="updateDialog"
-    :edit-item="editUser"
+    :title="updateTitle"
+    :edit-item="editPerson"
     :loading="loadingUpdate"
     :user-campus="filteredCampus"
     :generations="generations"
-    @submit="onUpdateUser"
+    @submit="onUpdate"
   />
-  <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
+  <ConfirmationDialog ref="confirmationDialog" />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
-import { storeToRefs } from "pinia";
-import { useUserPageStore } from "@/stores/views/usersPage";
+import { ref } from "vue";
+import { usePersonsPage, type PersonsMode } from "@/composables/usePersonsPage";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import UsersTable from "@/components/users/UsersTable.vue";
-import UserCreateDialog from "@/components/users/UserCreateDialog.vue";
+import PersonCreateDialog from "@/components/users/PersonCreateDialog.vue";
 import UserUpdateDialog from "@/components/users/UserUpdateDialog.vue";
+
+const props = defineProps<{
+  mode: PersonsMode;
+}>();
 
 const confirmationDialog = ref();
 
 const {
   links,
+  persons,
+  editPerson,
   createDialog,
-  loadingCreate,
-  filteredCampus,
-  users,
-  generations,
   updateDialog,
-  editUser,
+  filteredCampus,
+  loadingCreate,
   loadingUpdate,
-  readUsers,
-  createUsers,
-  editUsers,
   loadingTable,
-} = storeToRefs(useUserPageStore());
-const {
+  generations,
+  canRead,
+  canCreate,
+  canEdit,
   openCreateDialog,
-  onSaveUser,
   openUpdateDialog,
-  onUpdateUser,
-  openUserDetail,
-} = useUserPageStore();
+  openDetail,
+  onSave,
+  onUpdate,
+  defaultUserType,
+  createDefaultUserType,
+  createTitle,
+  updateTitle,
+} = usePersonsPage(props.mode);
 </script>

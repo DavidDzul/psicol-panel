@@ -9,7 +9,7 @@
     <v-card>
       <v-form>
         <v-toolbar dark>
-          <v-toolbar-title>Nuevo becario/a</v-toolbar-title>
+          <v-toolbar-title>{{ title }}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-toolbar-items>
             <v-btn icon @click="close"><v-icon>mdi-close</v-icon></v-btn>
@@ -129,6 +129,7 @@ interface Props {
   loading?: boolean;
   generations?: Generation[];
   userCampus?: SelectOption[];
+  title?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -136,6 +137,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   generations: () => [],
   userCampus: () => [],
+  title: "Nuevo becario/a",
 });
 
 interface Emits {

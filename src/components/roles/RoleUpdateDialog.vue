@@ -140,7 +140,7 @@
                 <template v-slot:chip="{ props, item }">
                   <v-chip
                     v-bind="props"
-                    :text="getPermissionText(item.raw.name)"
+                    :text="getPermissionText(item.name)"
                     size="small"
                   />
                 </template>
@@ -231,16 +231,16 @@ watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen && props.editItem) {
-      const config = props.editItem.configuration ?? {};
+      const config = props.editItem.configuration || null;
       setValues({
-        unlimited_jobs: config.unlimited_jobs ?? false,
-        num_job_vacancies: config.num_job_vacancies ?? 0,
-        unlimited_professionals: config.unlimited_professionals ?? false,
-        num_professional_vacancies: config.num_professional_vacancies ?? 0,
-        unlimited_jr: config.unlimited_jr ?? false,
-        num_jr_vacancies: config.num_jr_vacancies ?? 0,
-        unlimited_visualizations: config.unlimited_visualizations ?? false,
-        num_visualizations: config.num_visualizations ?? 0,
+        unlimited_jobs: config?.unlimited_jobs ?? false,
+        num_job_vacancies: config?.num_job_vacancies ?? 0,
+        unlimited_professionals: config?.unlimited_professionals ?? false,
+        num_professional_vacancies: config?.num_professional_vacancies ?? 0,
+        unlimited_jr: config?.unlimited_jr ?? false,
+        num_jr_vacancies: config?.num_jr_vacancies ?? 0,
+        unlimited_visualizations: config?.unlimited_visualizations ?? false,
+        num_visualizations: config?.num_visualizations ?? 0,
         permissions_ids: props.editItem.permissions?.map((p) => p.id) ?? [],
       });
     } else if (!isOpen) {
@@ -249,7 +249,8 @@ watch(
   },
 );
 
-const getPermissionText = (name: string): string => permissionsMap.get(name)?.text ?? name;
+const getPermissionText = (name: string): string =>
+  permissionsMap.get(name)?.text ?? name;
 const close = () => emit("update:modelValue", false);
 const save = handleSubmit((values) => emit("submit", values));
 </script>

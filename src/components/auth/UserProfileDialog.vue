@@ -92,28 +92,18 @@ import { type FieldState, useForm } from "vee-validate";
 import { watch } from "vue";
 import * as yup from "yup";
 
-import type { User } from "@/interfaces/user";
+import type { UserProfile, UserProfileForm } from "@/interfaces/user";
 import * as validations from "@/validations";
 
-interface UserProfileForm {
-  id: number
-  first_name: string
-  last_name: string
-  email: string
-  password: string
-  confirmation: string
-  phone: string
-}
-
 interface Props {
-  modelValue: boolean
-  loading: boolean
-  editItem: User
+  modelValue: boolean;
+  loading?: boolean;
+  editItem?: UserProfile | null;
 }
 
 interface Emits {
-  (e: "update:modelValue", value: boolean): void
-  (e: "submit", value: UserProfileForm): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", value: UserProfileForm): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -127,23 +117,25 @@ const vuetifyConfig = (state: FieldState<unknown>) => ({
   },
 });
 
-const { defineField, meta, values, setValues, resetForm } = useForm<UserProfileForm>({
-  validationSchema: toTypedSchema(
-    yup.object({
-      id: validations.id(),
-      first_name: validations.first_name(),
-      last_name: validations.last_name(),
-      email: validations.email(),
-      password: validations.updatePassword(),
-      confirmation: validations.confirmation(),
-      phone: validations.phone(),
-    })
-  ),
-});
+const { defineField, meta, values, setValues, resetForm } =
+  useForm<UserProfileForm>({
+    validationSchema: toTypedSchema(
+      yup.object({
+        id: validations.id(),
+        first_name: validations.first_name(),
+        last_name: validations.last_name(),
+        email: validations.email(),
+        password: validations.updatePassword(),
+        confirmation: validations.confirmation(),
+        phone: validations.phone(),
+      }),
+    ),
+  });
 
 const rules = {
   required: (value: string) => !!value || "Este campo es obligatorio",
-  validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
+  validYear: (value: string) =>
+    /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
   validPhone: (value: string) =>
     /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
   maxLength: (value: string) =>
@@ -164,7 +156,7 @@ const [email, emailProps] = defineField("email", vuetifyConfig);
 const [password, passwordProps] = defineField("password", vuetifyConfig);
 const [confirmation, confirmationProps] = defineField(
   "confirmation",
-  vuetifyConfig
+  vuetifyConfig,
 );
 const [phone, phoneProps] = defineField("phone", vuetifyConfig);
 
@@ -186,7 +178,7 @@ watch(
     } else {
       resetForm();
     }
-  }
+  },
 );
 
 const close = () => {
