@@ -64,7 +64,7 @@ export interface UpdateCandidateDataResponse { updateData: CandidateData; res: u
 export interface ClassListResponse { data: ClassEntity[] }
 export interface ClassDetailResponse { data: ClassEntity }
 export interface ClassAttendancesResponse { data: ClassAttendance[] }
-export interface FilterUsersResponse { data: unknown[] }
+export interface FilterUsersResponse { data: User[] }
 export interface ClassOperationResponse { data: ClassEntity }
 export interface AttendancesOperationResponse { data: ClassAttendance[] }
 export interface AttendanceOperationResponse { data: ClassAttendance }
@@ -82,3 +82,22 @@ export interface NoticeOperationResponse { data: Notice }
 export interface RolesResponse { roles: Role[] }
 export interface PermissionsResponse { permissions: Permission[] }
 export interface UpdateRoleResponse { data: Role }
+
+// Scholarships
+import type {
+  ScholarshipProfile,
+  ScholarshipRefrend,
+  StudentDocument,
+  AttendanceSummary,
+  ScholarshipSemesterGrade,
+} from './scholarship'
+
+export interface ScholarshipProfileResponse { data: ScholarshipProfile }
+export interface ScholarshipRefrendsResponse { data: ScholarshipRefrend[] }
+export interface ScholarshipRefrendResponse { data: ScholarshipRefrend }
+export interface ScholarshipDocumentsResponse { data: StudentDocument[] }
+export interface ScholarshipDocumentResponse { data: StudentDocument }
+export interface GenerateRefrendsResponse { data: { created: number; skipped: number; errors: number } }
+export interface AttendanceSummaryResponse { res: boolean; data: AttendanceSummary }
+export interface SemesterGradesResponse { res: boolean; data: ScholarshipSemesterGrade[] }
+export interface SemesterGradeResponse { res: boolean; data: ScholarshipSemesterGrade }

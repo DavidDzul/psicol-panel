@@ -13,3 +13,4 @@ export * from "./generation";
 export * from "./notice";
 export * from "./role";
 export * from "./attendance";
+export * from "./scholarship";

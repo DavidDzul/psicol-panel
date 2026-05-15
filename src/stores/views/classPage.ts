@@ -107,9 +107,11 @@ export const useClassPageStore = defineStore("classPage", () => {
       let success = false;
 
       if ((form as any).format === 1) {
-        success = await reportSemesterPDF(form);
+        await reportSemesterPDF(form);
+        success = true;
       } else if ((form as any).format === 2) {
-        success = await reportSemesterExcel(form);
+        await reportSemesterExcel(form);
+        success = true;
       }
 
       if (success) {

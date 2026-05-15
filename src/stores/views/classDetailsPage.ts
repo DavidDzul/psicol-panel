@@ -87,7 +87,7 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
   const generations = computed<Generation[]>(() => [
     ...resGenerations.value.values(),
   ]);
-  const users = computed<User[]>(() => [...usersByFilters.value.values()]);
+  const users = computed<User[]>(() => usersByFilters.value ?? []);
 
   const openAssignDialog = (): void => {
     assignDialog.value = true;

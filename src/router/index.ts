@@ -168,6 +168,18 @@ const routes = [
         component: () =>
           catchReload(import("@/views/roles/RolesAdminView.vue")),
       },
+      {
+        path: "/scholarships",
+        name: "ScholarshipRefrendsView",
+        component: () =>
+          catchReload(import("@/views/scholarships/ScholarshipRefrendsView.vue")),
+      },
+      {
+        path: "/scholarships/:id",
+        name: "ScholarshipRefrendDetailsView",
+        component: () =>
+          catchReload(import("@/views/scholarships/ScholarshipRefrendDetailsView.vue")),
+      },
     ],
   },
   {

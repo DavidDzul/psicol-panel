@@ -89,6 +89,15 @@ const links = ref([
     ],
   },
   {
+    text: "Becas",
+    icon: "mdi-school",
+    group: true,
+    key: "PS_GROUP_SCHOLARSHIPS",
+    links: [
+      { text: "Refrendos", link: "/scholarships", key: "PS_SCHOLARSHIPS" },
+    ],
+  },
+  {
     text: "Configuración",
     icon: "mdi-cog",
     group: true,

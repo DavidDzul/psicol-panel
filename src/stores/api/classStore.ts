@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert";
+import type { User } from "@/interfaces/user";
 import type { ClassEntity, ClassAttendance } from "@/interfaces/class";
 import type {
   ClassListResponse,
@@ -21,7 +22,7 @@ export const useClassStore = defineStore("classStore", () => {
   const classMap = ref<Map<number, ClassEntity>>(new Map());
   const attendanceMap = ref<Map<number, ClassAttendance>>(new Map());
   const classDetail = ref<ClassEntity | null>(null);
-  const usersByFilters = ref<unknown>(null);
+  const usersByFilters = ref<User[] | null>(null);
 
   const fetchClasses = async (form: unknown): Promise<ClassListResponse | undefined> => {
     try {

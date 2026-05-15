@@ -12,7 +12,7 @@ export const useNoticeStore = defineStore("noticeStore", () => {
 
   const noticesMap = ref<Map<number, Notice>>(new Map());
 
-  const fetchNotices = async (form: unknown): Promise<NoticesResponse | undefined> => {
+  const fetchNotices = async (form?: unknown): Promise<NoticesResponse | undefined> => {
     try {
       const res = await axios.get<NoticesResponse>("api/admin/notices", {
         params: form,
