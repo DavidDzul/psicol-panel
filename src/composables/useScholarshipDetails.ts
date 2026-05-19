@@ -3,26 +3,55 @@ import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import { useScholarshipDocumentsStore } from "@/stores/api/scholarshipDocumentsStore";
-import type { ScholarshipRefrend, ReviewForm, AuthorizeForm, StudentDocument, AttendanceSummary } from "@/interfaces/scholarship";
+import type {
+  ScholarshipProfile,
+  ScholarshipRefrend,
+  ReviewForm,
+  AuthorizeForm,
+  StudentDocument,
+  AttendanceSummary,
+  GraduateForm,
+} from "@/interfaces/scholarship";
 
 export function useScholarshipDetails() {
-  const route = useRoute();
-  const store = useScholarshipStore();
+  const route    = useRoute();
+  const store    = useScholarshipStore();
   const docsStore = useScholarshipDocumentsStore();
-  const { selectedRefrend } = storeToRefs(store);
+  const { selectedRefrend, refrends } = storeToRefs(store);
   const { documents } = storeToRefs(docsStore);
 
-  const loading             = ref<boolean>(false);
-  const reviewDialog        = ref<boolean>(false);
-  const reviewMode          = ref<'atencion' | 'pedagogia'>('atencion');
-  const uploadDialog        = ref<boolean>(false);
-  const withholdDialog      = ref<boolean>(false);
-  const withholdReason      = ref<string>('');
-  const authorizeDialog     = ref<boolean>(false);
-  const attendanceSummary   = ref<AttendanceSummary | null>(null);
+  const loading           = ref<boolean>(false);
+  const reviewDialog      = ref<boolean>(false);
+  const reviewMode        = ref<'atencion' | 'pedagogia'>('atencion');
+  const withholdDialog    = ref<boolean>(false);
+  const withholdReason    = ref<string>('');
+  const authorizeDialog   = ref<boolean>(false);
+  const graduateDialog    = ref<boolean>(false);
+  const attendanceSummary = ref<AttendanceSummary | null>(null);
+  const scholarshipProfile = ref<ScholarshipProfile | null>(null);
 
   const refrend = computed<ScholarshipRefrend | null>(() => selectedRefrend.value);
 
+  // Refrendos del mismo semestre que el refrendo consultado
+  // Semestre 1: meses 1–7 | Semestre 2: meses 8–12
+  const semesterRefrends = computed<ScholarshipRefrend[]>(() => {
+    if (!refrend.value) return [];
+    const { user_id, period_year, period_month } = refrend.value;
+    const isSemOne = period_month <= 7;
+    const semStart = isSemOne ? 1 : 8;
+    const semEnd   = isSemOne ? 7 : 12;
+    return [...refrends.value.values()]
+      .filter(
+        (r) =>
+          r.user_id === user_id &&
+          r.period_year === period_year &&
+          r.period_month >= semStart &&
+          r.period_month <= semEnd
+      )
+      .sort((a, b) => a.period_month - b.period_month);
+  });
+
+  // Documentos del periodo del refrendo (solo para mostrar estado, sin upload aquí)
   const docList = computed<StudentDocument[]>(() =>
     [...documents.value.values()].filter(
       (d) =>
@@ -42,12 +71,16 @@ export function useScholarshipDetails() {
 
     if (selectedRefrend.value) {
       const { user_id, period_year, period_month } = selectedRefrend.value;
-      await Promise.all([
+      const [, , profile] = await Promise.all([
         docsStore.fetchDocuments(user_id, period_year, period_month),
         store.fetchAttendanceSummary(user_id, period_year, period_month).then((s) => {
           attendanceSummary.value = s ?? null;
         }),
+        store.fetchProfile(user_id),
+        // Cargar todos los refrendos del becario para construir el historial semestral
+        store.fetchRefrendsForUser(user_id),
       ]);
+      scholarshipProfile.value = profile ?? null;
     }
     loading.value = false;
   };
@@ -101,30 +134,25 @@ export function useScholarshipDetails() {
     withholdDialog.value = false;
   };
 
-  const onUpload = async (formData: FormData): Promise<void> => {
-    await docsStore.uploadDocument(formData);
-    uploadDialog.value = false;
-  };
-
-  const onAcceptDoc = async (docId: number): Promise<void> => {
-    await docsStore.acceptDocument(docId);
-  };
-
-  const onRejectDoc = async (docId: number, reason: string): Promise<void> => {
-    await docsStore.rejectDocument(docId, reason);
+  const onGraduate = async (form: GraduateForm): Promise<void> => {
+    if (!refrend.value) return;
+    await store.markAsGraduate(refrend.value.user_id, form);
+    graduateDialog.value = false;
   };
 
   return {
     refrend,
     docList,
+    semesterRefrends,
     attendanceSummary,
+    scholarshipProfile,
     loading,
     reviewDialog,
     reviewMode,
-    uploadDialog,
     withholdDialog,
     withholdReason,
     authorizeDialog,
+    graduateDialog,
     openAtencionReview,
     openPedagogiaReview,
     onSubmitReview,
@@ -133,8 +161,6 @@ export function useScholarshipDetails() {
     onMarkPaid,
     openWithhold,
     onWithhold,
-    onUpload,
-    onAcceptDoc,
-    onRejectDoc,
+    onGraduate,
   };
 }

@@ -1,6 +1,11 @@
 <template>
   <div>
-    <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-3" />
+    <v-progress-linear
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="mb-3"
+    />
 
     <!-- Grades list -->
     <div v-if="grades.length" class="mb-3">
@@ -20,7 +25,7 @@
               <v-chip
                 v-if="g.grade !== null"
                 :color="gradeColor(Number(g.grade))"
-                size="x-small"
+                size="small"
                 label
               >
                 {{ g.grade }}
@@ -28,17 +33,28 @@
               <span v-else class="text-medium-emphasis text-caption">—</span>
             </td>
             <td>
-              <span v-if="g.original_name" class="text-caption d-flex align-center ga-1">
+              <span
+                v-if="g.original_name"
+                class="text-caption d-flex align-center ga-1"
+              >
                 <v-icon size="x-small" color="primary">mdi-file</v-icon>
                 {{ g.original_name }}
               </span>
-              <span v-else class="text-caption text-medium-emphasis">Sin documento</span>
+              <span v-else class="text-caption text-medium-emphasis"
+                >Sin documento</span
+              >
             </td>
-            <td class="text-right">
+            <td v-if="!props.readonly" class="text-right">
               <v-btn icon size="x-small" variant="text" @click="openEdit(g)">
                 <v-icon size="small">mdi-pencil</v-icon>
               </v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="onDelete(g.id)">
+              <v-btn
+                icon
+                size="x-small"
+                variant="text"
+                color="error"
+                @click="onDelete(g.id)"
+              >
                 <v-icon size="small">mdi-delete</v-icon>
               </v-btn>
             </td>
@@ -53,7 +69,7 @@
 
     <!-- Add / edit form -->
     <v-btn
-      v-if="!formOpen"
+      v-if="!formOpen && !props.readonly"
       size="small"
       variant="tonal"
       color="primary"
@@ -63,7 +79,12 @@
       Agregar calificación
     </v-btn>
 
-    <v-form v-if="formOpen" ref="formRef" @submit.prevent="onSave" class="mt-2">
+    <v-form
+      v-if="formOpen && !props.readonly"
+      ref="formRef"
+      @submit.prevent="onSave"
+      class="mt-2"
+    >
       <v-row dense>
         <v-col cols="6" sm="3">
           <v-text-field
@@ -114,7 +135,13 @@
       </v-row>
 
       <div class="d-flex ga-2">
-        <v-btn type="submit" color="primary" variant="tonal" size="small" :loading="saving">
+        <v-btn
+          type="submit"
+          color="primary"
+          variant="tonal"
+          size="small"
+          :loading="saving"
+        >
           Guardar
         </v-btn>
         <v-btn size="small" variant="text" @click="cancelForm">Cancelar</v-btn>
@@ -130,15 +157,18 @@ import type { ScholarshipSemesterGrade } from "@/interfaces/scholarship";
 
 const props = defineProps<{
   userId: number;
+  readonly?: boolean;
 }>();
 
-const store   = useScholarshipGradesStore();
+const store = useScholarshipGradesStore();
 const loading = ref(false);
-const saving  = ref(false);
+const saving = ref(false);
 const formOpen = ref(false);
 const formRef = ref();
 
-const grades = computed<ScholarshipSemesterGrade[]>(() => store.getGrades(props.userId));
+const grades = computed<ScholarshipSemesterGrade[]>(() =>
+  store.getGrades(props.userId),
+);
 
 onMounted(async () => {
   loading.value = true;
@@ -164,18 +194,18 @@ const periodOptions = [
 ];
 
 const openAdd = (): void => {
-  form.semester_year   = new Date().getFullYear();
+  form.semester_year = new Date().getFullYear();
   form.semester_period = 1;
   form.grade = null;
-  form.file  = null;
+  form.file = null;
   formOpen.value = true;
 };
 
 const openEdit = (g: ScholarshipSemesterGrade): void => {
-  form.semester_year   = g.semester_year;
+  form.semester_year = g.semester_year;
   form.semester_period = g.semester_period;
   form.grade = g.grade !== null ? Number(g.grade) : null;
-  form.file  = null;
+  form.file = null;
   formOpen.value = true;
 };
 

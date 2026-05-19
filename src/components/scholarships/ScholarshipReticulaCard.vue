@@ -21,7 +21,7 @@
           </div>
         </div>
         <v-spacer />
-        <v-btn size="small" variant="tonal" @click="startEdit">Editar retícula</v-btn>
+        <v-btn v-if="!props.readonly" size="small" variant="tonal" @click="startEdit">Editar retícula</v-btn>
       </div>
 
       <v-alert
@@ -32,14 +32,14 @@
         class="mb-3"
       >
         No se ha registrado la retícula. Es necesaria para validar el periodo de pago.
-        <template #append>
+        <template v-if="!props.readonly" #append>
           <v-btn size="small" variant="text" @click="startEdit">Registrar</v-btn>
         </template>
       </v-alert>
     </template>
 
-    <!-- Formulario de edición -->
-    <v-form v-if="editing" ref="formRef" @submit.prevent="onSave">
+    <!-- Formulario de edición (solo en modo editable) -->
+    <v-form v-if="editing && !props.readonly" ref="formRef" @submit.prevent="onSave">
       <v-row dense>
         <v-col cols="12" sm="4">
           <v-text-field
@@ -94,6 +94,7 @@ import type { ScholarshipProfile } from "@/interfaces/scholarship";
 const props = defineProps<{
   userId: number;
   profile: ScholarshipProfile | null;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{

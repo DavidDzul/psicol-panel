@@ -1,9 +1,9 @@
 <template>
-  <v-card variant="outlined">
+  <v-card variant="flat">
     <v-card-title class="d-flex align-center pa-3">
       <span class="text-subtitle-1 font-weight-bold">Documentos</span>
       <v-spacer />
-      <v-btn
+      <!-- <v-btn
         size="small"
         color="primary"
         variant="tonal"
@@ -11,7 +11,7 @@
         @click="$emit('upload')"
       >
         Subir
-      </v-btn>
+      </v-btn> -->
     </v-card-title>
 
     <v-card-text class="pa-0">
@@ -32,7 +32,12 @@
             </v-icon>
           </template>
           <template #append>
-            <v-chip :color="statusColor(doc.status)" size="x-small" label class="mr-1">
+            <v-chip
+              :color="statusColor(doc.status)"
+              size="x-small"
+              label
+              class="mr-1"
+            >
               {{ statusLabel(doc.status) }}
             </v-chip>
             <v-btn
@@ -91,7 +96,11 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import type { StudentDocument, DocumentType, DocumentStatus } from "@/interfaces/scholarship";
+import type {
+  StudentDocument,
+  DocumentType,
+  DocumentStatus,
+} from "@/interfaces/scholarship";
 
 defineProps<{
   documents: StudentDocument[];
@@ -103,8 +112,8 @@ const emit = defineEmits<{
   reject: [docId: number, reason: string];
 }>();
 
-const rejectDialog  = ref<boolean>(false);
-const rejectReason  = ref<string>("");
+const rejectDialog = ref<boolean>(false);
+const rejectReason = ref<string>("");
 const rejectTargetId = ref<number>(0);
 
 const openRejectDialog = (id: number): void => {

@@ -22,6 +22,7 @@
           </v-col>
           <v-col cols="auto">
             <v-btn
+              v-if="buttonText"
               variant="outlined"
               color="primary"
               class="mr-5"
@@ -37,11 +38,11 @@
 
 <script setup lang="ts">
 interface Props {
-  modelValue?: string
-  expanded?: boolean
-  title?: string
-  buttonText?: string
-  search?: boolean
+  modelValue?: string;
+  expanded?: boolean;
+  title?: string;
+  buttonText?: string;
+  search?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -49,12 +50,12 @@ withDefaults(defineProps<Props>(), {
   title: "",
   buttonText: "",
   search: false,
-})
+});
 
 defineEmits<{
-  "update:modelValue": [value: string]
-  buttonClick: []
-}>()
+  "update:modelValue": [value: string];
+  buttonClick: [];
+}>();
 </script>
 <style lang="scss" scoped>
 .panel-title {

@@ -11,13 +11,16 @@ import type {
   ReviewForm,
   AuthorizeForm,
   AttendanceSummary,
+  GraduateForm,
 } from "@/interfaces/scholarship";
+import type { User } from "@/interfaces/user";
 import type {
   ScholarshipProfileResponse,
   ScholarshipRefrendsResponse,
   ScholarshipRefrendResponse,
   GenerateRefrendsResponse,
   AttendanceSummaryResponse,
+  GraduatePersonResponse,
 } from "@/interfaces/api";
 
 export const useScholarshipStore = defineStore("scholarshipStore", () => {
@@ -225,6 +228,24 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const getAttendanceSummary = (userId: number, year: number, month: number): AttendanceSummary | undefined =>
     attendanceSummaries.value.get(`${userId}_${year}_${month}`);
 
+  // ── Graduate ──────────────────────────────────────────────────────────────
+
+  const markAsGraduate = async (userId: number, form: GraduateForm): Promise<User | undefined> => {
+    try {
+      const res = await axios.post<GraduatePersonResponse>(
+        `api/admin/persons/${userId}/graduate`,
+        form
+      );
+      showAlert({ title: "Becario marcado como egresado.", status: "success" });
+      return res.data.data;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al marcar como egresado.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   const _updateRefrend = async (url: string, data: object): Promise<ScholarshipRefrend | undefined> => {
@@ -281,5 +302,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     fetchAttendanceSummary,
     getAttendanceSummary,
     uploadReticula,
+    markAsGraduate,
   };
 });

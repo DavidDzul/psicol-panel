@@ -101,3 +101,4 @@ export interface GenerateRefrendsResponse { data: { created: number; skipped: nu
 export interface AttendanceSummaryResponse { res: boolean; data: AttendanceSummary }
 export interface SemesterGradesResponse { res: boolean; data: ScholarshipSemesterGrade[] }
 export interface SemesterGradeResponse { res: boolean; data: ScholarshipSemesterGrade }
+export interface GraduatePersonResponse { res: boolean; msg: string; data: User }

@@ -91,6 +91,8 @@ export interface ScholarshipRefrend {
   discount_percentage: string
   discount_amount: string
   final_amount: string
+  amount_pending_from_previous: string
+  total_to_pay: string
   snapshot_name: string
   snapshot_generation: string | null
   snapshot_campus: string
@@ -184,4 +186,8 @@ export interface ReviewForm {
 export interface AuthorizeForm {
   final_amount_override?: number | null
   authorization_notes?: string | null
+}
+
+export interface GraduateForm {
+  comment: string
 }
