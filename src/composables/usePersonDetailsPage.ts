@@ -5,13 +5,11 @@ import { useRoute } from "vue-router";
 import { usePersonsStore } from "@/stores/api/personsStore";
 import { useAuthStore } from "@/stores/api/authStore";
 import { useGenerationsStore } from "@/stores/api/generationStore";
-import { useScholarshipDocumentsStore } from "@/stores/api/scholarshipDocumentsStore";
 
 import type { User, UserUpdateForm } from "@/interfaces/user";
 import type { Generation } from "@/interfaces/generation";
 import type { LinkInterface } from "@/interfaces/link.interface";
 import type { PersonsMode } from "@/composables/usePersonsPage";
-import type { StudentDocument } from "@/interfaces/scholarship";
 
 const ROUTE_CONFIG = {
   becarios: {
@@ -34,15 +32,12 @@ export function usePersonDetailsPage(mode: PersonsMode) {
   const config = ROUTE_CONFIG[mode];
 
   const personsStore = usePersonsStore();
-  const docsStore    = useScholarshipDocumentsStore();
   const { personDetails } = storeToRefs(personsStore);
-  const { documents }     = storeToRefs(docsStore);
   const { filteredCampus } = storeToRefs(useAuthStore());
   const { resGenerations } = storeToRefs(useGenerationsStore());
 
   const route         = useRoute();
   const updateDialog  = ref<boolean>(false);
-  const uploadDialog  = ref<boolean>(false);
   const loadingUpdate = ref<boolean>(false);
 
   const validateAndFetch = async (): Promise<void> => {
@@ -55,8 +50,6 @@ export function usePersonDetailsPage(mode: PersonsMode) {
 
     try {
       await personsStore.showPerson(id);
-      // Cargar todos los documentos del becario (sin filtro de periodo)
-      await docsStore.fetchDocuments(id);
     } catch {
       // personsStore.showPerson already calls showAlert on error
     }
@@ -66,13 +59,6 @@ export function usePersonDetailsPage(mode: PersonsMode) {
   watch(() => route.fullPath, validateAndFetch);
 
   const selectedPerson = computed<User | null>(() => personDetails.value);
-
-  // Todos los documentos del becario seleccionado
-  const userDocuments = computed<StudentDocument[]>(() => {
-    const userId = selectedPerson.value?.id;
-    if (!userId) return [];
-    return [...documents.value.values()].filter((d) => d.user_id === userId);
-  });
 
   const generations = computed<Generation[]>(() => [
     ...resGenerations.value.values(),
@@ -108,33 +94,15 @@ export function usePersonDetailsPage(mode: PersonsMode) {
     loadingUpdate.value = false;
   };
 
-  const onUploadDocument = async (formData: FormData): Promise<void> => {
-    await docsStore.uploadDocument(formData);
-    uploadDialog.value = false;
-  };
-
-  const onAcceptDocument = async (docId: number): Promise<void> => {
-    await docsStore.acceptDocument(docId);
-  };
-
-  const onRejectDocument = async (docId: number, reason: string): Promise<void> => {
-    await docsStore.rejectDocument(docId, reason);
-  };
-
   return {
     links,
     selectedPerson,
     updateDialog,
-    uploadDialog,
     loadingUpdate,
-    userDocuments,
     generations,
     filteredCampus,
     dialogTitle: config.dialogTitle,
     openUpdateDialog,
     onUpdate,
-    onUploadDocument,
-    onAcceptDocument,
-    onRejectDocument,
   };
 }

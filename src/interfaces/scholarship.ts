@@ -22,7 +22,6 @@ export type DiscountType =
   | 'OTRO'
 
 export type DocumentType =
-  | 'CALIFICACIONES_ORIGINALES'
   | 'CONSTANCIA_ESTUDIOS'
   | 'COMPROBANTE_PAGO'
   | 'JUSTIFICANTE_MEDICO'
@@ -37,8 +36,6 @@ export interface ScholarshipProfile {
   user_id: number
   scholarship_type: ScholarshipType
   monthly_amount: string
-  payment_start_date: string
-  payment_end_date: string | null
   active_discount_percentage: string | null
   discount_valid_until: string | null
   reticula_start_date: string | null
@@ -56,6 +53,7 @@ export interface ScholarshipSemesterGrade {
   semester_period: 1 | 2
   semester_label: string
   grade: string | null
+  is_original: boolean
   file_path: string | null
   original_name: string | null
   mime_type: string | null
@@ -125,8 +123,9 @@ export interface StudentDocument {
   original_name: string
   mime_type: string
   file_size: number
-  version: number
   rejected_reason: string | null
+  description: string | null
+  observations: string | null
   created_at: string
   updated_at: string
 }
@@ -168,8 +167,6 @@ export interface ScholarshipProfileForm {
   user_id: number
   scholarship_type: ScholarshipType
   monthly_amount: number
-  payment_start_date: string
-  payment_end_date?: string | null
   active_discount_percentage?: number | null
   discount_valid_until?: string | null
 }

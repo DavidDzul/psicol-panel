@@ -79,6 +79,21 @@ export const useScholarshipDocumentsStore = defineStore("scholarshipDocumentsSto
     }
   };
 
+  const updateDocument = async (
+    id: number,
+    data: { document_type?: string; description?: string | null; observations?: string | null }
+  ): Promise<StudentDocument | undefined> => {
+    try {
+      const res = await axios.patch<ScholarshipDocumentResponse>(
+        `api/admin/scholarship-documents/${id}`,
+        data
+      );
+      return _merge(res.data.data);
+    } catch {
+      showAlert({ title: "Error al actualizar documento.", status: "error" });
+    }
+  };
+
   const deleteDocument = async (id: number): Promise<boolean> => {
     try {
       await axios.delete(`api/admin/scholarship-documents/${id}`);
@@ -107,8 +122,7 @@ export const useScholarshipDocumentsStore = defineStore("scholarshipDocumentsSto
     documents,
     fetchDocuments,
     uploadDocument,
-    acceptDocument,
-    rejectDocument,
+    updateDocument,
     deleteDocument,
   };
 });

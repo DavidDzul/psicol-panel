@@ -23,14 +23,15 @@
       />
     </v-col>
     <v-col cols="12" sm="4" md="2" class="d-flex align-center">
-      <v-btn
-        color="primary"
-        variant="tonal"
-        block
-        @click="emit('search')"
-      >
-        Buscar
-      </v-btn>
+      <v-btn color="grey" block @click="emit('search')"> Buscar </v-btn>
+    </v-col>
+    <v-col
+      v-if="$slots.default"
+      cols="12"
+      sm="auto"
+      class="d-flex align-center"
+    >
+      <slot />
     </v-col>
   </v-row>
 </template>
@@ -49,23 +50,26 @@ const emit = defineEmits<{
   search: [];
 }>();
 
-const internalYear  = ref<number>(props.year);
+const internalYear = ref<number>(props.year);
 const internalMonth = ref<number>(props.month);
 
-const yearOptions = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
+const yearOptions = Array.from(
+  { length: 6 },
+  (_, i) => new Date().getFullYear() - i,
+);
 
 const monthOptions = [
-  { title: "Enero",      value: 1 },
-  { title: "Febrero",    value: 2 },
-  { title: "Marzo",      value: 3 },
-  { title: "Abril",      value: 4 },
-  { title: "Mayo",       value: 5 },
-  { title: "Junio",      value: 6 },
-  { title: "Julio",      value: 7 },
-  { title: "Agosto",     value: 8 },
+  { title: "Enero", value: 1 },
+  { title: "Febrero", value: 2 },
+  { title: "Marzo", value: 3 },
+  { title: "Abril", value: 4 },
+  { title: "Mayo", value: 5 },
+  { title: "Junio", value: 6 },
+  { title: "Julio", value: 7 },
+  { title: "Agosto", value: 8 },
   { title: "Septiembre", value: 9 },
-  { title: "Octubre",    value: 10 },
-  { title: "Noviembre",  value: 11 },
-  { title: "Diciembre",  value: 12 },
+  { title: "Octubre", value: 10 },
+  { title: "Noviembre", value: 11 },
+  { title: "Diciembre", value: 12 },
 ];
 </script>

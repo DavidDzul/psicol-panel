@@ -14,6 +14,7 @@
           <tr>
             <th>Semestre</th>
             <th>Calificación</th>
+            <th>Tipo</th>
             <th>Documento</th>
             <th class="text-right">Acciones</th>
           </tr>
@@ -33,30 +34,53 @@
               <span v-else class="text-medium-emphasis text-caption">—</span>
             </td>
             <td>
+              <v-chip
+                :color="g.is_original ? 'success' : 'warning'"
+                size="small"
+                label
+                variant="tonal"
+              >
+                {{ g.is_original ? "Original" : "Provisional" }}
+              </v-chip>
+            </td>
+            <td>
               <span
                 v-if="g.original_name"
                 class="text-caption d-flex align-center ga-1"
               >
-                <v-icon size="x-small" color="primary">mdi-file</v-icon>
+                <v-icon size="small" color="primary">mdi-file</v-icon>
                 {{ g.original_name }}
               </span>
               <span v-else class="text-caption text-medium-emphasis"
                 >Sin documento</span
               >
             </td>
-            <td v-if="!props.readonly" class="text-right">
-              <v-btn icon size="x-small" variant="text" @click="openEdit(g)">
-                <v-icon size="small">mdi-pencil</v-icon>
-              </v-btn>
+            <td class="text-right">
               <v-btn
+                v-if="g.file_path"
                 icon
-                size="x-small"
+                size="small"
                 variant="text"
-                color="error"
-                @click="onDelete(g.id)"
+                color="primary"
+                :href="fileUrl(g.file_path)"
+                target="_blank"
               >
-                <v-icon size="small">mdi-delete</v-icon>
+                <v-icon size="small">mdi-eye</v-icon>
               </v-btn>
+              <template v-if="!props.readonly">
+                <v-btn icon size="small" variant="text" @click="openEdit(g)">
+                  <v-icon size="small">mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  color="error"
+                  @click="onDelete(g.id)"
+                >
+                  <v-icon size="small">mdi-delete</v-icon>
+                </v-btn>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -67,26 +91,14 @@
       Sin calificaciones registradas.
     </div>
 
-    <!-- Add / edit form -->
-    <v-btn
-      v-if="!formOpen && !props.readonly"
-      size="small"
-      variant="tonal"
-      color="primary"
-      prepend-icon="mdi-plus"
-      @click="openAdd"
-    >
-      Agregar calificación
-    </v-btn>
-
     <v-form
       v-if="formOpen && !props.readonly"
       ref="formRef"
       @submit.prevent="onSave"
       class="mt-2"
     >
-      <v-row dense>
-        <v-col cols="6" sm="3">
+      <v-row class="pa-3" dense>
+        <v-col cols="6" md="4">
           <v-text-field
             v-model.number="form.semester_year"
             label="Año *"
@@ -96,7 +108,7 @@
             :rules="[required]"
           />
         </v-col>
-        <v-col cols="6" sm="3">
+        <v-col cols="6" md="4">
           <v-select
             v-model="form.semester_period"
             :items="periodOptions"
@@ -106,7 +118,7 @@
             :rules="[required]"
           />
         </v-col>
-        <v-col cols="6" sm="3">
+        <v-col cols="6" md="4">
           <v-text-field
             v-model.number="form.grade"
             label="Calificación"
@@ -119,10 +131,10 @@
             :rules="[gradeRule]"
           />
         </v-col>
-        <v-col cols="12" sm="3">
+        <v-col cols="12" sm="8">
           <v-file-input
             v-model="form.file"
-            label="Documento"
+            label="Seleccionar documento"
             accept=".pdf,.jpg,.jpeg,.png"
             variant="outlined"
             density="compact"
@@ -130,6 +142,14 @@
             prepend-inner-icon="mdi-paperclip"
             :rules="[fileSizeRule]"
             clearable
+          />
+        </v-col>
+        <v-col cols="12" sm="3">
+          <v-checkbox
+            v-model="form.is_original"
+            label="Calificación original"
+            density="compact"
+            hide-details
           />
         </v-col>
       </v-row>
@@ -153,6 +173,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { useScholarshipGradesStore } from "@/stores/api/scholarshipGradesStore";
+import { API_URL } from "@/constants";
 import type { ScholarshipSemesterGrade } from "@/interfaces/scholarship";
 
 const props = defineProps<{
@@ -180,11 +201,13 @@ const form = reactive<{
   semester_year: number;
   semester_period: 1 | 2;
   grade: number | null;
+  is_original: boolean;
   file: File | null;
 }>({
   semester_year: new Date().getFullYear(),
   semester_period: 1,
   grade: null,
+  is_original: false,
   file: null,
 });
 
@@ -197,6 +220,7 @@ const openAdd = (): void => {
   form.semester_year = new Date().getFullYear();
   form.semester_period = 1;
   form.grade = null;
+  form.is_original = false;
   form.file = null;
   formOpen.value = true;
 };
@@ -205,6 +229,7 @@ const openEdit = (g: ScholarshipSemesterGrade): void => {
   form.semester_year = g.semester_year;
   form.semester_period = g.semester_period;
   form.grade = g.grade !== null ? Number(g.grade) : null;
+  form.is_original = g.is_original;
   form.file = null;
   formOpen.value = true;
 };
@@ -222,6 +247,7 @@ const onSave = async (): Promise<void> => {
   fd.append("semester_year", String(form.semester_year));
   fd.append("semester_period", String(form.semester_period));
   if (form.grade !== null) fd.append("grade", String(form.grade));
+  fd.append("is_original", form.is_original ? "1" : "0");
   if (form.file) fd.append("file", form.file);
 
   await store.saveGrade(props.userId, fd);
@@ -252,4 +278,8 @@ const fileSizeRule = (v: File | null): boolean | string => {
   if (!v) return true;
   return v.size <= 10 * 1024 * 1024 || "Máximo 10 MB.";
 };
+
+const fileUrl = (path: string): string => API_URL + "storage/" + path;
+
+defineExpose({ openAdd });
 </script>

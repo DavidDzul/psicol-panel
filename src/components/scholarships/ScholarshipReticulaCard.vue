@@ -1,27 +1,52 @@
 <template>
   <div>
-    <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-3" />
+    <v-progress-linear
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="mb-3"
+    />
 
     <!-- Vista de retícula existente -->
     <template v-if="!editing">
       <div v-if="hasReticula" class="d-flex align-center flex-wrap ga-4 mb-3">
-        <div>
-          <div class="text-caption text-medium-emphasis">Inicio de carrera</div>
-          <div class="text-body-2 font-weight-medium">{{ profile!.reticula_start_date }}</div>
-        </div>
-        <div>
-          <div class="text-caption text-medium-emphasis">Fin de carrera</div>
-          <div class="text-body-2 font-weight-medium">{{ profile!.reticula_end_date }}</div>
-        </div>
-        <div v-if="profile!.reticula_original_name">
-          <div class="text-caption text-medium-emphasis">Documento</div>
-          <div class="text-body-2 d-flex align-center ga-1">
-            <v-icon size="small" color="primary">mdi-file-pdf-box</v-icon>
-            {{ profile!.reticula_original_name }}
-          </div>
-        </div>
-        <v-spacer />
-        <v-btn v-if="!props.readonly" size="small" variant="tonal" @click="startEdit">Editar retícula</v-btn>
+        <v-row dense align="center">
+          <v-col cols="12" sm="3">
+            <div class="text-caption text-medium-emphasis">
+              Inicio de carrera
+            </div>
+            <div class="text-body-2 font-weight-medium">
+              {{ dayjs(profile!.reticula_start_date).format("DD-MM-YYYY") }}
+            </div>
+          </v-col>
+
+          <v-col cols="12" sm="3">
+            <div class="text-caption text-medium-emphasis">Fin de carrera</div>
+            <div class="text-body-2 font-weight-medium">
+              {{ dayjs(profile!.reticula_end_date).format("DD-MM-YYYY") }}
+            </div>
+          </v-col>
+
+          <v-col cols="12" sm="4" v-if="profile!.reticula_original_name">
+            <div class="text-caption text-medium-emphasis">Documento</div>
+            <div class="text-body-2 d-flex align-center ga-1">
+              <v-icon size="small" color="primary">mdi-file-pdf-box</v-icon>
+              <span class="text-truncate">{{
+                profile!.reticula_original_name
+              }}</span>
+            </div>
+          </v-col>
+
+          <v-col cols="12" sm="2" class="text-right">
+            <v-btn
+              v-if="!props.readonly"
+              size="small"
+              variant="tonal"
+              @click="startEdit"
+              >Editar retícula</v-btn
+            >
+          </v-col>
+        </v-row>
       </div>
 
       <v-alert
@@ -31,16 +56,23 @@
         density="compact"
         class="mb-3"
       >
-        No se ha registrado la retícula. Es necesaria para validar el periodo de pago.
+        No se ha registrado la retícula. Es necesaria para validar el periodo de
+        pago.
         <template v-if="!props.readonly" #append>
-          <v-btn size="small" variant="text" @click="startEdit">Registrar</v-btn>
+          <v-btn size="small" variant="text" @click="startEdit"
+            >Registrar</v-btn
+          >
         </template>
       </v-alert>
     </template>
 
     <!-- Formulario de edición (solo en modo editable) -->
-    <v-form v-if="editing && !props.readonly" ref="formRef" @submit.prevent="onSave">
-      <v-row dense>
+    <v-form
+      v-if="editing && !props.readonly"
+      ref="formRef"
+      @submit.prevent="onSave"
+    >
+      <v-row class="pa-3" dense>
         <v-col cols="12" sm="4">
           <v-text-field
             v-model="form.reticula_start_date"
@@ -77,7 +109,13 @@
       </v-row>
 
       <div class="d-flex ga-2 mt-1">
-        <v-btn type="submit" color="primary" variant="tonal" size="small" :loading="saving">
+        <v-btn
+          type="submit"
+          color="primary"
+          variant="tonal"
+          size="small"
+          :loading="saving"
+        >
           Guardar
         </v-btn>
         <v-btn size="small" variant="text" @click="cancelEdit">Cancelar</v-btn>
@@ -90,6 +128,7 @@
 import { ref, computed, reactive } from "vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type { ScholarshipProfile } from "@/interfaces/scholarship";
+import dayjs from "dayjs";
 
 const props = defineProps<{
   userId: number;
@@ -101,9 +140,9 @@ const emit = defineEmits<{
   (e: "updated", profile: ScholarshipProfile): void;
 }>();
 
-const store   = useScholarshipStore();
+const store = useScholarshipStore();
 const loading = ref(false);
-const saving  = ref(false);
+const saving = ref(false);
 const editing = ref(false);
 const formRef = ref();
 
@@ -117,13 +156,14 @@ const form = reactive<{
   file: null,
 });
 
-const hasReticula = computed(() =>
-  !!(props.profile?.reticula_start_date && props.profile?.reticula_end_date)
+const hasReticula = computed(
+  () =>
+    !!(props.profile?.reticula_start_date && props.profile?.reticula_end_date),
 );
 
 const startEdit = (): void => {
   form.reticula_start_date = props.profile?.reticula_start_date ?? "";
-  form.reticula_end_date   = props.profile?.reticula_end_date ?? "";
+  form.reticula_end_date = props.profile?.reticula_end_date ?? "";
   form.file = null;
   editing.value = true;
 };

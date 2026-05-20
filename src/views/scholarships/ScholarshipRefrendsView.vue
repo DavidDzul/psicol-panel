@@ -9,28 +9,22 @@
         @update:year="selectedYear = $event"
         @update:month="selectedMonth = $event"
         @search="onPeriodChange"
-      />
+      >
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-refresh"
+          :loading="generating"
+          @click="generateDialog = true"
+        >
+          Generar refrendos
+        </v-btn>
+      </ScholarshipFilters>
     </v-col>
   </v-row>
 
   <v-row>
     <v-col cols="12">
-      <ScholarshipTable
-        :refrends="refrendList"
-        @show="goToDetail"
-      >
-        <template #actions>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            prepend-icon="mdi-refresh"
-            :loading="generating"
-            @click="generateDialog = true"
-          >
-            Generar refrendos
-          </v-btn>
-        </template>
-      </ScholarshipTable>
+      <ScholarshipTable :refrends="refrendList" @show="goToDetail" />
     </v-col>
   </v-row>
 
@@ -39,8 +33,9 @@
     <v-card>
       <v-card-title class="pa-4">Generar refrendos</v-card-title>
       <v-card-text>
-        Esto generará refrendos en estado <strong>Borrador</strong> para todos los becarios
-        activos del periodo seleccionado. Los que ya existan serán omitidos.
+        Esto generará refrendos en estado <strong>Borrador</strong> para todos
+        los becarios activos del periodo seleccionado. Los que ya existan serán
+        omitidos.
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />

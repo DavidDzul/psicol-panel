@@ -29,7 +29,9 @@
     </template>
 
     <template #item.final_amount="{ item }">
-      <span class="font-weight-bold">{{ formatCurrency(item.final_amount) }}</span>
+      <span class="font-weight-bold">{{
+        formatCurrency(item.final_amount)
+      }}</span>
     </template>
 
     <template #item.status="{ item }">
@@ -50,7 +52,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ScholarshipRefrend, RefrendStatus } from "@/interfaces/scholarship";
+import type {
+  ScholarshipRefrend,
+  RefrendStatus,
+} from "@/interfaces/scholarship";
 
 defineProps<{
   refrends: ScholarshipRefrend[];
@@ -63,7 +68,7 @@ defineEmits<{
 
 const headers = [
   { title: "Becario", key: "snapshot_name" },
-  { title: "Campus", key: "snapshot_campus" },
+  { title: "Sede", key: "snapshot_campus" },
   { title: "Tipo", key: "snapshot_scholarship_type" },
   { title: "Monto base", key: "base_amount", align: "end" as const },
   { title: "Descuento", key: "discount_amount", align: "end" as const },
@@ -74,7 +79,7 @@ const headers = [
 
 const formatCurrency = (value: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
-    Number(value)
+    Number(value),
   );
 
 const statusColor = (status: RefrendStatus): string => {
