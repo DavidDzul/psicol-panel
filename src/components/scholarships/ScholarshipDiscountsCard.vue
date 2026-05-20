@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined">
+  <v-card variant="text">
     <v-card-title class="text-subtitle-1 font-weight-bold pa-3">
       Descuentos aplicados
     </v-card-title>
@@ -33,17 +33,27 @@
     </v-card-text>
     <v-card-text class="d-flex justify-space-between pa-3 pt-0">
       <span class="text-body-2 text-error">Descuento total</span>
-      <span class="text-error">-{{ fmt(refrend.discount_amount) }} ({{ refrend.discount_percentage }}%)</span>
+      <span class="text-error"
+        >-{{ fmt(refrend.discount_amount) }} ({{
+          refrend.discount_percentage
+        }}%)</span
+      >
     </v-card-text>
     <v-card-text class="d-flex justify-space-between pa-3 pt-0">
       <span class="text-body-1 font-weight-bold">Pago final</span>
-      <span class="text-h6 text-primary font-weight-bold">{{ fmt(refrend.final_amount) }}</span>
+      <span class="text-h6 text-primary font-weight-bold">{{
+        fmt(refrend.final_amount)
+      }}</span>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup lang="ts">
-import type { ScholarshipRefrend, ScholarshipRefrendDiscount, DiscountType } from "@/interfaces/scholarship";
+import type {
+  ScholarshipRefrend,
+  ScholarshipRefrendDiscount,
+  DiscountType,
+} from "@/interfaces/scholarship";
 
 defineProps<{
   refrend: ScholarshipRefrend;
@@ -51,7 +61,9 @@ defineProps<{
 }>();
 
 const fmt = (value: string | number): string =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    Number(value),
+  );
 
 const discountLabel = (type: DiscountType): string => {
   const map: Record<DiscountType, string> = {

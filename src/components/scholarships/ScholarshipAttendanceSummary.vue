@@ -1,17 +1,28 @@
 <template>
   <div>
-    <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-3" />
+    <v-progress-linear
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="mb-3"
+    />
 
     <template v-if="summary">
       <!-- Semester context -->
-      <div class="text-caption text-medium-emphasis mb-3">
-        Semestre: {{ summary.semester_start }} — {{ summary.semester_end }}
+      <div class="text-caption mb-3 font-weight-medium">
+        Semestre: {{ dayjs(summary.semester_start).format("DD/MM/YYYY") }} —
+        {{ dayjs(summary.semester_end).format("DD/MM/YYYY") }}
       </div>
 
       <!-- Stats grid -->
-      <v-row dense class="mb-3">
+      <v-row class="mb-3">
         <v-col v-for="stat in stats" :key="stat.label" cols="6" sm="4" md="3">
-          <v-card variant="tonal" :color="stat.color" rounded="lg" class="text-center pa-2">
+          <v-card
+            variant="tonal"
+            :color="stat.color"
+            rounded="lg"
+            class="text-center pa-2"
+          >
             <div class="text-h5 font-weight-bold">{{ stat.value }}</div>
             <div class="text-caption">{{ stat.label }}</div>
           </v-card>
@@ -26,7 +37,8 @@
         density="compact"
         class="mb-3"
       >
-        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) no consumido(s) en el semestre — al acumular 2 se aplica descuento del 25%.
+        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) no
+        consumido(s) en el semestre — al acumular 2 se aplica descuento del 25%.
       </v-alert>
 
       <!-- Records table -->
@@ -46,14 +58,23 @@
               </thead>
               <tbody>
                 <tr v-for="rec in summary.records" :key="rec.id">
-                  <td>{{ rec.class_date ?? '—' }}</td>
+                  <td>{{ rec.class_date ?? "—" }}</td>
                   <td>
-                    <v-chip :color="statusColor(rec.status)" size="x-small" label>
+                    <v-chip
+                      :color="statusColor(rec.status)"
+                      size="x-small"
+                      label
+                    >
                       {{ statusLabel(rec.status) }}
                     </v-chip>
                   </td>
                   <td>
-                    <v-icon v-if="rec.late_penalty_consumed" color="orange" size="small">mdi-check-circle</v-icon>
+                    <v-icon
+                      v-if="rec.late_penalty_consumed"
+                      color="orange"
+                      size="small"
+                      >mdi-check-circle</v-icon
+                    >
                     <span v-else class="text-medium-emphasis">—</span>
                   </td>
                 </tr>
@@ -74,6 +95,7 @@
 import { computed, ref, onMounted, watch } from "vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type { AttendanceSummary } from "@/interfaces/scholarship";
+import dayjs from "dayjs";
 
 const props = defineProps<{
   userId: number;
@@ -81,14 +103,19 @@ const props = defineProps<{
   month: number;
 }>();
 
-const store   = useScholarshipStore();
+const store = useScholarshipStore();
 const loading = ref<boolean>(false);
 const summary = ref<AttendanceSummary | null>(null);
 const showRecords = ref<number | undefined>(undefined);
 
 const load = async (): Promise<void> => {
   loading.value = true;
-  summary.value = (await store.fetchAttendanceSummary(props.userId, props.year, props.month)) ?? null;
+  summary.value =
+    (await store.fetchAttendanceSummary(
+      props.userId,
+      props.year,
+      props.month,
+    )) ?? null;
   loading.value = false;
 };
 

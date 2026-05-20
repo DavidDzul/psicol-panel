@@ -59,7 +59,7 @@
 
     <!-- Formulario inline -->
     <v-form v-if="editing" ref="formRef" @submit.prevent="onSave">
-      <v-row class="pa-2" dense>
+      <v-row class="pa-2">
         <v-col cols="12" md="6">
           <v-select
             v-model="form.scholarship_type"

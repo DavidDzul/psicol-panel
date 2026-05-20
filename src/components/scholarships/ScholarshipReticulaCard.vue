@@ -10,7 +10,7 @@
     <!-- Vista de retícula existente -->
     <template v-if="!editing">
       <div v-if="hasReticula" class="d-flex align-center flex-wrap ga-4 mb-3">
-        <v-row dense align="center">
+        <v-row align="center">
           <v-col cols="12" sm="3">
             <div class="text-caption text-medium-emphasis">
               Inicio de carrera
@@ -72,7 +72,7 @@
       ref="formRef"
       @submit.prevent="onSave"
     >
-      <v-row class="pa-3" dense>
+      <v-row class="pa-3">
         <v-col cols="12" sm="4">
           <v-text-field
             v-model="form.reticula_start_date"

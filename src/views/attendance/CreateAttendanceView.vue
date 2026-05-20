@@ -79,7 +79,7 @@
               </v-chip>
 
               <!-- Detalles en formato limpio -->
-              <v-row dense>
+              <v-row>
                 <v-col cols="12">
                   <strong>📚 Sesión:</strong>
                   <div>{{ dialogData.attendance.class.name }}</div>

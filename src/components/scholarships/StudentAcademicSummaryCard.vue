@@ -1,6 +1,8 @@
 <template>
-  <v-card variant="outlined" class="mb-4">
-    <v-card-title class="text-subtitle-2 pa-3 bg-grey-lighten-5 d-flex align-center ga-2">
+  <v-card variant="text" class="mb-4">
+    <v-card-title
+      class="text-subtitle-2 pa-3 bg-grey-lighten-5 d-flex align-center ga-2"
+    >
       <v-icon size="small" color="primary">mdi-school</v-icon>
       Información académica
     </v-card-title>
@@ -9,7 +11,9 @@
 
     <v-card-text class="pa-4">
       <div class="mb-4">
-        <div class="text-caption font-weight-medium text-medium-emphasis mb-2">RETÍCULA</div>
+        <div class="text-caption font-weight-medium text-medium-emphasis mb-2">
+          RETÍCULA
+        </div>
         <ScholarshipReticulaCard
           :user-id="userId"
           :profile="profile"
@@ -20,11 +24,10 @@
       <v-divider class="mb-4" />
 
       <div>
-        <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CALIFICACIONES SEMESTRALES</div>
-        <ScholarshipSemesterGradesCard
-          :user-id="userId"
-          :readonly="true"
-        />
+        <div class="text-caption font-weight-medium text-medium-emphasis mb-2">
+          CALIFICACIONES SEMESTRALES
+        </div>
+        <ScholarshipSemesterGradesCard :user-id="userId" :readonly="true" />
       </div>
     </v-card-text>
   </v-card>

@@ -14,14 +14,41 @@
       :total-to-pay="refrend.total_to_pay"
     />
 
+    <!-- Acciones secundarias -->
+    <div class="mb-4 d-flex justify-end flex-wrap ga-2">
+      <v-btn
+        v-if="!isLocked && refrend.status !== 'WITHHELD'"
+        color="error"
+        variant="text"
+        size="small"
+        prepend-icon="mdi-pause-circle"
+        @click="openWithhold"
+      >
+        Retener refrendo
+      </v-btn>
+      <v-btn
+        v-if="!isLocked"
+        color="orange-darken-2"
+        variant="text"
+        size="small"
+        prepend-icon="mdi-account-school"
+        @click="graduateDialog = true"
+      >
+        Marcar como egresado
+      </v-btn>
+    </div>
+
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
-    <v-card variant="outlined" class="mb-4">
+    <v-card class="mb-4">
       <v-card-text>
         <v-row align="center" class="flex-wrap ga-2">
           <v-col cols="12" sm="auto">
-            <div class="text-h6 font-weight-bold">{{ refrend.snapshot_name }}</div>
+            <div class="text-h6 font-weight-bold">
+              {{ refrend.snapshot_name }}
+            </div>
             <div class="text-body-2 text-medium-emphasis">
-              {{ refrend.snapshot_campus }} &middot; {{ refrend.snapshot_scholarship_type }} &middot; {{ periodLabel }}
+              {{ refrend.snapshot_campus }} &middot;
+              {{ refrend.snapshot_scholarship_type }} &middot; {{ periodLabel }}
             </div>
           </v-col>
 
@@ -30,24 +57,42 @@
           <!-- Financials -->
           <v-col cols="auto" class="text-right">
             <div class="text-caption text-medium-emphasis">Monto base</div>
-            <div class="text-body-1 font-weight-medium">{{ fmt(refrend.base_amount) }}</div>
+            <div class="text-body-1 font-weight-medium">
+              {{ fmt(refrend.base_amount) }}
+            </div>
           </v-col>
-          <v-col v-if="Number(refrend.discount_amount) > 0" cols="auto" class="text-right">
+          <v-col
+            v-if="Number(refrend.discount_amount) > 0"
+            cols="auto"
+            class="text-right"
+          >
             <div class="text-caption text-medium-emphasis">Descuento</div>
             <div class="text-body-1 font-weight-medium text-error">
-              - {{ fmt(refrend.discount_amount) }} ({{ refrend.discount_percentage }}%)
+              - {{ fmt(refrend.discount_amount) }} ({{
+                refrend.discount_percentage
+              }}%)
             </div>
           </v-col>
-          <v-col cols="auto" class="text-right">
+          <v-col cols="auto" class="text-right mx-2">
             <div class="text-caption text-medium-emphasis">
-              {{ Number(refrend.amount_pending_from_previous) > 0 ? 'Total a pagar' : 'Pago final' }}
+              {{
+                Number(refrend.amount_pending_from_previous) > 0
+                  ? "Total a pagar"
+                  : "Pago final"
+              }}
             </div>
             <div class="text-h6 font-weight-bold text-success">
-              {{ fmt(Number(refrend.amount_pending_from_previous) > 0 ? refrend.total_to_pay : refrend.final_amount) }}
+              {{
+                fmt(
+                  Number(refrend.amount_pending_from_previous) > 0
+                    ? refrend.total_to_pay
+                    : refrend.final_amount,
+                )
+              }}
             </div>
           </v-col>
 
-          <v-col cols="auto">
+          <v-col class="mx-2" cols="auto">
             <v-chip :color="statusColor(refrend.status)" label size="default">
               {{ statusLabel(refrend.status) }}
             </v-chip>
@@ -62,25 +107,34 @@
       <v-col cols="12" md="6">
         <v-card variant="outlined" color="blue" class="actor-card h-100">
           <v-card-title class="actor-header bg-blue-lighten-5">
-            <v-icon color="blue" size="small" class="mr-1">mdi-account-check</v-icon>
-            Atención de Becarios
+            <v-icon color="blue" size="small" class="mr-1"
+              >mdi-account-check</v-icon
+            >
+            Encargado/a de Atención de Becarios
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
               <v-icon :color="atencionDone ? 'success' : 'grey'" size="small">
-                {{ atencionDone ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                {{ atencionDone ? "mdi-check-circle" : "mdi-circle-outline" }}
               </v-icon>
               <span class="text-body-2">
-                {{ atencionDone ? 'Revisado' : 'Pendiente de revisión' }}
+                {{ atencionDone ? "Revisado" : "Pendiente de revisión" }}
               </span>
-              <span v-if="refrend.atencion_reviewed_at" class="text-caption text-medium-emphasis">
+              <span
+                v-if="refrend.atencion_reviewed_at"
+                class="text-caption text-medium-emphasis"
+              >
                 · {{ formatDate(refrend.atencion_reviewed_at) }}
               </span>
             </div>
 
             <div v-if="refrend.atencion_observations" class="mb-3">
-              <div class="text-caption text-medium-emphasis mb-1">Observaciones</div>
-              <div class="text-body-2 observation-box">{{ refrend.atencion_observations }}</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Observaciones
+              </div>
+              <div class="text-body-2 observation-box">
+                {{ refrend.atencion_observations }}
+              </div>
             </div>
 
             <v-btn
@@ -91,7 +145,7 @@
               prepend-icon="mdi-pencil"
               @click="openAtencionReview"
             >
-              {{ atencionDone ? 'Actualizar revisión' : 'Marcar revisado' }}
+              {{ atencionDone ? "Actualizar revisión" : "Marcar revisado" }}
             </v-btn>
           </v-card-text>
         </v-card>
@@ -102,22 +156,29 @@
         <v-card variant="outlined" color="purple" class="actor-card h-100">
           <v-card-title class="actor-header bg-purple-lighten-5">
             <v-icon color="purple" size="small" class="mr-1">mdi-school</v-icon>
-            Pedagogía
+            Encargado/a de Pedagogía
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
               <v-icon :color="pedagogiaDone ? 'success' : 'grey'" size="small">
-                {{ pedagogiaDone ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                {{ pedagogiaDone ? "mdi-check-circle" : "mdi-circle-outline" }}
               </v-icon>
               <span class="text-body-2">{{ pedagogiaStatus }}</span>
-              <span v-if="refrend.pedagogia_reviewed_at" class="text-caption text-medium-emphasis">
+              <span
+                v-if="refrend.pedagogia_reviewed_at"
+                class="text-caption text-medium-emphasis"
+              >
                 · {{ formatDate(refrend.pedagogia_reviewed_at) }}
               </span>
             </div>
 
             <div v-if="refrend.pedagogia_observations" class="mb-3">
-              <div class="text-caption text-medium-emphasis mb-1">Observaciones</div>
-              <div class="text-body-2 observation-box">{{ refrend.pedagogia_observations }}</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Observaciones
+              </div>
+              <div class="text-body-2 observation-box">
+                {{ refrend.pedagogia_observations }}
+              </div>
             </div>
 
             <div class="d-flex flex-wrap ga-2">
@@ -129,7 +190,7 @@
                 prepend-icon="mdi-pencil"
                 @click="openPedagogiaReview"
               >
-                {{ pedagogiaDone ? 'Actualizar revisión' : 'Revisar' }}
+                {{ pedagogiaDone ? "Actualizar revisión" : "Revisar" }}
               </v-btn>
               <v-btn
                 v-if="!isLocked && canAuthorize"
@@ -157,32 +218,8 @@
       </v-col>
     </v-row>
 
-    <!-- Acciones secundarias -->
-    <div class="mb-4 d-flex justify-end flex-wrap ga-2">
-      <v-btn
-        v-if="!isLocked && refrend.status !== 'WITHHELD'"
-        color="error"
-        variant="text"
-        size="small"
-        prepend-icon="mdi-pause-circle"
-        @click="openWithhold"
-      >
-        Retener refrendo
-      </v-btn>
-      <v-btn
-        v-if="!isLocked"
-        color="orange-darken-2"
-        variant="text"
-        size="small"
-        prepend-icon="mdi-account-school"
-        @click="graduateDialog = true"
-      >
-        Marcar como egresado
-      </v-btn>
-    </div>
-
     <!-- ── Content tabs ────────────────────────────────────────────────────── -->
-    <v-card variant="outlined">
+    <v-card>
       <v-tabs v-model="activeTab" color="primary" density="compact">
         <v-tab value="asistencias">
           <v-icon size="small" class="mr-1">mdi-calendar-check</v-icon>
@@ -294,7 +331,10 @@
               Refrendos del {{ semesterLabel }} · {{ refrend.period_year }}
             </div>
 
-            <div v-if="!semesterRefrends.length" class="text-body-2 text-medium-emphasis">
+            <div
+              v-if="!semesterRefrends.length"
+              class="text-body-2 text-medium-emphasis"
+            >
               Sin refrendos registrados en este semestre.
             </div>
 
@@ -303,7 +343,9 @@
                 v-for="sr in semesterRefrends"
                 :key="sr.id"
                 :class="sr.id === refrend.id ? 'bg-blue-lighten-5' : ''"
-                :to="sr.id !== refrend.id ? `/scholarships/${sr.id}` : undefined"
+                :to="
+                  sr.id !== refrend.id ? `/scholarships/${sr.id}` : undefined
+                "
                 rounded="lg"
               >
                 <template #prepend>
@@ -312,14 +354,20 @@
                     size="small"
                     class="mr-2"
                   >
-                    {{ sr.id === refrend.id ? 'mdi-circle' : 'mdi-circle-outline' }}
+                    {{
+                      sr.id === refrend.id ? "mdi-circle" : "mdi-circle-outline"
+                    }}
                   </v-icon>
                 </template>
 
                 <template #title>
                   <span class="text-body-2 font-weight-medium">
                     {{ monthName(sr.period_month) }}
-                    <span v-if="sr.id === refrend.id" class="text-caption text-blue ml-1">(actual)</span>
+                    <span
+                      v-if="sr.id === refrend.id"
+                      class="text-caption text-blue ml-1"
+                      >(actual)</span
+                    >
                   </span>
                 </template>
 
@@ -330,8 +378,14 @@
                       · Desc. {{ fmt(sr.discount_amount) }}
                     </template>
                     · <strong>Final {{ fmt(sr.final_amount) }}</strong>
-                    <template v-if="Number(sr.amount_pending_from_previous) > 0">
-                      <span class="text-warning"> + {{ fmt(sr.amount_pending_from_previous) }} retenido</span>
+                    <template
+                      v-if="Number(sr.amount_pending_from_previous) > 0"
+                    >
+                      <span class="text-warning">
+                        +
+                        {{ fmt(sr.amount_pending_from_previous) }}
+                        retenido</span
+                      >
                     </template>
                   </span>
                 </template>
@@ -386,7 +440,11 @@
   <!-- Review dialog -->
   <ScholarshipReviewDialog
     v-model="reviewDialog"
-    :title="reviewMode === 'atencion' ? 'Revisión — Atención de Becarios' : 'Revisión — Pedagogía'"
+    :title="
+      reviewMode === 'atencion'
+        ? 'Revisión — Atención de Becarios'
+        : 'Revisión — Pedagogía'
+    "
     @submit="onSubmitReview"
   />
 
@@ -400,13 +458,24 @@
       <v-card-text class="pt-0">
         <div class="mb-4 pa-3 rounded bg-grey-lighten-5">
           <div class="text-caption text-medium-emphasis">Monto calculado</div>
-          <div class="text-h6 font-weight-bold">{{ fmt(refrend?.final_amount ?? 0) }}</div>
-          <div v-if="Number(refrend?.amount_pending_from_previous) > 0" class="text-caption text-warning mt-1">
-            + {{ fmt(refrend?.amount_pending_from_previous ?? 0) }} de meses retenidos
-            = <strong>{{ fmt(refrend?.total_to_pay ?? 0) }}</strong> total a pagar
+          <div class="text-h6 font-weight-bold">
+            {{ fmt(refrend?.final_amount ?? 0) }}
           </div>
-          <div v-if="Number(refrend?.discount_amount) > 0" class="text-caption text-error">
-            Incluye descuento de {{ fmt(refrend?.discount_amount ?? 0) }} ({{ refrend?.discount_percentage }}%)
+          <div
+            v-if="Number(refrend?.amount_pending_from_previous) > 0"
+            class="text-caption text-warning mt-1"
+          >
+            + {{ fmt(refrend?.amount_pending_from_previous ?? 0) }} de meses
+            retenidos =
+            <strong>{{ fmt(refrend?.total_to_pay ?? 0) }}</strong> total a pagar
+          </div>
+          <div
+            v-if="Number(refrend?.discount_amount) > 0"
+            class="text-caption text-error"
+          >
+            Incluye descuento de {{ fmt(refrend?.discount_amount ?? 0) }} ({{
+              refrend?.discount_percentage
+            }}%)
           </div>
         </div>
 
@@ -440,10 +509,13 @@
         <v-btn
           color="success"
           variant="tonal"
-          @click="onAuthorize({
-            final_amount_override: authorizeForm.final_amount_override || null,
-            authorization_notes: authorizeForm.authorization_notes || null,
-          })"
+          @click="
+            onAuthorize({
+              final_amount_override:
+                authorizeForm.final_amount_override || null,
+              authorization_notes: authorizeForm.authorization_notes || null,
+            })
+          "
         >
           Confirmar autorización
         </v-btn>
@@ -468,7 +540,11 @@
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
         <v-btn variant="text" @click="withholdDialog = false">Cancelar</v-btn>
-        <v-btn color="error" variant="tonal" @click="onWithhold(withholdReason || undefined)">
+        <v-btn
+          color="error"
+          variant="tonal"
+          @click="onWithhold(withholdReason || undefined)"
+        >
           Retener
         </v-btn>
       </v-card-actions>
@@ -484,8 +560,9 @@
       </v-card-title>
       <v-card-text class="pt-0">
         <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-          Esta acción cambiará al becario a estado <strong>Inactivo</strong> y cancelará el
-          refrendo activo del mes actual. Esta acción no se puede deshacer fácilmente.
+          Esta acción cambiará al becario a estado <strong>Inactivo</strong> y
+          cancelará el refrendo activo del mes actual. Esta acción no se puede
+          deshacer fácilmente.
         </v-alert>
 
         <v-textarea
@@ -553,7 +630,7 @@ const authorizeForm = reactive<{
   authorization_notes: "",
 });
 
-const graduateComment   = ref<string>("");
+const graduateComment = ref<string>("");
 const graduateConfirmed = ref<boolean>(false);
 
 const {
@@ -582,39 +659,63 @@ const {
 // ── Computed state helpers ────────────────────────────────────────────────
 
 const isLocked = computed<boolean>(() =>
-  refrend.value ? ['AUTHORIZED', 'PAID', 'CANCELLED'].includes(refrend.value.status) : false
+  refrend.value
+    ? ["AUTHORIZED", "PAID", "CANCELLED"].includes(refrend.value.status)
+    : false,
 );
 
 const atencionDone = computed<boolean>(() =>
-  refrend.value ? ['ATENCION_REVIEW', 'PEDAGOGIA_REVIEW', 'AUTHORIZED', 'PAID'].includes(refrend.value.status) : false
+  refrend.value
+    ? ["ATENCION_REVIEW", "PEDAGOGIA_REVIEW", "AUTHORIZED", "PAID"].includes(
+        refrend.value.status,
+      )
+    : false,
 );
 
 const pedagogiaDone = computed<boolean>(() =>
-  refrend.value ? ['PEDAGOGIA_REVIEW', 'AUTHORIZED', 'PAID'].includes(refrend.value.status) : false
+  refrend.value
+    ? ["PEDAGOGIA_REVIEW", "AUTHORIZED", "PAID"].includes(refrend.value.status)
+    : false,
 );
 
 const canAtencionReview = computed<boolean>(() =>
-  refrend.value ? ['DRAFT', 'ATENCION_REVIEW'].includes(refrend.value.status) : false
+  refrend.value
+    ? ["DRAFT", "ATENCION_REVIEW"].includes(refrend.value.status)
+    : false,
 );
 
 const canPedagogiaReview = computed<boolean>(() =>
-  refrend.value ? ['ATENCION_REVIEW', 'PEDAGOGIA_REVIEW'].includes(refrend.value.status) : false
+  refrend.value
+    ? ["ATENCION_REVIEW", "PEDAGOGIA_REVIEW"].includes(refrend.value.status)
+    : false,
 );
 
 const canAuthorize = computed<boolean>(() =>
-  refrend.value ? refrend.value.status === 'PEDAGOGIA_REVIEW' : false
+  refrend.value ? refrend.value.status === "PEDAGOGIA_REVIEW" : false,
 );
 
 const pedagogiaStatus = computed<string>(() => {
-  if (!refrend.value) return 'Pendiente';
-  if (['AUTHORIZED', 'PAID'].includes(refrend.value.status)) return 'Autorizado';
-  if (refrend.value.status === 'PEDAGOGIA_REVIEW') return 'Revisado — pendiente de autorizar';
-  return 'Pendiente de revisión';
+  if (!refrend.value) return "Pendiente";
+  if (["AUTHORIZED", "PAID"].includes(refrend.value.status))
+    return "Autorizado";
+  if (refrend.value.status === "PEDAGOGIA_REVIEW")
+    return "Revisado — pendiente de autorizar";
+  return "Pendiente de revisión";
 });
 
 const MONTHS = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 const monthName = (month: number): string => MONTHS[month - 1] ?? String(month);
@@ -631,7 +732,11 @@ const semesterLabel = computed<string>(() => {
     : "Semestre 2 (Ago–Dic)";
 });
 
-const semesterTotals = computed<{ paid: number; withheld: number; pending: number }>(() => {
+const semesterTotals = computed<{
+  paid: number;
+  withheld: number;
+  pending: number;
+}>(() => {
   return semesterRefrends.value.reduce(
     (acc, sr) => {
       const amount = Number(sr.final_amount);
@@ -646,26 +751,40 @@ const semesterTotals = computed<{ paid: number; withheld: number; pending: numbe
 
 const statusColor = (status: RefrendStatus): string => {
   const map: Record<RefrendStatus, string> = {
-    DRAFT: "grey", ATENCION_REVIEW: "blue", PEDAGOGIA_REVIEW: "purple",
-    AUTHORIZED: "green", PAID: "teal", WITHHELD: "orange", CANCELLED: "red",
+    DRAFT: "grey",
+    ATENCION_REVIEW: "blue",
+    PEDAGOGIA_REVIEW: "purple",
+    AUTHORIZED: "green",
+    PAID: "teal",
+    WITHHELD: "orange",
+    CANCELLED: "red",
   };
   return map[status] ?? "grey";
 };
 
 const statusLabel = (status: RefrendStatus): string => {
   const map: Record<RefrendStatus, string> = {
-    DRAFT: "Borrador", ATENCION_REVIEW: "Rev. Atención", PEDAGOGIA_REVIEW: "Rev. Pedagogía",
-    AUTHORIZED: "Autorizado", PAID: "Pagado", WITHHELD: "Retenido", CANCELLED: "Cancelado",
+    DRAFT: "Borrador",
+    ATENCION_REVIEW: "Rev. Atención",
+    PEDAGOGIA_REVIEW: "Rev. Pedagogía",
+    AUTHORIZED: "Autorizado",
+    PAID: "Pagado",
+    WITHHELD: "Retenido",
+    CANCELLED: "Cancelado",
   };
   return map[status] ?? status;
 };
 
 const fmt = (value: string | number): string =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    Number(value),
+  );
 
 const formatDate = (iso: string): string =>
   new Date(iso).toLocaleDateString("es-MX", {
-    day: "2-digit", month: "short", year: "numeric",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 
 const requiredRule = (v: string): boolean | string =>
@@ -681,13 +800,13 @@ const requiredRule = (v: string): boolean | string =>
   font-size: 13px;
   font-weight: 600;
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
 }
 
 .observation-box {
-  background: rgba(0,0,0,0.04);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 13px;

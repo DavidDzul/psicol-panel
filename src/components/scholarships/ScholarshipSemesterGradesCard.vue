@@ -97,7 +97,7 @@
       @submit.prevent="onSave"
       class="mt-2"
     >
-      <v-row class="pa-3" dense>
+      <v-row class="pa-3">
         <v-col cols="6" md="4">
           <v-text-field
             v-model.number="form.semester_year"

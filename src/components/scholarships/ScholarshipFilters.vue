@@ -1,5 +1,5 @@
 <template>
-  <v-row dense class="mb-2">
+  <v-row class="mb-2">
     <v-col cols="12" sm="4" md="3">
       <v-select
         v-model="internalYear"

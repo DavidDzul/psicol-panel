@@ -31,7 +31,7 @@
 
         <!-- Información -->
         <v-col cols="12" md="7" class="mt-4 mt-md-0">
-          <v-row dense>
+          <v-row>
             <!-- Matrícula -->
             <v-col cols="12" sm="6">
               <div

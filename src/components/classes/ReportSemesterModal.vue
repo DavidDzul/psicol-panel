@@ -20,7 +20,7 @@
           Seleccione los datos solicitados para generar el reporte.
         </p>
 
-        <v-row dense>
+        <v-row>
           <!-- Sede -->
           <v-col cols="12" md="6">
             <v-select
@@ -100,20 +100,20 @@ import type { Generation } from "@/interfaces/generation";
 import type { ReportSemesterForm } from "@/interfaces/class";
 
 interface SemesterOption {
-  title: string
-  value: number
+  title: string;
+  value: number;
 }
 
 interface Props {
-  modelValue: boolean
-  adminCampus: SelectOption[]
-  generations: Generation[]
-  loading: boolean
+  modelValue: boolean;
+  adminCampus: SelectOption[];
+  generations: Generation[];
+  loading: boolean;
 }
 
 interface Emits {
-  (e: "update:modelValue", value: boolean): void
-  (e: "submit", form: ReportSemesterForm): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "submit", form: ReportSemesterForm): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -132,7 +132,7 @@ const semester = ref<number | null>(null);
 const format = ref<number>(1);
 
 const filteredGenerations = computed<Generation[]>(() =>
-  props.generations.filter((g) => g.campus === campus.value)
+  props.generations.filter((g) => g.campus === campus.value),
 );
 
 const selectYear = computed<number[]>(() => {
@@ -145,14 +145,22 @@ const selectSemester: SemesterOption[] = [
   { title: "Agosto - Diciembre", value: 2 },
 ];
 
-const isValid = computed<boolean>(() =>
-  !!(campus.value && generation_id.value && year.value && semester.value && format.value)
+const isValid = computed<boolean>(
+  () =>
+    !!(
+      campus.value &&
+      generation_id.value &&
+      year.value &&
+      semester.value &&
+      format.value
+    ),
 );
 
 const close = (): void => emit("update:modelValue", false);
 
 const submit = (): void => {
-  if (!campus.value || !generation_id.value || !year.value || !semester.value) return;
+  if (!campus.value || !generation_id.value || !year.value || !semester.value)
+    return;
   emit("submit", {
     campus: campus.value,
     generation_id: generation_id.value,
