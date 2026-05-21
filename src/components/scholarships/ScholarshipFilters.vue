@@ -36,6 +36,21 @@
         @update:model-value="emit('update:month', internalMonth)"
       />
     </v-col>
+    <v-col md="2">
+      <v-autocomplete
+        v-model="internalGenerationId"
+        :items="generationList"
+        item-title="generation_name"
+        item-value="id"
+        label="Generación"
+        density="compact"
+        variant="outlined"
+        hide-details
+        clearable
+        prepend-inner-icon="mdi-account-group"
+        @update:model-value="emit('update:generationId', internalGenerationId)"
+      />
+    </v-col>
     <v-col cols="12" sm="4" md="2" class="d-flex align-center">
       <v-btn color="grey" block @click="emit('search')"> Buscar </v-btn>
     </v-col>
@@ -51,26 +66,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { storeToRefs } from "pinia";
 import type { SelectOption } from "@/constants";
+import { useGenerationsStore } from "@/stores/api/generationStore";
 
 const props = defineProps<{
   year: number;
   month: number;
   campuses?: SelectOption[] | null;
   campus?: string | null;
+  generationId?: number | null;
 }>();
 
 const emit = defineEmits<{
   "update:year": [value: number];
   "update:month": [value: number];
   "update:campus": [value: string | null];
+  "update:generationId": [value: number | null];
   search: [];
 }>();
+
+const { resGenerations } = storeToRefs(useGenerationsStore());
+const generationList = computed(() => [...resGenerations.value.values()]);
 
 const internalYear = ref<number>(props.year);
 const internalMonth = ref<number>(props.month);
 const internalCampus = ref<string | null>(props.campus ?? null);
+const internalGenerationId = ref<number | null>(props.generationId ?? null);
 
 const yearOptions = Array.from(
   { length: 6 },
