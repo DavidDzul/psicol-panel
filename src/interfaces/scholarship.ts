@@ -93,6 +93,7 @@ export interface ScholarshipRefrend {
   total_to_pay: string
   snapshot_name: string
   snapshot_generation: string | null
+  snapshot_generation_id: number | null
   snapshot_campus: string
   snapshot_scholarship_type: ScholarshipType
   atencion_observations: string | null
@@ -111,6 +112,48 @@ export interface ScholarshipRefrend {
   logs?: ScholarshipRefrendLog[]
   atencion_reviewed_by?: { id: number; first_name: string; last_name: string } | null
   pedagogia_reviewed_by?: { id: number; first_name: string; last_name: string } | null
+}
+
+// ── Bulk table types (master table) ───────────────────────────────────────
+
+export interface BulkRefrendRow {
+  refrend: ScholarshipRefrend
+  attendance_present: number
+  attendance_late: number
+  attendance_late_justified: number
+  attendance_late_consumed: number
+  attendance_late_unconsumed: number
+  attendance_absent: number
+  attendance_absent_justified: number
+  attendance_total: number
+  last_grade: string | null
+  academic_status: 'ok' | 'low_grade' | 'missing_subjects' | 'inactive'
+  active_discount_pct: string
+  projected_amount: string
+  incidents_count: number
+}
+
+export interface BulkTableParams {
+  year: number
+  month: number
+  campus?: string | null
+  generation_id?: number | null
+  page?: number
+  per_page?: number
+}
+
+export interface BulkTableMeta {
+  total: number
+  per_page: number
+  current_page: number
+  last_page: number
+}
+
+export interface InlinePatchPayload {
+  atencion_labels?: string[] | null
+  atencion_observations?: string | null
+  pedagogia_observations?: string | null
+  final_amount_override?: number | null
 }
 
 export interface StudentDocument {
