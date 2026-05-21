@@ -2,6 +2,7 @@ import axios from "@/axiosConfig";
 import { isAxiosError } from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { toRaw } from "vue";
 import { useAlertStore } from "@/stores/alert";
 import type {
   ScholarshipProfile,
@@ -12,6 +13,10 @@ import type {
   AuthorizeForm,
   AttendanceSummary,
   GraduateForm,
+  BulkRefrendRow,
+  BulkTableMeta,
+  BulkTableParams,
+  InlinePatchPayload,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -30,6 +35,13 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const profiles = ref<Map<number, ScholarshipProfile>>(new Map());
   const selectedRefrend = ref<ScholarshipRefrend | null>(null);
   const attendanceSummaries = ref<Map<string, AttendanceSummary>>(new Map());
+
+  // ── Bulk table (master table) ─────────────────────────────────────────────
+  const bulkRows = ref<BulkRefrendRow[]>([]);
+  const bulkMeta = ref<BulkTableMeta | null>(null);
+  const bulkLoading = ref<boolean>(false);
+  const bulkError = ref<string | null>(null);
+  const bulkParams = ref<BulkTableParams | null>(null);
 
   // ── Profiles ──────────────────────────────────────────────────────────────
 
@@ -248,6 +260,64 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // ── Bulk table actions ────────────────────────────────────────────────────
+
+  const fetchBulkTable = async (params: BulkTableParams): Promise<void> => {
+    bulkLoading.value = true;
+    bulkError.value = null;
+    bulkParams.value = params;
+    try {
+      const res = await axios.get("api/admin/scholarship-refrends/bulk-table", { params });
+      bulkRows.value = res.data.data;
+      bulkMeta.value = res.data.meta;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al cargar la tabla.")
+        : "Error de red.";
+      bulkError.value = msg;
+      bulkRows.value = [];
+      bulkMeta.value = null;
+      showAlert({ title: msg, status: "error" });
+    } finally {
+      bulkLoading.value = false;
+    }
+  };
+
+  const patchInline = async (id: number, payload: InlinePatchPayload): Promise<void> => {
+    const rowIdx = bulkRows.value.findIndex((r) => r.refrend.id === id);
+    const previous = rowIdx >= 0 ? structuredClone(toRaw(bulkRows.value[rowIdx])) : null;
+
+    if (rowIdx >= 0) {
+      const row = bulkRows.value[rowIdx];
+      if (payload.atencion_labels !== undefined) {
+        row.refrend.atencion_labels = payload.atencion_labels;
+      }
+      if (payload.atencion_observations !== undefined) {
+        row.refrend.atencion_observations = payload.atencion_observations;
+      }
+      if (payload.pedagogia_observations !== undefined) {
+        row.refrend.pedagogia_observations = payload.pedagogia_observations;
+      }
+      if (payload.final_amount_override != null) {
+        row.refrend.final_amount = String(payload.final_amount_override);
+        row.projected_amount = String(payload.final_amount_override);
+      }
+      row.incidents_count = row.refrend.atencion_labels?.length ?? 0;
+    }
+
+    try {
+      const res = await axios.patch(`api/admin/scholarship-refrends/${id}/inline`, payload);
+      if (rowIdx >= 0) {
+        bulkRows.value[rowIdx].refrend = res.data.data as ScholarshipRefrend;
+      }
+    } catch (error: unknown) {
+      if (rowIdx >= 0 && previous !== null) {
+        bulkRows.value[rowIdx] = previous;
+      }
+      throw error;
+    }
+  };
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   const _updateRefrend = async (url: string, data: object): Promise<ScholarshipRefrend | undefined> => {
@@ -289,6 +359,11 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     profiles,
     selectedRefrend,
     attendanceSummaries,
+    bulkRows,
+    bulkMeta,
+    bulkLoading,
+    bulkError,
+    bulkParams,
     fetchProfile,
     saveProfile,
     fetchRefrends,
@@ -305,5 +380,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     getAttendanceSummary,
     uploadReticula,
     markAsGraduate,
+    fetchBulkTable,
+    patchInline,
   };
 });
