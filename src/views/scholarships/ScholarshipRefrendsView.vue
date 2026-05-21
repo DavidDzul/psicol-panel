@@ -8,9 +8,11 @@
         :month="selectedMonth"
         :campuses="filteredCampus"
         :campus="selectedCampus"
+        :generation-id="selectedGenerationId"
         @update:year="selectedYear = $event"
         @update:month="selectedMonth = $event"
         @update:campus="selectedCampus = $event"
+        @update:generation-id="selectedGenerationId = $event"
         @search="onPeriodChange"
       >
         <v-btn
@@ -25,7 +27,28 @@
     </v-col>
   </v-row>
 
-  <v-row>
+  <!-- Master table path -->
+  <v-row v-if="isMasterTable">
+    <v-col cols="12">
+      <v-alert
+        v-if="scholarshipStore.bulkError"
+        type="error"
+        variant="tonal"
+        density="compact"
+        class="mb-2"
+      >
+        {{ scholarshipStore.bulkError }}
+      </v-alert>
+      <RefrendMasterTable
+        :rows="scholarshipStore.bulkRows"
+        :loading="scholarshipStore.bulkLoading"
+        @atencion-saved="onAtencionSaved"
+      />
+    </v-col>
+  </v-row>
+
+  <!-- Legacy path — completely unmodified -->
+  <v-row v-else>
     <v-col cols="12">
       <ScholarshipTable :refrends="refrendList" @show="goToDetail" />
     </v-col>
@@ -62,21 +85,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, defineAsyncComponent, ref } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
+import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipTable from "@/components/scholarships/ScholarshipTable.vue";
 import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue";
 import type { ScholarshipRefrend } from "@/interfaces/scholarship";
 import type { LinkInterface } from "@/interfaces";
 
+const RefrendMasterTable = defineAsyncComponent(
+  () => import("@/components/scholarships/RefrendMasterTable.vue"),
+);
+
+// ── Feature flag ───────────────────────────────────────────────────────────
+
+const isMasterTable = import.meta.env.VITE_REFRENDS_MASTER_TABLE === "true";
+
+// ── Router ─────────────────────────────────────────────────────────────────
+
 const router = useRouter();
+
+// ── Breadcrumbs ────────────────────────────────────────────────────────────
 
 const links: LinkInterface[] = [
   { title: "Inicio", disabled: false, href: "/" },
   { title: "Refrendos", disabled: true, href: "/scholarships" },
 ];
+
+// ── Legacy composable (shared state for both paths) ───────────────────────
 
 const {
   selectedYear,
@@ -86,14 +125,55 @@ const {
   generating,
   generateDialog,
   refrendList,
-  onPeriodChange,
   onGeneratePeriod,
 } = useScholarshipPage();
+
+// ── Generation filter (master table path only) ────────────────────────────
+
+const selectedGenerationId = ref<number | null>(null);
+
+// ── Scholarship store (master table path) ─────────────────────────────────
+
+const scholarshipStore = useScholarshipStore();
+
+// ── campusLabel for generate dialog ───────────────────────────────────────
 
 const campusLabel = computed<string>(() => {
   const found = filteredCampus.value.find((c) => c.value === selectedCampus.value);
   return found?.text ?? selectedCampus.value ?? "";
 });
+
+// ── Period change handler ──────────────────────────────────────────────────
+
+const onPeriodChange = async (): Promise<void> => {
+  if (isMasterTable) {
+    await scholarshipStore.fetchBulkTable({
+      year: selectedYear.value,
+      month: selectedMonth.value,
+      campus: selectedCampus.value,
+      generation_id: selectedGenerationId.value,
+    });
+  } else {
+    await scholarshipStore.fetchRefrends(
+      selectedYear.value,
+      selectedMonth.value,
+      selectedCampus.value,
+    );
+  }
+};
+
+// ── Atencion saved callback (master table) ─────────────────────────────────
+
+const onAtencionSaved = (refrend: ScholarshipRefrend): void => {
+  const idx = scholarshipStore.bulkRows.findIndex((r) => r.refrend.id === refrend.id);
+  if (idx >= 0) {
+    scholarshipStore.bulkRows[idx].refrend = refrend;
+    scholarshipStore.bulkRows[idx].incidents_count =
+      refrend.atencion_labels?.length ?? 0;
+  }
+};
+
+// ── Legacy navigation ──────────────────────────────────────────────────────
 
 const goToDetail = (refrend: ScholarshipRefrend): void => {
   router.push(`/scholarships/${refrend.id}`);
