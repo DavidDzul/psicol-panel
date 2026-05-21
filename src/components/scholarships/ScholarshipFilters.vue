@@ -1,6 +1,20 @@
 <template>
   <v-row class="mb-2">
-    <v-col cols="12" sm="4" md="3">
+    <v-col v-if="campuses && campuses.length > 0" md="2">
+      <v-select
+        v-model="internalCampus"
+        :items="campuses"
+        item-title="text"
+        item-value="value"
+        label="Sede"
+        density="compact"
+        variant="outlined"
+        hide-details
+        prepend-inner-icon="mdi-map-marker"
+        @update:model-value="emit('update:campus', internalCampus)"
+      />
+    </v-col>
+    <v-col md="2">
       <v-select
         v-model="internalYear"
         :items="yearOptions"
@@ -11,7 +25,7 @@
         @update:model-value="emit('update:year', internalYear)"
       />
     </v-col>
-    <v-col cols="12" sm="4" md="3">
+    <v-col md="2">
       <v-select
         v-model="internalMonth"
         :items="monthOptions"
@@ -38,20 +52,25 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { SelectOption } from "@/constants";
 
 const props = defineProps<{
   year: number;
   month: number;
+  campuses?: SelectOption[] | null;
+  campus?: string | null;
 }>();
 
 const emit = defineEmits<{
   "update:year": [value: number];
   "update:month": [value: number];
+  "update:campus": [value: string | null];
   search: [];
 }>();
 
 const internalYear = ref<number>(props.year);
 const internalMonth = ref<number>(props.month);
+const internalCampus = ref<string | null>(props.campus ?? null);
 
 const yearOptions = Array.from(
   { length: 6 },

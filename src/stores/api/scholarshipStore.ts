@@ -80,11 +80,13 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Refrends — list ───────────────────────────────────────────────────────
 
-  const fetchRefrends = async (year: number, month: number): Promise<void> => {
+  const fetchRefrends = async (year: number, month: number, campus?: string | null): Promise<void> => {
     try {
+      const params: Record<string, unknown> = { year, month };
+      if (campus) params.campus = campus;
       const res = await axios.get<ScholarshipRefrendsResponse>(
         "api/admin/scholarship-refrends",
-        { params: { year, month } }
+        { params }
       );
       refrends.value = new Map(res.data.data.map((r) => [r.id, r]));
     } catch {

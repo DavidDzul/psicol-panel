@@ -31,14 +31,25 @@
 
       <!-- Retardos detail -->
       <v-alert
-        v-if="summary.late_unconsumed > 0"
+        v-if="summary.late_unconsumed >= 2"
         type="warning"
         variant="tonal"
         density="compact"
         class="mb-3"
       >
-        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) no
-        consumido(s) en el semestre — al acumular 2 se aplica descuento del 25%.
+        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) no consumido(s)
+        en el semestre — cada par equivale a 1 falta injustificada; aplica
+        suspensión del pago mensual (reglamento art. 5).
+      </v-alert>
+      <v-alert
+        v-else-if="summary.late_unconsumed === 1"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-3"
+      >
+        1 retardo pendiente — se necesita 1 más en el semestre para generar
+        penalización (reglamento art. 5).
       </v-alert>
 
       <!-- Records table -->

@@ -68,7 +68,6 @@ const rejectedCount = computed(
 
 const docTypeLabel = (type: DocumentType): string => {
   const map: Record<DocumentType, string> = {
-    CALIFICACIONES_ORIGINALES: "Calificaciones originales",
     CONSTANCIA_ESTUDIOS: "Constancia de estudios",
     COMPROBANTE_PAGO: "Comprobante de pago",
     JUSTIFICANTE_MEDICO: "Justificante médico",

@@ -80,18 +80,20 @@
             >
               <v-icon size="small">mdi-eye</v-icon>
             </v-btn>
-            <v-btn icon size="small" variant="text" @click="openEdit(doc)">
-              <v-icon size="small">mdi-pencil</v-icon>
-            </v-btn>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              color="error"
-              @click="openDeleteConfirm(doc)"
-            >
-              <v-icon size="small">mdi-delete</v-icon>
-            </v-btn>
+            <template v-if="!readonly">
+              <v-btn icon size="small" variant="text" @click="openEdit(doc)">
+                <v-icon size="small">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn
+                icon
+                size="small"
+                variant="text"
+                color="error"
+                @click="openDeleteConfirm(doc)"
+              >
+                <v-icon size="small">mdi-delete</v-icon>
+              </v-btn>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -102,89 +104,92 @@
     </div>
   </div>
 
-  <!-- Upload dialog -->
-  <ScholarshipDocumentUploadDialog
-    v-model="uploadDialog"
-    :user-id="userId"
-    :period-year="periodYear"
-    :period-month="periodMonth"
-    :loading="uploading"
-    @upload="onUpload"
-  />
+  <!-- Dialogs only available in write mode -->
+  <template v-if="!readonly">
+    <!-- Upload dialog -->
+    <ScholarshipDocumentUploadDialog
+      v-model="uploadDialog"
+      :user-id="userId!"
+      :period-year="periodYear!"
+      :period-month="periodMonth!"
+      :loading="uploading"
+      @upload="onUpload"
+    />
 
-  <!-- Edit dialog -->
-  <v-dialog v-model="editDialog" max-width="480" persistent>
-    <v-card v-if="editTarget">
-      <v-card-title class="pa-4">Editar documento</v-card-title>
-      <v-card-text>
-        <div class="text-caption text-medium-emphasis mb-3">
-          {{ editTarget.original_name }}
-        </div>
-        <v-select
-          v-model="editForm.document_type"
-          :items="typeFilterOptions"
-          label="Tipo de documento"
-          variant="outlined"
-          density="compact"
-          class="mb-3"
-        />
-        <v-text-field
-          v-if="editForm.document_type === 'OTRO'"
-          v-model="editForm.description"
-          label="Descripción del documento"
-          variant="outlined"
-          density="compact"
-          maxlength="255"
-          class="mb-3"
-        />
-        <v-textarea
-          v-model="editForm.observations"
-          label="Observaciones (opcional)"
-          variant="outlined"
-          density="compact"
-          rows="3"
-          maxlength="2000"
-          auto-grow
-        />
-      </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="editDialog = false">Cancelar</v-btn>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          :loading="editSaving"
-          @click="onEditSave"
-        >
-          Guardar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <!-- Edit dialog -->
+    <v-dialog v-model="editDialog" max-width="480" persistent>
+      <v-card v-if="editTarget">
+        <v-card-title class="pa-4">Editar documento</v-card-title>
+        <v-card-text>
+          <div class="text-caption text-medium-emphasis mb-3">
+            {{ editTarget.original_name }}
+          </div>
+          <v-select
+            v-model="editForm.document_type"
+            :items="typeFilterOptions"
+            label="Tipo de documento"
+            variant="outlined"
+            density="compact"
+            class="mb-3"
+          />
+          <v-text-field
+            v-if="editForm.document_type === 'OTRO'"
+            v-model="editForm.description"
+            label="Descripción del documento"
+            variant="outlined"
+            density="compact"
+            maxlength="255"
+            class="mb-3"
+          />
+          <v-textarea
+            v-model="editForm.observations"
+            label="Observaciones (opcional)"
+            variant="outlined"
+            density="compact"
+            rows="3"
+            maxlength="2000"
+            auto-grow
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="editDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :loading="editSaving"
+            @click="onEditSave"
+          >
+            Guardar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-  <!-- Delete confirm dialog -->
-  <v-dialog v-model="deleteDialog" max-width="400">
-    <v-card v-if="deleteTarget">
-      <v-card-title class="pa-4">Eliminar documento</v-card-title>
-      <v-card-text>
-        ¿Estás seguro de eliminar
-        <strong>{{ docLabel(deleteTarget.document_type) }}</strong>
-        ({{ deleteTarget.original_name }})? Esta acción no se puede deshacer.
-      </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="deleteDialog = false">Cancelar</v-btn>
-        <v-btn
-          color="error"
-          variant="elevated"
-          :loading="deleting"
-          @click="onDeleteConfirm"
-        >
-          Eliminar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <!-- Delete confirm dialog -->
+    <v-dialog v-model="deleteDialog" max-width="400">
+      <v-card v-if="deleteTarget">
+        <v-card-title class="pa-4">Eliminar documento</v-card-title>
+        <v-card-text>
+          ¿Estás seguro de eliminar
+          <strong>{{ docLabel(deleteTarget.document_type) }}</strong>
+          ({{ deleteTarget.original_name }})? Esta acción no se puede deshacer.
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="deleteDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="deleting"
+            @click="onDeleteConfirm"
+          >
+            Eliminar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -195,9 +200,13 @@ import ScholarshipDocumentUploadDialog from "@/components/scholarships/Scholarsh
 import type { StudentDocument, DocumentType } from "@/interfaces/scholarship";
 
 const props = defineProps<{
-  userId: number;
-  periodYear: number;
-  periodMonth: number;
+  readonly?: boolean;
+  // Used in write mode (PersonDetailsView)
+  userId?: number;
+  periodYear?: number;
+  periodMonth?: number;
+  // Pre-loaded documents (read-only mode from refrend detail)
+  externalDocuments?: StudentDocument[];
 }>();
 
 const store = useScholarshipDocumentsStore();
@@ -226,9 +235,10 @@ const editForm = reactive<{
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const documents = computed<StudentDocument[]>(() =>
-  [...store.documents.values()].filter((d) => d.user_id === props.userId),
-);
+const documents = computed<StudentDocument[]>(() => {
+  if (props.externalDocuments !== undefined) return props.externalDocuments;
+  return [...store.documents.values()].filter((d) => d.user_id === props.userId);
+});
 
 const filteredDocuments = computed<StudentDocument[]>(() =>
   typeFilter.value
@@ -237,6 +247,8 @@ const filteredDocuments = computed<StudentDocument[]>(() =>
 );
 
 onMounted(async () => {
+  if (props.externalDocuments !== undefined) return;
+  if (!props.userId) return;
   loading.value = true;
   await store.fetchDocuments(props.userId);
   loading.value = false;
@@ -247,7 +259,7 @@ onMounted(async () => {
 const onUpload = async (formData: FormData): Promise<void> => {
   uploading.value = true;
   const result = await store.uploadDocument(formData);
-  if (result) await store.fetchDocuments(props.userId);
+  if (result && props.userId) await store.fetchDocuments(props.userId);
   uploading.value = false;
   uploadDialog.value = false;
 };
@@ -329,7 +341,9 @@ const typeFilterOptions = [
   { title: "Otro documento", value: "OTRO" },
 ];
 
-const openUpload = (): void => { uploadDialog.value = true; };
+const openUpload = (): void => {
+  uploadDialog.value = true;
+};
 
 defineExpose({ openUpload });
 </script>

@@ -6,8 +6,11 @@
       <ScholarshipFilters
         :year="selectedYear"
         :month="selectedMonth"
+        :campuses="filteredCampus"
+        :campus="selectedCampus"
         @update:year="selectedYear = $event"
         @update:month="selectedMonth = $event"
+        @update:campus="selectedCampus = $event"
         @search="onPeriodChange"
       >
         <v-btn
@@ -29,13 +32,18 @@
   </v-row>
 
   <!-- Generate period confirmation -->
-  <v-dialog v-model="generateDialog" max-width="420">
+  <v-dialog v-model="generateDialog" max-width="440">
     <v-card>
       <v-card-title class="pa-4">Generar refrendos</v-card-title>
       <v-card-text>
-        Esto generará refrendos en estado <strong>Borrador</strong> para todos
-        los becarios activos del periodo seleccionado. Los que ya existan serán
-        omitidos.
+        <p>
+          Esto generará refrendos en estado <strong>Borrador</strong> para todos
+          los becarios activos
+          <template v-if="selectedCampus">
+            de la sede <strong>{{ campusLabel }}</strong>
+          </template>
+          del periodo seleccionado. Los que ya existan serán omitidos.
+        </p>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
@@ -54,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
@@ -72,12 +81,19 @@ const links: LinkInterface[] = [
 const {
   selectedYear,
   selectedMonth,
+  selectedCampus,
+  filteredCampus,
   generating,
   generateDialog,
   refrendList,
   onPeriodChange,
   onGeneratePeriod,
 } = useScholarshipPage();
+
+const campusLabel = computed<string>(() => {
+  const found = filteredCampus.value.find((c) => c.value === selectedCampus.value);
+  return found?.text ?? selectedCampus.value ?? "";
+});
 
 const goToDetail = (refrend: ScholarshipRefrend): void => {
   router.push(`/scholarships/${refrend.id}`);

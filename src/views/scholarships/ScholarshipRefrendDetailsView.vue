@@ -128,6 +128,30 @@
               </span>
             </div>
 
+            <!-- Etiquetas de revisión -->
+            <div
+              v-if="
+                refrend.atencion_labels && refrend.atencion_labels.length > 0
+              "
+              class="mb-3"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                Etiquetas
+              </div>
+              <div class="d-flex flex-wrap ga-1">
+                <v-chip
+                  v-for="label in refrend.atencion_labels"
+                  :key="label"
+                  color="blue"
+                  variant="tonal"
+                  size="x-small"
+                  label
+                >
+                  {{ label }}
+                </v-chip>
+              </div>
+            </div>
+
             <div v-if="refrend.atencion_observations" class="mb-3">
               <div class="text-caption text-medium-emphasis mb-1">
                 Observaciones
@@ -304,13 +328,10 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- Documentos (solo estado, sin upload) -->
+        <!-- Documentos (solo lectura, gestión en perfil del becario) -->
         <v-window-item value="documentos">
           <v-card-text>
-            <div class="text-caption text-medium-emphasis mb-3">
-              La gestión documental se realiza en el perfil del becario.
-            </div>
-            <StudentDocumentStatusBadges :documents="docList" />
+            <ScholarshipDocumentsCard readonly :user-id="refrend.user_id" />
           </v-card-text>
         </v-window-item>
 
@@ -437,27 +458,102 @@
     Refrendo no encontrado.
   </div>
 
-  <!-- Review dialog -->
-  <ScholarshipReviewDialog
+  <!-- Atencion review dialog (with labels + rules) -->
+  <ScholarshipAtencionReviewDialog
     v-model="reviewDialog"
-    :title="
-      reviewMode === 'atencion'
-        ? 'Revisión — Atención de Becarios'
-        : 'Revisión — Pedagogía'
-    "
+    :attendance-summary="reviewMode === 'atencion' ? attendanceSummary : null"
+    :refrend="reviewMode === 'atencion' ? refrend : null"
     @submit="onSubmitReview"
   />
 
+  <!-- Pedagogia review dialog (plain observations) -->
+  <ScholarshipReviewDialog
+    v-model="pedagogiaReviewDialog"
+    title="Revisión — Pedagogía"
+    @submit="onSubmitPedagogiaReview"
+  />
+
   <!-- Authorize dialog -->
-  <v-dialog v-model="authorizeDialog" max-width="480">
+  <v-dialog v-model="authorizeDialog" max-width="540">
     <v-card>
       <v-card-title class="text-subtitle-1 pa-4 d-flex align-center ga-2">
         <v-icon color="success" size="small">mdi-check-all</v-icon>
         Autorizar pago
       </v-card-title>
       <v-card-text class="pt-0">
+        <!-- Faltas administrativas -->
+        <div v-if="attendanceSummary" class="mb-4">
+          <div
+            class="text-caption font-weight-medium text-medium-emphasis mb-2"
+          >
+            FALTAS ADMINISTRATIVAS (reglamento art. 5)
+          </div>
+          <v-row dense>
+            <v-col cols="6">
+              <div class="text-caption text-medium-emphasis">
+                Faltas injustificadas
+              </div>
+              <div
+                class="text-body-2 font-weight-medium"
+                :class="
+                  attendanceSummary.absent_unjustified > 0
+                    ? 'text-error'
+                    : 'text-success'
+                "
+              >
+                {{ attendanceSummary.absent_unjustified }}
+              </div>
+            </v-col>
+            <v-col cols="6">
+              <div class="text-caption text-medium-emphasis">
+                Retardos no consumidos
+              </div>
+              <div
+                class="text-body-2 font-weight-medium"
+                :class="
+                  attendanceSummary.late_unconsumed >= 2 ? 'text-warning' : ''
+                "
+              >
+                {{ attendanceSummary.late_unconsumed }}
+                <span
+                  v-if="effectiveAbsencesFromLate > 0"
+                  class="text-caption text-warning"
+                >
+                  (= {{ effectiveAbsencesFromLate }} falta extra)
+                </span>
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-alert
+            v-if="totalEffectiveAbsences > 0"
+            type="error"
+            variant="tonal"
+            density="compact"
+            class="mt-2"
+          >
+            <strong
+              >{{ totalEffectiveAbsences }} falta(s) administrativa(s)</strong
+            >
+            — El reglamento indica suspensión del pago mensual. Monto sugerido:
+            <strong>{{ fmt(adminSuggestedAmount) }}</strong>
+          </v-alert>
+          <v-alert
+            v-else
+            type="success"
+            variant="tonal"
+            density="compact"
+            class="mt-2"
+          >
+            Sin faltas administrativas — no aplica suspensión por asistencia.
+          </v-alert>
+        </div>
+
+        <!-- Monto calculado por el sistema -->
         <div class="mb-4 pa-3 rounded bg-grey-lighten-5">
-          <div class="text-caption text-medium-emphasis">Monto calculado</div>
+          <div class="text-caption text-medium-emphasis">
+            Monto calculado por descuentos académicos
+          </div>
           <div class="text-h6 font-weight-bold">
             {{ fmt(refrend?.final_amount ?? 0) }}
           </div>
@@ -475,13 +571,36 @@
           >
             Incluye descuento de {{ fmt(refrend?.discount_amount ?? 0) }} ({{
               refrend?.discount_percentage
-            }}%)
+            }}%) por calificaciones
+          </div>
+        </div>
+
+        <!-- Monto sugerido final considerando ambos criterios -->
+        <div
+          v-if="attendanceSummary"
+          class="mb-4 pa-3 rounded bg-blue-lighten-5"
+        >
+          <div class="text-caption text-medium-emphasis text-blue">
+            MONTO SUGERIDO TOTAL (académico + administrativo)
+          </div>
+          <div class="text-h5 font-weight-bold text-blue">
+            {{ fmt(combinedSuggestedAmount) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            <template v-if="totalEffectiveAbsences > 0">
+              Suspensión por falta(s) administrativa(s) tiene prioridad sobre
+              descuento académico.
+            </template>
+            <template v-else>
+              Sin faltas administrativas — se aplica solo el descuento
+              académico.
+            </template>
           </div>
         </div>
 
         <v-text-field
           v-model.number="authorizeForm.final_amount_override"
-          label="Monto a pagar (dejar vacío para usar el calculado)"
+          label="Monto a pagar (dejar vacío para usar el monto sugerido)"
           type="number"
           min="0"
           step="0.01"
@@ -606,12 +725,13 @@ import { useScholarshipDetails } from "@/composables/useScholarshipDetails";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipDiscountsCard from "@/components/scholarships/ScholarshipDiscountsCard.vue";
 import ScholarshipReviewDialog from "@/components/scholarships/ScholarshipReviewDialog.vue";
+import ScholarshipAtencionReviewDialog from "@/components/scholarships/ScholarshipAtencionReviewDialog.vue";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import ScholarshipHistoryTimeline from "@/components/scholarships/ScholarshipHistoryTimeline.vue";
 import StudentAcademicSummaryCard from "@/components/scholarships/StudentAcademicSummaryCard.vue";
-import StudentDocumentStatusBadges from "@/components/scholarships/StudentDocumentStatusBadges.vue";
+import ScholarshipDocumentsCard from "@/components/scholarships/ScholarshipDocumentsCard.vue";
 import RefrendCarryoverAlert from "@/components/scholarships/RefrendCarryoverAlert.vue";
-import type { RefrendStatus } from "@/interfaces/scholarship";
+import type { RefrendStatus, ReviewForm } from "@/interfaces/scholarship";
 import type { LinkInterface } from "@/interfaces";
 
 const links: LinkInterface[] = [
@@ -633,10 +753,14 @@ const authorizeForm = reactive<{
 const graduateComment = ref<string>("");
 const graduateConfirmed = ref<boolean>(false);
 
+// Separate dialog ref for pedagogia (atencion uses reviewDialog from composable)
+const pedagogiaReviewDialog = ref<boolean>(false);
+
 const {
   refrend,
   docList,
   semesterRefrends,
+  attendanceSummary,
   loading,
   scholarshipProfile,
   reviewDialog,
@@ -646,7 +770,7 @@ const {
   authorizeDialog,
   graduateDialog,
   openAtencionReview,
-  openPedagogiaReview,
+  openPedagogiaReview: _openPedagogiaReview,
   onSubmitReview,
   openAuthorize,
   onAuthorize,
@@ -655,6 +779,43 @@ const {
   onWithhold,
   onGraduate,
 } = useScholarshipDetails();
+
+// Override pedagogia review to use separate dialog
+const openPedagogiaReview = (): void => {
+  reviewMode.value = "pedagogia";
+  pedagogiaReviewDialog.value = true;
+};
+
+const onSubmitPedagogiaReview = async (form: ReviewForm): Promise<void> => {
+  await onSubmitReview(form);
+  pedagogiaReviewDialog.value = false;
+};
+
+// ── Attendance-based calculations ────────────────────────────────────────────
+
+const effectiveAbsencesFromLate = computed<number>(() => {
+  if (!attendanceSummary.value) return 0;
+  return Math.floor(attendanceSummary.value.late_unconsumed / 2);
+});
+
+const totalEffectiveAbsences = computed<number>(() => {
+  if (!attendanceSummary.value) return 0;
+  return (
+    attendanceSummary.value.absent_unjustified + effectiveAbsencesFromLate.value
+  );
+});
+
+// When there are administrative absences, the payment for the month is suspended (= $0)
+// Otherwise, the academic final_amount already applies
+const adminSuggestedAmount = computed<number>(() => {
+  if (totalEffectiveAbsences.value > 0) return 0;
+  return Number(refrend.value?.final_amount ?? 0);
+});
+
+// Combined suggestion: admin infractions override academic discounts
+const combinedSuggestedAmount = computed<number>(
+  () => adminSuggestedAmount.value,
+);
 
 // ── Computed state helpers ────────────────────────────────────────────────
 

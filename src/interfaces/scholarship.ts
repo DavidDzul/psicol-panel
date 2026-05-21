@@ -96,6 +96,7 @@ export interface ScholarshipRefrend {
   snapshot_campus: string
   snapshot_scholarship_type: ScholarshipType
   atencion_observations: string | null
+  atencion_labels: string[] | null
   atencion_reviewed_by_id: number | null
   atencion_reviewed_at: string | null
   pedagogia_observations: string | null
@@ -174,10 +175,12 @@ export interface ScholarshipProfileForm {
 export interface GeneratePeriodForm {
   year: number
   month: number
+  campus?: string | null
 }
 
 export interface ReviewForm {
   observations?: string | null
+  labels?: string[] | null
 }
 
 export interface AuthorizeForm {
