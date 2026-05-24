@@ -27,8 +27,7 @@
     </v-col>
   </v-row>
 
-  <!-- Master table path -->
-  <v-row v-if="isMasterTable">
+  <v-row>
     <v-col cols="12">
       <v-alert
         v-if="scholarshipStore.bulkError"
@@ -42,15 +41,9 @@
       <RefrendMasterTable
         :rows="scholarshipStore.bulkRows"
         :loading="scholarshipStore.bulkLoading"
-        @atencion-saved="onAtencionSaved"
+        :year="selectedYear"
+        :month="selectedMonth"
       />
-    </v-col>
-  </v-row>
-
-  <!-- Legacy path — completely unmodified -->
-  <v-row v-else>
-    <v-col cols="12">
-      <ScholarshipTable :refrends="refrendList" @show="goToDetail" />
     </v-col>
   </v-row>
 
@@ -86,27 +79,15 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from "vue";
-import { useRouter } from "vue-router";
-import { storeToRefs } from "pinia";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
-import ScholarshipTable from "@/components/scholarships/ScholarshipTable.vue";
 import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue";
-import type { ScholarshipRefrend } from "@/interfaces/scholarship";
 import type { LinkInterface } from "@/interfaces";
 
 const RefrendMasterTable = defineAsyncComponent(
   () => import("@/components/scholarships/RefrendMasterTable.vue"),
 );
-
-// ── Feature flag ───────────────────────────────────────────────────────────
-
-const isMasterTable = import.meta.env.VITE_REFRENDS_MASTER_TABLE === "true";
-
-// ── Router ─────────────────────────────────────────────────────────────────
-
-const router = useRouter();
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
 
@@ -115,7 +96,7 @@ const links: LinkInterface[] = [
   { title: "Refrendos", disabled: true, href: "/scholarships" },
 ];
 
-// ── Legacy composable (shared state for both paths) ───────────────────────
+// ── Shared composable ──────────────────────────────────────────────────────
 
 const {
   selectedYear,
@@ -124,15 +105,12 @@ const {
   filteredCampus,
   generating,
   generateDialog,
-  refrendList,
   onGeneratePeriod,
 } = useScholarshipPage();
 
-// ── Generation filter (master table path only) ────────────────────────────
-
 const selectedGenerationId = ref<number | null>(null);
 
-// ── Scholarship store (master table path) ─────────────────────────────────
+// ── Store ──────────────────────────────────────────────────────────────────
 
 const scholarshipStore = useScholarshipStore();
 
@@ -143,39 +121,14 @@ const campusLabel = computed<string>(() => {
   return found?.text ?? selectedCampus.value ?? "";
 });
 
-// ── Period change handler ──────────────────────────────────────────────────
+// ── Period change ──────────────────────────────────────────────────────────
 
 const onPeriodChange = async (): Promise<void> => {
-  if (isMasterTable) {
-    await scholarshipStore.fetchBulkTable({
-      year: selectedYear.value,
-      month: selectedMonth.value,
-      campus: selectedCampus.value,
-      generation_id: selectedGenerationId.value,
-    });
-  } else {
-    await scholarshipStore.fetchRefrends(
-      selectedYear.value,
-      selectedMonth.value,
-      selectedCampus.value,
-    );
-  }
-};
-
-// ── Atencion saved callback (master table) ─────────────────────────────────
-
-const onAtencionSaved = (refrend: ScholarshipRefrend): void => {
-  const idx = scholarshipStore.bulkRows.findIndex((r) => r.refrend.id === refrend.id);
-  if (idx >= 0) {
-    scholarshipStore.bulkRows[idx].refrend = refrend;
-    scholarshipStore.bulkRows[idx].incidents_count =
-      refrend.atencion_labels?.length ?? 0;
-  }
-};
-
-// ── Legacy navigation ──────────────────────────────────────────────────────
-
-const goToDetail = (refrend: ScholarshipRefrend): void => {
-  router.push(`/scholarships/${refrend.id}`);
+  await scholarshipStore.fetchBulkTable({
+    year: selectedYear.value,
+    month: selectedMonth.value,
+    campus: selectedCampus.value,
+    generation_id: selectedGenerationId.value,
+  });
 };
 </script>

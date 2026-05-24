@@ -1,6 +1,7 @@
 <template>
   <div class="refrend-master-table-wrapper">
     <v-data-table
+      v-model:expanded="expanded"
       :headers="headers"
       :items="rows"
       :loading="loading"
@@ -11,267 +12,291 @@
       :items-per-page="50"
       hover
       item-value="refrend.id"
+      show-expand
     >
-      <!-- Becario (sticky left) -->
+      <!-- ── IDENTIDAD ─────────────────────────────────────────────────────── -->
+
       <template #item.snapshot_name="{ item }">
-        <div class="d-flex align-center ga-1">
-          <span class="font-weight-medium text-no-wrap">{{ item.refrend.snapshot_name }}</span>
+        <div class="d-flex align-center ga-1 text-no-wrap">
+          <span class="font-weight-medium">{{ item.refrend.snapshot_name }}</span>
           <v-chip
-            v-if="item.incidents_count >= 3"
-            color="error"
+            v-if="item.incidents_count > 0"
+            :color="item.incidents_count >= 3 ? 'error' : 'warning'"
             size="x-small"
             variant="tonal"
-            class="ml-1"
-          >
-            {{ item.incidents_count }}
-          </v-chip>
-          <v-chip
-            v-else-if="item.incidents_count >= 1"
-            color="warning"
-            size="x-small"
-            variant="tonal"
-            class="ml-1"
-          >
-            {{ item.incidents_count }}
-          </v-chip>
+          >{{ item.incidents_count }}</v-chip>
         </div>
       </template>
 
-      <!-- Asistencias summary -->
-      <template #item.attendance_summary="{ item }">
-        <span class="text-caption">
-          <span class="text-success">P:{{ item.attendance_present }}</span>
-          <span class="ml-1 text-warning">R:{{ item.attendance_late }}</span>
-          <span class="ml-1 text-error">F:{{ item.attendance_absent }}</span>
-        </span>
+      <template #item.snapshot_campus="{ item }">
+        <span class="text-caption">{{ item.refrend.snapshot_campus }}</span>
       </template>
 
-      <!-- Retardos no consumidos -->
-      <template #item.attendance_late_unconsumed="{ item }">
-        <span :class="item.attendance_late_unconsumed >= 2 ? 'text-error font-weight-bold' : ''">
-          {{ item.attendance_late_unconsumed }}
-        </span>
+      <template #item.snapshot_generation="{ item }">
+        <span class="text-caption">{{ item.refrend.snapshot_generation ?? '—' }}</span>
       </template>
 
-      <!-- Promedio / estado académico -->
+      <template #item.snapshot_scholarship_type="{ item }">
+        <v-chip size="x-small" variant="outlined" label>{{ item.refrend.snapshot_scholarship_type }}</v-chip>
+      </template>
+
+      <!-- ── ACADÉMICO ────────────────────────────────────────────────────── -->
+
       <template #item.last_grade="{ item }">
-        <v-chip
-          :color="academicColor(item.academic_status)"
-          size="small"
-          label
-        >
-          {{ item.last_grade ?? '-' }}
+        <v-chip :color="academicColor(item.academic_status)" size="small" label>
+          {{ item.last_grade ?? '—' }}
         </v-chip>
       </template>
 
-      <!-- Monto proyectado (inline edit) -->
-      <template #item.projected_amount="{ item }">
-        <div v-if="isLocked(item.refrend)" class="text-caption font-weight-medium">
-          {{ formatCurrency(item.projected_amount) }}
-        </div>
-        <div v-else class="d-flex align-center ga-1">
-          <v-text-field
-            :model-value="editingAmountId === item.refrend.id ? amountDraft : item.refrend.final_amount"
-            density="compact"
-            variant="plain"
-            hide-details
-            type="number"
-            min="0"
-            style="max-width: 90px"
-            @focus="startEditAmount(item)"
-            @blur="saveAmount(item)"
-            @update:model-value="amountDraft = $event"
-            @keydown.enter="saveAmount(item)"
-            @keydown.escape="cancelEditAmount"
+      <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
+
+      <template #item.attendance_present="{ item }">
+        <span class="text-success font-weight-medium text-caption">{{ item.attendance_present }}</span>
+      </template>
+
+      <template #item.attendance_absent="{ item }">
+        <span class="text-error font-weight-medium text-caption">{{ item.attendance_absent }}</span>
+      </template>
+
+      <template #item.attendance_absent_justified="{ item }">
+        <span class="text-caption">{{ item.attendance_absent_justified }}</span>
+      </template>
+
+      <template #item.attendance_late="{ item }">
+        <span class="text-warning font-weight-medium text-caption">{{ item.attendance_late }}</span>
+      </template>
+
+      <template #item.attendance_late_justified="{ item }">
+        <span class="text-caption">{{ item.attendance_late_justified }}</span>
+      </template>
+
+      <template #item.attendance_late_consumed="{ item }">
+        <span class="text-caption">{{ item.attendance_late_consumed }}</span>
+      </template>
+
+      <template #item.attendance_late_unconsumed="{ item }">
+        <v-chip
+          :color="item.attendance_late_unconsumed >= 2 ? 'error' : item.attendance_late_unconsumed === 1 ? 'warning' : 'default'"
+          size="x-small"
+          :variant="item.attendance_late_unconsumed > 0 ? 'tonal' : 'text'"
+        >
+          {{ item.attendance_late_unconsumed }}
+        </v-chip>
+      </template>
+
+      <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
+
+      <template #item.workflow_status="{ item }">
+        <v-chip
+          :color="workflowColor(item.refrend.workflow_status)"
+          size="small"
+          label
+          variant="tonal"
+        >
+          {{ workflowLabel(item.refrend.workflow_status) }}
+        </v-chip>
+      </template>
+
+      <template #item.atencion="{ item }">
+        <div class="d-flex align-center ga-1">
+          <!-- Flag: habilitado en DRAFT (registrar) y CON_INCIDENCIA (editar) -->
+          <v-btn
+            icon="mdi-flag-outline"
+            size="x-small"
+            variant="text"
+            color="blue"
+            :disabled="!['DRAFT', 'CON_INCIDENCIA'].includes(item.refrend.workflow_status ?? '')"
+            :title="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'Editar incidencia' : 'Registrar incidencia'"
+            @click="openAtencionDialog(item)"
           />
+
+          <!-- Tooltip con detalle de incidencia activa -->
+          <v-tooltip
+            v-if="item.incident_description"
+            location="bottom"
+            max-width="280"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <v-icon
+                v-bind="tooltipProps"
+                icon="mdi-alert-circle-outline"
+                size="14"
+                color="orange-darken-2"
+                class="flex-shrink-0"
+              />
+            </template>
+            <div class="text-caption">
+              <div class="font-weight-bold mb-1">
+                {{ item.incident_category }} — {{ item.incident_type }}
+              </div>
+              <div>{{ item.incident_description }}</div>
+            </div>
+          </v-tooltip>
+
+          <!-- Observación (solo lectura, truncada) -->
+          <span
+            v-if="item.refrend.atencion_observations"
+            class="text-caption text-medium-emphasis text-truncate"
+            style="max-width: 110px"
+            :title="item.refrend.atencion_observations"
+          >{{ item.refrend.atencion_observations }}</span>
         </div>
       </template>
 
-      <!-- Etiquetas de atención (inline editor) -->
-      <template #item.atencion_labels="{ item }">
-        <RefrendInlineLabelsEditor
-          :model-value="item.refrend.atencion_labels ?? []"
-          :disabled="isLocked(item.refrend)"
-          @update:model-value="onLabelsChange(item, $event)"
+      <template #item.pedagogia="{ item }">
+        <div class="d-flex align-center ga-1">
+          <v-btn
+            icon="mdi-school-outline"
+            size="x-small"
+            variant="text"
+            color="deep-purple"
+            :disabled="!canPedagogia(item.refrend.workflow_status)"
+            @click="openPedagogiaDialog(item)"
+          />
+          <span
+            v-if="item.refrend.pedagogia_observations"
+            class="text-caption text-medium-emphasis text-truncate"
+            style="max-width: 120px"
+            :title="item.refrend.pedagogia_observations"
+          >{{ item.refrend.pedagogia_observations }}</span>
+        </div>
+      </template>
+
+      <template #item.notificado="{ item }">
+        <v-checkbox
+          :model-value="!!item.refrend.notified_at"
+          color="teal"
+          density="compact"
+          hide-details
+          :disabled="notificadoLoading === item.refrend.id"
+          @update:model-value="toggleNotificado(item, $event)"
         />
       </template>
 
-      <!-- Estado -->
-      <template #item.status="{ item }">
-        <v-chip :color="statusColor(item.refrend.status)" size="small" label>
-          {{ statusLabel(item.refrend.status) }}
-        </v-chip>
+      <!-- ── ECONÓMICO ────────────────────────────────────────────────────── -->
+
+      <template #item.base_amount="{ item }">
+        <span class="text-caption">{{ fmt(item.refrend.base_amount) }}</span>
       </template>
 
-      <!-- Acciones -->
-      <template #item.actions="{ item }">
-        <div class="d-flex align-center">
+      <template #item.discount_pct="{ item }">
+        <span class="text-caption" :class="Number(item.refrend.discount_percentage) > 0 ? 'text-error' : ''">
+          {{ item.refrend.discount_percentage }}%
+        </span>
+      </template>
+
+      <template #item.projected_amount="{ item }">
+        <div v-if="isLocked(item.refrend)" class="text-caption font-weight-medium">
+          {{ fmt(item.refrend.final_amount) }}
+        </div>
+        <v-text-field
+          v-else
+          :model-value="editingAmountId === item.refrend.id ? amountDraft : item.refrend.final_amount"
+          density="compact"
+          variant="plain"
+          hide-details
+          type="number"
+          min="0"
+          style="max-width: 90px"
+          @focus="startEditAmount(item)"
+          @blur="saveAmount(item)"
+          @update:model-value="amountDraft = $event"
+          @keydown.enter="saveAmount(item)"
+          @keydown.escape="cancelEditAmount"
+        />
+      </template>
+
+      <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
+
+      <template #item.payment_verify="{ item }">
+        <div class="d-flex align-center ga-1">
           <v-btn
-            icon="mdi-comment-edit"
+            v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
+            :loading="clearFlagLoading === item.refrend.id"
+            icon="mdi-flag-remove-outline"
             size="x-small"
             variant="text"
-            :disabled="isLocked(item.refrend)"
-            @click="openAtencionDialog(item)"
+            color="orange-darken-2"
+            title="Quitar incidencia (vuelve a Borrador)"
+            @click="onClearFlag(item)"
           />
           <v-btn
-            icon="mdi-eye"
+            icon="mdi-currency-usd-off"
             size="x-small"
             variant="text"
-            :to="{ name: 'ScholarshipRefrendDetailsView', params: { id: item.refrend.id } }"
-          />
-          <v-btn
-            v-if="item.incidents_count > 0"
-            icon="mdi-alert-circle"
-            size="x-small"
-            variant="text"
-            color="warning"
-            @click="openIncidentDialog(item)"
+            color="orange-darken-2"
+            title="Verificar pago"
+            @click="openPaymentVerifyDialog(item)"
           />
         </div>
       </template>
+
+      <!-- ── EXPANDED ROW ─────────────────────────────────────────────────── -->
+
+      <template #expanded-row="{ columns, item }">
+        <tr>
+          <td :colspan="columns.length" class="pa-4 bg-grey-lighten-5">
+            <div class="text-caption font-weight-medium text-medium-emphasis mb-2">
+              DETALLE DE ASISTENCIAS — {{ item.refrend.snapshot_name }}
+            </div>
+            <ScholarshipAttendanceSummary
+              :user-id="item.refrend.user_id"
+              :year="year"
+              :month="month"
+            />
+          </td>
+        </tr>
+      </template>
     </v-data-table>
 
-    <!-- ScholarshipAtencionReviewDialog mounted ONCE -->
-    <ScholarshipAtencionReviewDialog
-      v-if="activeRow !== null"
-      :model-value="atencionDialogOpen"
-      :refrend="activeRow.refrend"
+    <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
+
+    <RefrendAtencionDialog
+      v-model="atencionOpen"
       :loading="atencionLoading"
-      @update:model-value="atencionDialogOpen = $event"
+      :initial-description="activeRow?.refrend.atencion_observations ?? null"
+      :initial-category="(activeRow?.incident_category as any) ?? null"
       @submit="onAtencionSubmit"
     />
 
-    <!-- Incident resolution dialog -->
-    <v-dialog v-model="incidentDialogOpen" max-width="480" persistent>
-      <v-card>
-        <v-card-title class="text-h6 pa-4 d-flex align-center ga-2">
-          <v-icon color="warning" size="small">mdi-alert-circle</v-icon>
-          Resolver incidencia
-        </v-card-title>
-        <v-card-text class="pt-0">
-          <p class="text-body-2 mb-3">
-            Becario: <strong>{{ incidentRow?.refrend.snapshot_name }}</strong>
-            — {{ incidentRow?.incidents_count }} incidencia(s).
-          </p>
-          <v-textarea
-            v-model="incidentComment"
-            label="Comentario de resolución"
-            rows="3"
-            variant="outlined"
-            counter="500"
-            maxlength="500"
-            :error-messages="incidentCommentError"
-            placeholder="Describe el motivo o resolución de la incidencia..."
-          />
-        </v-card-text>
-        <v-card-actions class="pa-4 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="closeIncidentDialog">Cancelar</v-btn>
-          <v-btn
-            color="warning"
-            variant="elevated"
-            :disabled="incidentComment.trim().length < 10"
-            :loading="incidentLoading"
-            @click="submitIncident"
-          >
-            Resolver
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <RefrendPedagogiaDialog
+      v-model="pedagogiaOpen"
+      :loading="pedagogiaLoading"
+      :atencion-observations="activeRow?.refrend.atencion_observations ?? null"
+      @submit="onPedagogiaSubmit"
+    />
+
+    <RefrendPaymentVerifyDialog
+      v-model="paymentVerifyOpen"
+      :loading="paymentVerifyLoading"
+      @submit="onPaymentVerifySubmit"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent } from "vue";
-import { storeToRefs } from "pinia";
+import { ref } from "vue";
+import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
+import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
+import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
+import RefrendPaymentVerifyDialog from "@/components/scholarships/RefrendPaymentVerifyDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type {
   BulkRefrendRow,
   ScholarshipRefrend,
-  RefrendStatus,
+  WorkflowStatus,
+  AtencionFlagForm,
+  PedagogiaResolveForm,
+  RefrendPaymentVerifyForm,
 } from "@/interfaces/scholarship";
-import type { ReviewForm } from "@/interfaces/scholarship";
 
-const ScholarshipAtencionReviewDialog = defineAsyncComponent(
-  () => import("@/components/scholarships/ScholarshipAtencionReviewDialog.vue"),
-);
-
-// ── RefrendInlineLabelsEditor subcomponent ─────────────────────────────────
-
-const RefrendInlineLabelsEditor = {
-  name: "RefrendInlineLabelsEditor",
-  props: {
-    modelValue: {
-      type: Array as () => string[],
-      default: () => [],
-    },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ["update:modelValue"],
-  setup(props: { modelValue: string[]; disabled: boolean }, ctx: { emit: (event: string, ...args: unknown[]) => void }) {
-    const newLabel = ref<string>("");
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const emitDebounced = (value: string[]): void => {
-      if (debounceTimer !== null) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        ctx.emit("update:modelValue", value);
-      }, 400);
-    };
-
-    const addLabel = (): void => {
-      const trimmed = newLabel.value.trim();
-      if (!trimmed || props.disabled) return;
-      const updated = [...props.modelValue, trimmed];
-      newLabel.value = "";
-      emitDebounced(updated);
-    };
-
-    const removeLabel = (label: string): void => {
-      if (props.disabled) return;
-      const updated = props.modelValue.filter((l) => l !== label);
-      emitDebounced(updated);
-    };
-
-    return { newLabel, addLabel, removeLabel };
-  },
-  template: `
-    <div class="d-flex flex-wrap align-center ga-1" style="min-width: 180px">
-      <v-chip
-        v-for="label in modelValue"
-        :key="label"
-        size="x-small"
-        closable
-        :disabled="disabled"
-        @click:close="removeLabel(label)"
-      >{{ label }}</v-chip>
-      <v-text-field
-        v-if="!disabled"
-        v-model="newLabel"
-        density="compact"
-        variant="plain"
-        hide-details
-        placeholder="+ etiqueta"
-        style="max-width: 100px; min-width: 80px"
-        @keydown.enter.prevent="addLabel"
-      />
-    </div>
-  `,
-};
-
-// ── Props & emits ──────────────────────────────────────────────────────────
+// ── Props ──────────────────────────────────────────────────────────────────
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
   loading?: boolean;
-}>();
-
-const emit = defineEmits<{
-  atencionSaved: [refrend: ScholarshipRefrend];
+  year: number;
+  month: number;
 }>();
 
 // ── Store ──────────────────────────────────────────────────────────────────
@@ -281,78 +306,181 @@ const store = useScholarshipStore();
 // ── Table headers ──────────────────────────────────────────────────────────
 
 const headers = [
-  { title: "Becario", key: "snapshot_name", fixed: true, width: 220, sortable: true },
-  { title: "Generación", key: "refrend.snapshot_generation", width: 120, sortable: false },
-  { title: "Sede", key: "refrend.snapshot_campus", width: 90, sortable: false },
-  { title: "Tipo", key: "refrend.snapshot_scholarship_type", width: 70, sortable: false },
-  { title: "Asist.", key: "attendance_summary", width: 130, sortable: false },
-  { title: "Ret. nc.", key: "attendance_late_unconsumed", width: 80, sortable: true },
-  { title: "Promedio", key: "last_grade", width: 100, sortable: false },
-  { title: "% Desc.", key: "active_discount_pct", width: 80, sortable: false },
-  { title: "Monto base", key: "refrend.base_amount", width: 110, sortable: false },
-  { title: "Monto proy.", key: "projected_amount", width: 120, sortable: false },
-  { title: "Etiquetas", key: "atencion_labels", width: 240, sortable: false },
-  { title: "Estado", key: "status", width: 140, sortable: false },
-  { title: "", key: "actions", width: 100, sortable: false },
+  // IDENTIDAD (ancla fija)
+  { title: "Becario", key: "snapshot_name", fixed: true, width: 200, sortable: true },
+  // REVISIÓN (lo más importante para el operador)
+  { title: "Estado", key: "workflow_status", width: 130, sortable: false },
+  { title: "Atención", key: "atencion", width: 190, sortable: false },
+  { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
+  { title: "Notif.", key: "notificado", width: 65, sortable: false },
+  // ASISTENCIAS
+  { title: "Pres.", key: "attendance_present", width: 60, sortable: true },
+  { title: "Faltas", key: "attendance_absent", width: 65, sortable: true },
+  { title: "F.J.", key: "attendance_absent_justified", width: 55, sortable: false },
+  { title: "Ret.", key: "attendance_late", width: 55, sortable: true },
+  { title: "R.J.", key: "attendance_late_justified", width: 50, sortable: false },
+  { title: "R.C.", key: "attendance_late_consumed", width: 50, sortable: false },
+  { title: "R.nc.", key: "attendance_late_unconsumed", width: 65, sortable: true },
+  // ACADÉMICO
+  { title: "Promedio", key: "last_grade", width: 90, sortable: true },
+  // IDENTIDAD (referencia, menos frecuente)
+  { title: "Sede", key: "snapshot_campus", width: 80, sortable: false },
+  { title: "Generación", key: "snapshot_generation", width: 100, sortable: false },
+  { title: "Tipo", key: "snapshot_scholarship_type", width: 70, sortable: false },
+  // ECONÓMICO
+  { title: "Base", key: "base_amount", width: 100, sortable: false },
+  { title: "Desc.%", key: "discount_pct", width: 70, sortable: false },
+  { title: "Final", key: "projected_amount", width: 110, sortable: false },
+  // ACCIONES
+  { title: "", key: "payment_verify", width: 80, sortable: false },
 ] as const;
+
+// ── Expanded rows ──────────────────────────────────────────────────────────
+
+const expanded = ref<string[]>([]);
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const LOCKED_STATUSES: RefrendStatus[] = ["PAID", "AUTHORIZED"];
+const LOCKED_STATUSES = new Set(["PAID", "AUTHORIZED"]);
 
 const isLocked = (refrend: ScholarshipRefrend): boolean =>
-  LOCKED_STATUSES.includes(refrend.status);
+  LOCKED_STATUSES.has(refrend.status);
 
-const formatCurrency = (value: string | number): string =>
+const fmt = (value: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
 
-const academicColor = (status: BulkRefrendRow["academic_status"]): string => {
-  const map: Record<BulkRefrendRow["academic_status"], string> = {
-    ok: "green",
-    low_grade: "orange",
-    missing_subjects: "red",
-    inactive: "grey",
-  };
-  return map[status] ?? "grey";
-};
+const academicColor = (status: BulkRefrendRow["academic_status"]): string =>
+  ({ ok: "green", low_grade: "orange", missing_subjects: "red", inactive: "grey" })[status] ?? "grey";
 
-const statusColor = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
+const workflowColor = (status: WorkflowStatus | null): string => {
+  const map: Record<string, string> = {
     DRAFT: "grey",
-    ATENCION_REVIEW: "blue",
-    PEDAGOGIA_REVIEW: "purple",
-    AUTHORIZED: "green",
-    PAID: "teal",
-    WITHHELD: "orange",
-    CANCELLED: "red",
+    CON_INCIDENCIA: "orange",
+    PENDIENTE_NOTIFICACION: "blue",
+    LISTO_PARA_PAGO: "green",
+    CLOSED: "teal",
   };
-  return map[status] ?? "grey";
+  return map[status ?? "DRAFT"] ?? "grey";
 };
 
-const statusLabel = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
+const workflowLabel = (status: WorkflowStatus | null): string => {
+  const map: Record<string, string> = {
     DRAFT: "Borrador",
-    ATENCION_REVIEW: "Rev. Atención",
-    PEDAGOGIA_REVIEW: "Rev. Pedagogía",
-    AUTHORIZED: "Autorizado",
-    PAID: "Pagado",
-    WITHHELD: "Retenido",
-    CANCELLED: "Cancelado",
+    CON_INCIDENCIA: "Con incidencia",
+    PENDIENTE_NOTIFICACION: "Pend. notif.",
+    LISTO_PARA_PAGO: "Listo para pago",
+    CLOSED: "Cerrado",
   };
-  return map[status] ?? status;
+  return map[status ?? "DRAFT"] ?? (status ?? "—");
 };
 
-// ── Inline labels ──────────────────────────────────────────────────────────
+const canPedagogia = (status: WorkflowStatus | null): boolean =>
+  status === "CON_INCIDENCIA" || status === "PENDIENTE_NOTIFICACION";
 
-const onLabelsChange = async (item: BulkRefrendRow, newLabels: string[]): Promise<void> => {
+// ── Active row state ───────────────────────────────────────────────────────
+
+const activeRow = ref<BulkRefrendRow | null>(null);
+
+// ── Atencion dialog ────────────────────────────────────────────────────────
+
+const atencionOpen = ref(false);
+const atencionLoading = ref(false);
+
+const openAtencionDialog = (item: BulkRefrendRow): void => {
+  activeRow.value = item;
+  atencionOpen.value = true;
+};
+
+const onAtencionSubmit = async (form: AtencionFlagForm): Promise<void> => {
+  if (!activeRow.value) return;
+  atencionLoading.value = true;
   try {
-    await store.patchInline(item.refrend.id, { atencion_labels: newLabels });
-  } catch {
-    // rollback already handled in store
+    const isEdit = activeRow.value.refrend.workflow_status === "CON_INCIDENCIA";
+    if (isEdit) {
+      await store.patchInline(activeRow.value.refrend.id, {
+        atencion_observations: form.description.trim() || null,
+      });
+    } else {
+      await store.atencionFlag(activeRow.value.refrend.id, form);
+    }
+    atencionOpen.value = false;
+  } finally {
+    atencionLoading.value = false;
   }
 };
 
-// ── Inline amount ──────────────────────────────────────────────────────────
+// ── Pedagogia dialog ───────────────────────────────────────────────────────
+
+const pedagogiaOpen = ref(false);
+const pedagogiaLoading = ref(false);
+
+const openPedagogiaDialog = (item: BulkRefrendRow): void => {
+  activeRow.value = item;
+  pedagogiaOpen.value = true;
+};
+
+const onPedagogiaSubmit = async (form: PedagogiaResolveForm): Promise<void> => {
+  if (!activeRow.value) return;
+  pedagogiaLoading.value = true;
+  try {
+    await store.pedagogiaResolve(activeRow.value.refrend.id, form);
+    pedagogiaOpen.value = false;
+  } finally {
+    pedagogiaLoading.value = false;
+  }
+};
+
+// ── Payment verify dialog ──────────────────────────────────────────────────
+
+const paymentVerifyOpen = ref(false);
+const paymentVerifyLoading = ref(false);
+
+const openPaymentVerifyDialog = (item: BulkRefrendRow): void => {
+  activeRow.value = item;
+  paymentVerifyOpen.value = true;
+};
+
+const onPaymentVerifySubmit = async (form: RefrendPaymentVerifyForm): Promise<void> => {
+  if (!activeRow.value) return;
+  paymentVerifyLoading.value = true;
+  try {
+    await store.submitPaymentVerify(activeRow.value.refrend.id, form);
+    paymentVerifyOpen.value = false;
+  } finally {
+    paymentVerifyLoading.value = false;
+  }
+};
+
+// ── Clear flag ─────────────────────────────────────────────────────────────
+
+const clearFlagLoading = ref<number | null>(null);
+
+const onClearFlag = async (item: BulkRefrendRow): Promise<void> => {
+  clearFlagLoading.value = item.refrend.id;
+  try {
+    await store.clearFlag(item.refrend.id);
+  } finally {
+    clearFlagLoading.value = null;
+  }
+};
+
+// ── Notificado toggle ──────────────────────────────────────────────────────
+
+const notificadoLoading = ref<number | null>(null);
+
+const toggleNotificado = async (item: BulkRefrendRow, value: boolean | null): Promise<void> => {
+  notificadoLoading.value = item.refrend.id;
+  try {
+    await store.patchInline(item.refrend.id, {
+      notified_at: value ? new Date().toISOString() : null,
+      notification_method: value ? "EMAIL" : null,
+    });
+  } finally {
+    notificadoLoading.value = null;
+  }
+};
+
+// ── Inline amount edit ─────────────────────────────────────────────────────
 
 const editingAmountId = ref<number | null>(null);
 const amountDraft = ref<string>("");
@@ -377,80 +505,10 @@ const saveAmount = async (item: BulkRefrendRow): Promise<void> => {
 const cancelEditAmount = (): void => {
   editingAmountId.value = null;
 };
-
-// ── Atencion dialog (mounted once) ─────────────────────────────────────────
-
-const activeRow = ref<BulkRefrendRow | null>(null);
-const atencionDialogOpen = ref<boolean>(false);
-const atencionLoading = ref<boolean>(false);
-
-const openAtencionDialog = (item: BulkRefrendRow): void => {
-  activeRow.value = item;
-  atencionDialogOpen.value = true;
-};
-
-const onAtencionSubmit = async (form: ReviewForm): Promise<void> => {
-  if (!activeRow.value) return;
-  atencionLoading.value = true;
-  try {
-    const updated = await store.submitAtencionReview(activeRow.value.refrend.id, form);
-    if (updated) {
-      emit("atencionSaved", updated);
-    }
-    atencionDialogOpen.value = false;
-  } finally {
-    atencionLoading.value = false;
-  }
-};
-
-// ── Incident resolution dialog ─────────────────────────────────────────────
-
-const incidentRow = ref<BulkRefrendRow | null>(null);
-const incidentDialogOpen = ref<boolean>(false);
-const incidentComment = ref<string>("");
-const incidentCommentError = ref<string>("");
-const incidentLoading = ref<boolean>(false);
-
-const openIncidentDialog = (item: BulkRefrendRow): void => {
-  incidentRow.value = item;
-  incidentComment.value = "";
-  incidentCommentError.value = "";
-  incidentDialogOpen.value = true;
-};
-
-const closeIncidentDialog = (): void => {
-  incidentDialogOpen.value = false;
-  incidentRow.value = null;
-};
-
-const submitIncident = async (): Promise<void> => {
-  if (!incidentRow.value) return;
-  const comment = incidentComment.value.trim();
-  if (comment.length < 10) {
-    incidentCommentError.value = "El comentario debe tener al menos 10 caracteres.";
-    return;
-  }
-  incidentLoading.value = true;
-  try {
-    await store.patchInline(incidentRow.value.refrend.id, {
-      atencion_observations: comment,
-    });
-    closeIncidentDialog();
-  } catch {
-    incidentCommentError.value = "Error al guardar. Intenta de nuevo.";
-  } finally {
-    incidentLoading.value = false;
-  }
-};
 </script>
 
 <style scoped>
 .refrend-master-table-wrapper {
-  overflow-x: auto;
   width: 100%;
-}
-
-.refrend-master-table {
-  min-width: 1400px;
 }
 </style>

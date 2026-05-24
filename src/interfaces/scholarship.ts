@@ -13,6 +13,13 @@ export type RefrendStatus =
   | 'WITHHELD'
   | 'CANCELLED'
 
+export type WorkflowStatus =
+  | 'DRAFT'
+  | 'CON_INCIDENCIA'
+  | 'PENDIENTE_NOTIFICACION'
+  | 'LISTO_PARA_PAGO'
+  | 'CLOSED'
+
 export type DiscountType =
   | 'RETARDOS'
   | 'FALTA_INJUSTIFICADA'
@@ -28,6 +35,35 @@ export type DocumentType =
   | 'OTRO'
 
 export type DocumentStatus = 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED'
+
+export type IncidentCategory = 'ASISTENCIA' | 'ACADEMICO' | 'DOCUMENTOS' | 'ADMINISTRATIVO' | 'OTRO'
+export type IncidentPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+
+export type PaymentVerifyMotivo = 'RETENIDA' | 'SUSPENDIDA' | 'BAJA'
+export type BecaRetenidaOpcion = 'BECA_RETENIDA' | 'PAGO_MESES_RETENIDOS'
+export type BajaOpcion = 'DEFINITIVA' | 'TEMPORAL'
+
+export type BecaRetenidaCausa =
+  | 'FALTAS_FI'
+  | 'SIN_ENTREVISTA_CALIFICACIONES'
+  | 'NO_ENTREGO_CALIFICACIONES_PROVISIONALES'
+  | 'NO_ENTREGO_CALIFICACIONES_ORIGINALES'
+  | 'OTRO'
+
+export type SuspendidaCausa =
+  | 'BAJO_PROMEDIO'
+  | 'FALTAS_FORMACION_INTEGRAL'
+  | 'LLEVARSE_EXTRAORDINARIO'
+  | 'OTRO'
+
+export type BajaCausa =
+  | 'BAJO_PROMEDIO'
+  | 'FALTAS_FORMACION_INTEGRAL'
+  | 'DEJO_ESCUELA_PERSONALES'
+  | 'DEJO_ESCUELA_VOCACIONAL'
+  | 'DESAPARECIO'
+  | 'FALTAS_REGLAMENTO'
+  | 'OTRO'
 
 // ── Domain models ──────────────────────────────────────────────────────────
 
@@ -85,6 +121,7 @@ export interface ScholarshipRefrend {
   period_month: number
   refrend_type: RefrendType
   status: RefrendStatus
+  workflow_status: WorkflowStatus | null
   base_amount: string
   discount_percentage: string
   discount_amount: string
@@ -103,6 +140,9 @@ export interface ScholarshipRefrend {
   pedagogia_observations: string | null
   pedagogia_reviewed_by_id: number | null
   pedagogia_reviewed_at: string | null
+  notified_by_id: number | null
+  notified_at: string | null
+  notification_method: string | null
   locked_at: string | null
   locked_by_id: number | null
   created_at: string
@@ -112,6 +152,7 @@ export interface ScholarshipRefrend {
   logs?: ScholarshipRefrendLog[]
   atencion_reviewed_by?: { id: number; first_name: string; last_name: string } | null
   pedagogia_reviewed_by?: { id: number; first_name: string; last_name: string } | null
+  notified_by?: { id: number; first_name: string; last_name: string } | null
 }
 
 // ── Bulk table types (master table) ───────────────────────────────────────
@@ -131,6 +172,9 @@ export interface BulkRefrendRow {
   active_discount_pct: string
   projected_amount: string
   incidents_count: number
+  incident_description: string | null
+  incident_category: string | null
+  incident_type: string | null
 }
 
 export interface BulkTableParams {
@@ -154,6 +198,39 @@ export interface InlinePatchPayload {
   atencion_observations?: string | null
   pedagogia_observations?: string | null
   final_amount_override?: number | null
+  notification_method?: string | null
+  notified_at?: string | null
+}
+
+// ── Form interfaces ────────────────────────────────────────────────────────
+
+export interface AtencionFlagForm {
+  description: string
+  incident_category?: IncidentCategory
+}
+
+export interface PedagogiaResolveForm {
+  comment?: string | null
+  notify_student: boolean
+}
+
+export interface RefrendPaymentVerifyForm {
+  motivo: PaymentVerifyMotivo
+  // RETENIDA fields
+  retenida_opcion?: BecaRetenidaOpcion | null
+  retenida_num_meses?: number | null
+  retenida_meses_especificar?: string | null
+  retenida_causa?: BecaRetenidaCausa | null
+  retenida_causa_otro?: string | null
+  // SUSPENDIDA fields
+  suspendida_pct?: number | null
+  suspendida_causa?: SuspendidaCausa | null
+  suspendida_causa_otro?: string | null
+  // BAJA fields
+  baja_opcion?: BajaOpcion | null
+  baja_causa?: BajaCausa | null
+  baja_causa_otro?: string | null
+  notes?: string | null
 }
 
 export interface StudentDocument {
@@ -205,7 +282,7 @@ export interface AttendanceSummary {
   records: AttendanceSummaryRecord[]
 }
 
-// ── View/form helpers ──────────────────────────────────────────────────────
+// ── Legacy view/form helpers ───────────────────────────────────────────────
 
 export interface ScholarshipProfileForm {
   user_id: number

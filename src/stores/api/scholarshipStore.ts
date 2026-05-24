@@ -17,6 +17,9 @@ import type {
   BulkTableMeta,
   BulkTableParams,
   InlinePatchPayload,
+  AtencionFlagForm,
+  PedagogiaResolveForm,
+  RefrendPaymentVerifyForm,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -196,6 +199,110 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const withholdRefrend = async (id: number, reason?: string): Promise<ScholarshipRefrend | undefined> =>
     _updateRefrend(`api/admin/scholarship-refrends/${id}/withhold`, { reason });
 
+  // ── Workflow actions (master table) ───────────────────────────────────────
+
+  const atencionFlag = async (id: number, form: AtencionFlagForm): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const payload = {
+        description: form.description,
+        incident_category: form.incident_category ?? 'ADMINISTRATIVO',
+        incident_type: 'Incidencia administrativa',
+        priority: 'MEDIUM',
+      };
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/atencion-flag`,
+        payload
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend, {
+        incident_description: form.description,
+        incident_category: form.incident_category ?? 'ADMINISTRATIVO',
+        incident_type: payload.incident_type,
+        incidents_count: (bulkRows.value.find((r) => r.refrend.id === id)?.incidents_count ?? 0) + 1,
+      });
+      showAlert({ title: "Incidencia registrada.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al registrar incidencia.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
+  const pedagogiaResolve = async (id: number, form: PedagogiaResolveForm): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/pedagogia-resolve`,
+        form
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Revisión de pedagogía guardada.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al guardar revisión.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
+  const notifyStudent = async (id: number, notificationMethod?: string): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/notify`,
+        { method: notificationMethod ?? 'EMAIL' }
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al notificar.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
+  const clearFlag = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/atencion-clear`
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend, {
+        incident_description: null,
+        incident_category: null,
+        incident_type: null,
+      });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al limpiar incidencia.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
+  const submitPaymentVerify = async (id: number, form: RefrendPaymentVerifyForm): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/payment-verify`,
+        form
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Verificación de pago registrada.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al verificar pago.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   // ── Retícula ──────────────────────────────────────────────────────────────
 
   const uploadReticula = async (userId: number, formData: FormData): Promise<ScholarshipProfile | undefined> => {
@@ -302,6 +409,12 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         row.refrend.final_amount = String(payload.final_amount_override);
         row.projected_amount = String(payload.final_amount_override);
       }
+      if (payload.notification_method !== undefined) {
+        row.refrend.notification_method = payload.notification_method;
+      }
+      if (payload.notified_at !== undefined) {
+        row.refrend.notified_at = payload.notified_at;
+      }
       row.incidents_count = row.refrend.atencion_labels?.length ?? 0;
     }
 
@@ -344,6 +457,16 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const _mergeBulkRow = (
+    refrend: ScholarshipRefrend,
+    extra?: Partial<Omit<BulkRefrendRow, "refrend">>
+  ): void => {
+    const idx = bulkRows.value.findIndex((r) => r.refrend.id === refrend.id);
+    if (idx >= 0) {
+      bulkRows.value[idx] = { ...bulkRows.value[idx], refrend, ...extra };
+    }
+  };
+
   const _mergeRefrend = (refrend: ScholarshipRefrend): ScholarshipRefrend => {
     const newMap = new Map(refrends.value);
     newMap.set(refrend.id, refrend);
@@ -382,5 +505,10 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     markAsGraduate,
     fetchBulkTable,
     patchInline,
+    atencionFlag,
+    clearFlag,
+    pedagogiaResolve,
+    notifyStudent,
+    submitPaymentVerify,
   };
 });
