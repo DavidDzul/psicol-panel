@@ -1,6 +1,6 @@
 <template>
   <v-row class="mb-2">
-    <v-col v-if="campuses && campuses.length > 0" md="2">
+    <v-col v-if="campuses && campuses.length > 0" md="6">
       <v-select
         v-model="internalCampus"
         :items="campuses"
@@ -8,35 +8,12 @@
         item-value="value"
         label="Sede"
         density="compact"
-        variant="outlined"
         hide-details
         prepend-inner-icon="mdi-map-marker"
         @update:model-value="emit('update:campus', internalCampus)"
       />
     </v-col>
-    <v-col md="2">
-      <v-select
-        v-model="internalYear"
-        :items="yearOptions"
-        label="Año"
-        density="compact"
-        variant="outlined"
-        hide-details
-        @update:model-value="emit('update:year', internalYear)"
-      />
-    </v-col>
-    <v-col md="2">
-      <v-select
-        v-model="internalMonth"
-        :items="monthOptions"
-        label="Mes"
-        density="compact"
-        variant="outlined"
-        hide-details
-        @update:model-value="emit('update:month', internalMonth)"
-      />
-    </v-col>
-    <v-col md="2">
+    <v-col md="6">
       <v-autocomplete
         v-model="internalGenerationId"
         :items="generationList"
@@ -44,13 +21,33 @@
         item-value="id"
         label="Generación"
         density="compact"
-        variant="outlined"
         hide-details
         clearable
         prepend-inner-icon="mdi-account-group"
         @update:model-value="emit('update:generationId', internalGenerationId)"
       />
     </v-col>
+    <v-col md="3">
+      <v-select
+        v-model="internalYear"
+        :items="yearOptions"
+        label="Año"
+        density="compact"
+        hide-details
+        @update:model-value="emit('update:year', internalYear)"
+      />
+    </v-col>
+    <v-col md="3">
+      <v-select
+        v-model="internalMonth"
+        :items="monthOptions"
+        label="Mes"
+        density="compact"
+        hide-details
+        @update:model-value="emit('update:month', internalMonth)"
+      />
+    </v-col>
+
     <v-col cols="12" sm="4" md="2" class="d-flex align-center">
       <v-btn color="grey" block @click="emit('search')"> Buscar </v-btn>
     </v-col>

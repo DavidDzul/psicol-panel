@@ -18,13 +18,16 @@
 
       <template #item.snapshot_name="{ item }">
         <div class="d-flex align-center ga-1 text-no-wrap">
-          <span class="font-weight-medium">{{ item.refrend.snapshot_name }}</span>
+          <span class="font-weight-medium">{{
+            item.refrend.snapshot_name
+          }}</span>
           <v-chip
             v-if="item.incidents_count > 0"
             :color="item.incidents_count >= 3 ? 'error' : 'warning'"
             size="x-small"
             variant="tonal"
-          >{{ item.incidents_count }}</v-chip>
+            >{{ item.incidents_count }}</v-chip
+          >
         </div>
       </template>
 
@@ -33,29 +36,37 @@
       </template>
 
       <template #item.snapshot_generation="{ item }">
-        <span class="text-caption">{{ item.refrend.snapshot_generation ?? '—' }}</span>
+        <span class="text-caption">{{
+          item.refrend.snapshot_generation ?? "—"
+        }}</span>
       </template>
 
       <template #item.snapshot_scholarship_type="{ item }">
-        <v-chip size="x-small" variant="outlined" label>{{ item.refrend.snapshot_scholarship_type }}</v-chip>
+        <v-chip size="x-small" variant="outlined" label>{{
+          item.refrend.snapshot_scholarship_type
+        }}</v-chip>
       </template>
 
       <!-- ── ACADÉMICO ────────────────────────────────────────────────────── -->
 
       <template #item.last_grade="{ item }">
         <v-chip :color="academicColor(item.academic_status)" size="small" label>
-          {{ item.last_grade ?? '—' }}
+          {{ item.last_grade ?? "—" }}
         </v-chip>
       </template>
 
       <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
       <template #item.attendance_present="{ item }">
-        <span class="text-success font-weight-medium text-caption">{{ item.attendance_present }}</span>
+        <span class="text-success font-weight-medium text-caption">{{
+          item.attendance_present
+        }}</span>
       </template>
 
       <template #item.attendance_absent="{ item }">
-        <span class="text-error font-weight-medium text-caption">{{ item.attendance_absent }}</span>
+        <span class="text-error font-weight-medium text-caption">{{
+          item.attendance_absent
+        }}</span>
       </template>
 
       <template #item.attendance_absent_justified="{ item }">
@@ -63,7 +74,9 @@
       </template>
 
       <template #item.attendance_late="{ item }">
-        <span class="text-warning font-weight-medium text-caption">{{ item.attendance_late }}</span>
+        <span class="text-warning font-weight-medium text-caption">{{
+          item.attendance_late
+        }}</span>
       </template>
 
       <template #item.attendance_late_justified="{ item }">
@@ -76,7 +89,13 @@
 
       <template #item.attendance_late_unconsumed="{ item }">
         <v-chip
-          :color="item.attendance_late_unconsumed >= 2 ? 'error' : item.attendance_late_unconsumed === 1 ? 'warning' : 'default'"
+          :color="
+            item.attendance_late_unconsumed >= 2
+              ? 'error'
+              : item.attendance_late_unconsumed === 1
+                ? 'warning'
+                : 'default'
+          "
           size="x-small"
           :variant="item.attendance_late_unconsumed > 0 ? 'tonal' : 'text'"
         >
@@ -105,8 +124,16 @@
             size="x-small"
             variant="text"
             color="blue"
-            :disabled="!['DRAFT', 'CON_INCIDENCIA'].includes(item.refrend.workflow_status ?? '')"
-            :title="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'Editar incidencia' : 'Registrar incidencia'"
+            :disabled="
+              !['DRAFT', 'CON_INCIDENCIA'].includes(
+                item.refrend.workflow_status ?? '',
+              )
+            "
+            :title="
+              item.refrend.workflow_status === 'CON_INCIDENCIA'
+                ? 'Editar incidencia'
+                : 'Registrar incidencia'
+            "
             @click="openAtencionDialog(item)"
           />
 
@@ -139,7 +166,8 @@
             class="text-caption text-medium-emphasis text-truncate"
             style="max-width: 110px"
             :title="item.refrend.atencion_observations"
-          >{{ item.refrend.atencion_observations }}</span>
+            >{{ item.refrend.atencion_observations }}</span
+          >
         </div>
       </template>
 
@@ -158,7 +186,8 @@
             class="text-caption text-medium-emphasis text-truncate"
             style="max-width: 120px"
             :title="item.refrend.pedagogia_observations"
-          >{{ item.refrend.pedagogia_observations }}</span>
+            >{{ item.refrend.pedagogia_observations }}</span
+          >
         </div>
       </template>
 
@@ -180,18 +209,30 @@
       </template>
 
       <template #item.discount_pct="{ item }">
-        <span class="text-caption" :class="Number(item.refrend.discount_percentage) > 0 ? 'text-error' : ''">
+        <span
+          class="text-caption"
+          :class="
+            Number(item.refrend.discount_percentage) > 0 ? 'text-error' : ''
+          "
+        >
           {{ item.refrend.discount_percentage }}%
         </span>
       </template>
 
       <template #item.projected_amount="{ item }">
-        <div v-if="isLocked(item.refrend)" class="text-caption font-weight-medium">
+        <div
+          v-if="isLocked(item.refrend)"
+          class="text-caption font-weight-medium"
+        >
           {{ fmt(item.refrend.final_amount) }}
         </div>
         <v-text-field
           v-else
-          :model-value="editingAmountId === item.refrend.id ? amountDraft : item.refrend.final_amount"
+          :model-value="
+            editingAmountId === item.refrend.id
+              ? amountDraft
+              : item.refrend.final_amount
+          "
           density="compact"
           variant="plain"
           hide-details
@@ -210,6 +251,16 @@
 
       <template #item.payment_verify="{ item }">
         <div class="d-flex align-center ga-1">
+          <v-btn
+            v-if="item.refrend.workflow_status === 'DRAFT'"
+            :loading="recalcLoading === item.refrend.id"
+            icon="mdi-refresh"
+            size="x-small"
+            variant="text"
+            color="teal"
+            title="Recalcular refrendo (actualiza snapshot de asistencias y montos)"
+            @click="onRecalculate(item)"
+          />
           <v-btn
             v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
             :loading="clearFlagLoading === item.refrend.id"
@@ -236,7 +287,9 @@
       <template #expanded-row="{ columns, item }">
         <tr>
           <td :colspan="columns.length" class="pa-4 bg-grey-lighten-5">
-            <div class="text-caption font-weight-medium text-medium-emphasis mb-2">
+            <div
+              class="text-caption font-weight-medium text-medium-emphasis mb-2"
+            >
               DETALLE DE ASISTENCIAS — {{ item.refrend.snapshot_name }}
             </div>
             <ScholarshipAttendanceSummary
@@ -307,30 +360,70 @@ const store = useScholarshipStore();
 
 const headers = [
   // IDENTIDAD (ancla fija)
-  { title: "Becario", key: "snapshot_name", fixed: true, width: 200, sortable: true },
+  {
+    title: "Becario",
+    key: "snapshot_name",
+    fixed: true,
+    sortable: true,
+  },
+  { title: "Sede", key: "snapshot_campus", width: 80, sortable: false },
+  {
+    title: "Generación",
+    key: "snapshot_generation",
+    width: 100,
+    sortable: false,
+  },
   // REVISIÓN (lo más importante para el operador)
-  { title: "Estado", key: "workflow_status", width: 130, sortable: false },
-  { title: "Atención", key: "atencion", width: 190, sortable: false },
+  { title: "Estado", key: "workflow_status", sortable: false },
+  {
+    title: "Atención a Becarios/as",
+    key: "atencion",
+    sortable: false,
+  },
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Notif.", key: "notificado", width: 65, sortable: false },
   // ASISTENCIAS
   { title: "Pres.", key: "attendance_present", width: 60, sortable: true },
   { title: "Faltas", key: "attendance_absent", width: 65, sortable: true },
-  { title: "F.J.", key: "attendance_absent_justified", width: 55, sortable: false },
+  {
+    title: "F.J.",
+    key: "attendance_absent_justified",
+    width: 55,
+    sortable: false,
+  },
   { title: "Ret.", key: "attendance_late", width: 55, sortable: true },
-  { title: "R.J.", key: "attendance_late_justified", width: 50, sortable: false },
-  { title: "R.C.", key: "attendance_late_consumed", width: 50, sortable: false },
-  { title: "R.nc.", key: "attendance_late_unconsumed", width: 65, sortable: true },
+  {
+    title: "R.J.",
+    key: "attendance_late_justified",
+    width: 50,
+    sortable: false,
+  },
+  {
+    title: "R.C.",
+    key: "attendance_late_consumed",
+    width: 50,
+    sortable: false,
+  },
+  {
+    title: "R.nc.",
+    key: "attendance_late_unconsumed",
+    width: 65,
+    sortable: true,
+  },
   // ACADÉMICO
   { title: "Promedio", key: "last_grade", width: 90, sortable: true },
   // IDENTIDAD (referencia, menos frecuente)
-  { title: "Sede", key: "snapshot_campus", width: 80, sortable: false },
-  { title: "Generación", key: "snapshot_generation", width: 100, sortable: false },
-  { title: "Tipo", key: "snapshot_scholarship_type", width: 70, sortable: false },
+
+  {
+    title: "Tipo",
+    key: "snapshot_scholarship_type",
+    width: 70,
+    sortable: false,
+  },
   // ECONÓMICO
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 70, sortable: false },
-  { title: "Final", key: "projected_amount", width: 110, sortable: false },
+  { title: "Final", key: "projected_amount", sortable: false },
   // ACCIONES
   { title: "", key: "payment_verify", width: 80, sortable: false },
 ] as const;
@@ -347,10 +440,17 @@ const isLocked = (refrend: ScholarshipRefrend): boolean =>
   LOCKED_STATUSES.has(refrend.status);
 
 const fmt = (value: string | number): string =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    Number(value),
+  );
 
 const academicColor = (status: BulkRefrendRow["academic_status"]): string =>
-  ({ ok: "green", low_grade: "orange", missing_subjects: "red", inactive: "grey" })[status] ?? "grey";
+  ({
+    ok: "green",
+    low_grade: "orange",
+    missing_subjects: "red",
+    inactive: "grey",
+  })[status] ?? "grey";
 
 const workflowColor = (status: WorkflowStatus | null): string => {
   const map: Record<string, string> = {
@@ -371,7 +471,7 @@ const workflowLabel = (status: WorkflowStatus | null): string => {
     LISTO_PARA_PAGO: "Listo para pago",
     CLOSED: "Cerrado",
   };
-  return map[status ?? "DRAFT"] ?? (status ?? "—");
+  return map[status ?? "DRAFT"] ?? status ?? "—";
 };
 
 const canPedagogia = (status: WorkflowStatus | null): boolean =>
@@ -440,7 +540,9 @@ const openPaymentVerifyDialog = (item: BulkRefrendRow): void => {
   paymentVerifyOpen.value = true;
 };
 
-const onPaymentVerifySubmit = async (form: RefrendPaymentVerifyForm): Promise<void> => {
+const onPaymentVerifySubmit = async (
+  form: RefrendPaymentVerifyForm,
+): Promise<void> => {
   if (!activeRow.value) return;
   paymentVerifyLoading.value = true;
   try {
@@ -468,7 +570,10 @@ const onClearFlag = async (item: BulkRefrendRow): Promise<void> => {
 
 const notificadoLoading = ref<number | null>(null);
 
-const toggleNotificado = async (item: BulkRefrendRow, value: boolean | null): Promise<void> => {
+const toggleNotificado = async (
+  item: BulkRefrendRow,
+  value: boolean | null,
+): Promise<void> => {
   notificadoLoading.value = item.refrend.id;
   try {
     await store.patchInline(item.refrend.id, {
@@ -477,6 +582,19 @@ const toggleNotificado = async (item: BulkRefrendRow, value: boolean | null): Pr
     });
   } finally {
     notificadoLoading.value = null;
+  }
+};
+
+// ── Recalculate ────────────────────────────────────────────────────────────
+
+const recalcLoading = ref<number | null>(null);
+
+const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
+  recalcLoading.value = item.refrend.id;
+  try {
+    await store.recalculateRefrend(item.refrend.id);
+  } finally {
+    recalcLoading.value = null;
   }
 };
 

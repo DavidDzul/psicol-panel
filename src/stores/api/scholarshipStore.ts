@@ -285,6 +285,23 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const recalculateRefrend = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/recalculate`
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Refrendo recalculado.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al recalcular.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   const submitPaymentVerify = async (id: number, form: RefrendPaymentVerifyForm): Promise<ScholarshipRefrend | undefined> => {
     try {
       const res = await axios.post<ScholarshipRefrendResponse>(
@@ -510,5 +527,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     pedagogiaResolve,
     notifyStudent,
     submitPaymentVerify,
+    recalculateRefrend,
   };
 });
