@@ -1,5 +1,15 @@
 <template>
   <div class="refrend-master-table-wrapper">
+    <div class="d-flex align-center ga-3 mb-2 px-1">
+      <span class="text-subtitle-2 font-weight-medium">{{ tableInfo.campus }}</span>
+      <v-divider vertical class="mx-1" />
+      <span class="text-caption text-medium-emphasis">{{ tableInfo.generation }}</span>
+      <v-divider vertical class="mx-1" />
+      <span class="text-caption text-medium-emphasis">{{ tableInfo.period }}</span>
+      <v-spacer />
+      <span class="text-caption text-medium-emphasis">{{ rows.length }} becarios</span>
+    </div>
+
     <v-data-table
       v-model:expanded="expanded"
       :headers="headers"
@@ -220,37 +230,14 @@
       </template>
 
       <template #item.projected_amount="{ item }">
-        <div
-          v-if="isLocked(item.refrend)"
-          class="text-caption font-weight-medium"
-        >
-          {{ fmt(item.refrend.final_amount) }}
-        </div>
-        <v-text-field
-          v-else
-          :model-value="
-            editingAmountId === item.refrend.id
-              ? amountDraft
-              : item.refrend.final_amount
-          "
-          density="compact"
-          variant="plain"
-          hide-details
-          type="number"
-          min="0"
-          style="max-width: 90px"
-          @focus="startEditAmount(item)"
-          @blur="saveAmount(item)"
-          @update:model-value="amountDraft = $event"
-          @keydown.enter="saveAmount(item)"
-          @keydown.escape="cancelEditAmount"
-        />
+        <span class="text-caption font-weight-medium">{{ fmt(item.refrend.final_amount) }}</span>
       </template>
 
       <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
 
       <template #item.payment_verify="{ item }">
-        <div class="d-flex align-center ga-1">
+        <div class="d-flex align-center ga-1 flex-wrap">
+          <!-- Recalculate (DRAFT only) -->
           <v-btn
             v-if="item.refrend.workflow_status === 'DRAFT'"
             :loading="recalcLoading === item.refrend.id"
@@ -258,9 +245,10 @@
             size="x-small"
             variant="text"
             color="teal"
-            title="Recalcular refrendo (actualiza snapshot de asistencias y montos)"
+            title="Recalcular refrendo"
             @click="onRecalculate(item)"
           />
+          <!-- Clear flag (CON_INCIDENCIA only) -->
           <v-btn
             v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
             :loading="clearFlagLoading === item.refrend.id"
@@ -271,13 +259,13 @@
             title="Quitar incidencia (vuelve a Borrador)"
             @click="onClearFlag(item)"
           />
-          <v-btn
-            icon="mdi-currency-usd-off"
-            size="x-small"
-            variant="text"
-            color="orange-darken-2"
-            title="Verificar pago"
-            @click="openPaymentVerifyDialog(item)"
+          <!-- Situation quick-access bar -->
+          <RefrendSituationBar
+            :current-resolution="item.refrend.resolution_type ?? null"
+            :locked="isLocked(item.refrend)"
+            :active-type="situationLoadingId === item.refrend.id ? situationLoadingType : null"
+            @submit-direct="(type) => onSituationDirect(item, type)"
+            @open="(type) => openSituationDialog(item, type)"
           />
         </div>
       </template>
@@ -319,28 +307,60 @@
       @submit="onPedagogiaSubmit"
     />
 
-    <RefrendPaymentVerifyDialog
-      v-model="paymentVerifyOpen"
-      :loading="paymentVerifyLoading"
-      @submit="onPaymentVerifySubmit"
+    <SituationSinPagoDialog
+      v-model="situationDialogs.SIN_PAGO"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
+    />
+    <SituationRetenidaDialog
+      v-model="situationDialogs.RETENIDA"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
+    />
+    <SituationPagoMesesDialog
+      v-model="situationDialogs.PAGO_MESES"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
+    />
+    <SituationSuspendidaDialog
+      v-model="situationDialogs.SUSPENDIDA"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
+    />
+    <SituationBajaDialog
+      v-model="situationDialogs.BAJA_DEFINITIVA"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
+    />
+    <SituationEgresadoDialog
+      v-model="situationDialogs.EGRESADO"
+      :loading="situationSubmitLoading"
+      @submit="onSituationSubmit"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
-import RefrendPaymentVerifyDialog from "@/components/scholarships/RefrendPaymentVerifyDialog.vue";
+import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
+import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
+import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
+import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
+import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
+import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
+import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type {
   BulkRefrendRow,
   ScholarshipRefrend,
   WorkflowStatus,
+  ResolutionType,
   AtencionFlagForm,
   PedagogiaResolveForm,
-  RefrendPaymentVerifyForm,
+  RecordSituationForm,
 } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -351,6 +371,22 @@ const props = defineProps<{
   year: number;
   month: number;
 }>();
+
+// ── Table title ────────────────────────────────────────────────────────────
+
+const MONTHS_ES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+];
+
+const tableInfo = computed(() => {
+  const first = props.rows[0]?.refrend;
+  return {
+    campus:     first?.snapshot_campus     ?? "—",
+    generation: first?.snapshot_generation ?? "—",
+    period:     `${MONTHS_ES[(props.month - 1)] ?? props.month} ${props.year}`,
+  };
+});
 
 // ── Store ──────────────────────────────────────────────────────────────────
 
@@ -365,13 +401,6 @@ const headers = [
     key: "snapshot_name",
     fixed: true,
     sortable: true,
-  },
-  { title: "Sede", key: "snapshot_campus", width: 80, sortable: false },
-  {
-    title: "Generación",
-    key: "snapshot_generation",
-    width: 100,
-    sortable: false,
   },
   // REVISIÓN (lo más importante para el operador)
   { title: "Estado", key: "workflow_status", sortable: false },
@@ -530,26 +559,50 @@ const onPedagogiaSubmit = async (form: PedagogiaResolveForm): Promise<void> => {
   }
 };
 
-// ── Payment verify dialog ──────────────────────────────────────────────────
+// ── Situation dialogs ─────────────────────────────────────────────────────
 
-const paymentVerifyOpen = ref(false);
-const paymentVerifyLoading = ref(false);
+type SituationKey = ResolutionType | "PAGO_MESES";
 
-const openPaymentVerifyDialog = (item: BulkRefrendRow): void => {
+const situationDialogs = ref<Record<SituationKey, boolean>>({
+  BECA_MES: false,
+  SIN_PAGO: false,
+  RETENIDA: false,
+  PAGO_MESES: false,
+  SUSPENDIDA: false,
+  BAJA_DEFINITIVA: false,
+  EGRESADO: false,
+});
+const situationSubmitLoading = ref(false);
+const situationLoadingId = ref<number | null>(null);
+const situationLoadingType = ref<SituationKey | null>(null);
+
+const openSituationDialog = (item: BulkRefrendRow, type: SituationKey): void => {
   activeRow.value = item;
-  paymentVerifyOpen.value = true;
+  situationDialogs.value[type] = true;
 };
 
-const onPaymentVerifySubmit = async (
-  form: RefrendPaymentVerifyForm,
-): Promise<void> => {
-  if (!activeRow.value) return;
-  paymentVerifyLoading.value = true;
+const onSituationDirect = async (item: BulkRefrendRow, type: ResolutionType): Promise<void> => {
+  situationLoadingId.value = item.refrend.id;
+  situationLoadingType.value = type;
   try {
-    await store.submitPaymentVerify(activeRow.value.refrend.id, form);
-    paymentVerifyOpen.value = false;
+    await store.recordPaymentSituation(item.refrend.id, { resolution_type: type });
   } finally {
-    paymentVerifyLoading.value = false;
+    situationLoadingId.value = null;
+    situationLoadingType.value = null;
+  }
+};
+
+const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
+  if (!activeRow.value) return;
+  situationSubmitLoading.value = true;
+  try {
+    await store.recordPaymentSituation(activeRow.value.refrend.id, form);
+    const key = (form.carryover_months_count && form.resolution_type === "BECA_MES")
+      ? "PAGO_MESES"
+      : form.resolution_type as SituationKey;
+    situationDialogs.value[key] = false;
+  } finally {
+    situationSubmitLoading.value = false;
   }
 };
 
@@ -598,31 +651,6 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
   }
 };
 
-// ── Inline amount edit ─────────────────────────────────────────────────────
-
-const editingAmountId = ref<number | null>(null);
-const amountDraft = ref<string>("");
-
-const startEditAmount = (item: BulkRefrendRow): void => {
-  editingAmountId.value = item.refrend.id;
-  amountDraft.value = item.refrend.final_amount;
-};
-
-const saveAmount = async (item: BulkRefrendRow): Promise<void> => {
-  if (editingAmountId.value !== item.refrend.id) return;
-  editingAmountId.value = null;
-  const parsed = parseFloat(amountDraft.value);
-  if (isNaN(parsed) || parsed < 0) return;
-  try {
-    await store.patchInline(item.refrend.id, { final_amount_override: parsed });
-  } catch {
-    // rollback handled in store
-  }
-};
-
-const cancelEditAmount = (): void => {
-  editingAmountId.value = null;
-};
 </script>
 
 <style scoped>

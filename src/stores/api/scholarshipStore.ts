@@ -20,6 +20,7 @@ import type {
   AtencionFlagForm,
   PedagogiaResolveForm,
   RefrendPaymentVerifyForm,
+  RecordSituationForm,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -494,6 +495,29 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     return refrend;
   };
 
+  // ── Payment situation ─────────────────────────────────────────────────────
+
+  const recordPaymentSituation = async (
+    id: number,
+    form: RecordSituationForm,
+  ): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/situation`,
+        form,
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Situación registrada.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al registrar situación.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   return {
     refrends,
     profiles,
@@ -528,5 +552,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     notifyStudent,
     submitPaymentVerify,
     recalculateRefrend,
+    recordPaymentSituation,
   };
 });

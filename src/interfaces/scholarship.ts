@@ -20,6 +20,14 @@ export type WorkflowStatus =
   | 'LISTO_PARA_PAGO'
   | 'CLOSED'
 
+export type ResolutionType =
+  | 'BECA_MES'
+  | 'SIN_PAGO'
+  | 'RETENIDA'
+  | 'SUSPENDIDA'
+  | 'BAJA_DEFINITIVA'
+  | 'EGRESADO'
+
 export type DiscountType =
   | 'RETARDOS'
   | 'FALTA_INJUSTIFICADA'
@@ -122,6 +130,12 @@ export interface ScholarshipRefrend {
   refrend_type: RefrendType
   status: RefrendStatus
   workflow_status: WorkflowStatus | null
+  resolution_type: ResolutionType | null
+  resolution_cause: string | null
+  resolution_notes: string | null
+  suspension_percentage: string | null
+  carryover_months_count: number | null
+  carryover_months_detail: string | null
   base_amount: string
   discount_percentage: string
   discount_amount: string
@@ -200,6 +214,17 @@ export interface InlinePatchPayload {
   final_amount_override?: number | null
   notification_method?: string | null
   notified_at?: string | null
+}
+
+// ── Situation form ─────────────────────────────────────────────────────────
+
+export interface RecordSituationForm {
+  resolution_type: ResolutionType
+  resolution_cause?: string | null
+  resolution_notes?: string | null
+  suspension_percentage?: number | null
+  carryover_months_count?: number | null
+  carryover_months_detail?: string | null
 }
 
 // ── Form interfaces ────────────────────────────────────────────────────────
