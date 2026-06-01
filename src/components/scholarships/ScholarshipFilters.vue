@@ -1,6 +1,26 @@
 <template>
   <v-row class="mb-2">
-    <v-col v-if="campuses && campuses.length > 0" md="6">
+    <v-col md="2">
+      <v-select
+        v-model="internalYear"
+        :items="yearOptions"
+        label="Año de refrendo"
+        density="compact"
+        hide-details
+        @update:model-value="emit('update:year', internalYear)"
+      />
+    </v-col>
+    <v-col md="2">
+      <v-select
+        v-model="internalMonth"
+        :items="monthOptions"
+        label="Mes de refrendo"
+        density="compact"
+        hide-details
+        @update:model-value="emit('update:month', internalMonth)"
+      />
+    </v-col>
+    <v-col v-if="campuses && campuses.length > 0" md="2">
       <v-select
         v-model="internalCampus"
         :items="campuses"
@@ -13,7 +33,7 @@
         @update:model-value="emit('update:campus', internalCampus)"
       />
     </v-col>
-    <v-col md="6">
+    <v-col md="2">
       <v-autocomplete
         v-model="internalGenerationId"
         :items="generationList"
@@ -22,43 +42,27 @@
         label="Generación"
         density="compact"
         hide-details
-        clearable
         prepend-inner-icon="mdi-account-group"
         @update:model-value="emit('update:generationId', internalGenerationId)"
       />
     </v-col>
-    <v-col md="3">
-      <v-select
-        v-model="internalYear"
-        :items="yearOptions"
-        label="Año"
-        density="compact"
-        hide-details
-        @update:model-value="emit('update:year', internalYear)"
-      />
-    </v-col>
-    <v-col md="3">
-      <v-select
-        v-model="internalMonth"
-        :items="monthOptions"
-        label="Mes"
-        density="compact"
-        hide-details
-        @update:model-value="emit('update:month', internalMonth)"
-      />
-    </v-col>
 
-    <v-col cols="12" sm="4" md="2" class="d-flex align-center">
-      <v-btn color="grey" block @click="emit('search')"> Buscar </v-btn>
-    </v-col>
-    <v-col
-      v-if="$slots.default"
-      cols="12"
-      sm="auto"
-      class="d-flex align-center"
-    >
+    <v-col class="d-flex text-center justify-between" md="4">
+      <v-btn
+        class="mx-3"
+        color="grey"
+        prepend-icon="mdi-magnify"
+        :disabled="!campus || !generationId"
+        @click="emit('search')"
+      >
+        Buscar
+      </v-btn>
+
       <slot />
     </v-col>
+    <!-- <v-col md="2" v-if="$slots.default">
+      
+    </v-col> -->
   </v-row>
 </template>
 
@@ -91,7 +95,6 @@ const internalYear = ref<number>(props.year);
 const internalMonth = ref<number>(props.month);
 const internalCampus = ref<string | null>(props.campus ?? null);
 const internalGenerationId = ref<number | null>(props.generationId ?? null);
-
 const yearOptions = Array.from(
   { length: 6 },
   (_, i) => new Date().getFullYear() - i,

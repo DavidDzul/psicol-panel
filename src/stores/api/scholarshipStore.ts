@@ -495,6 +495,42 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     return refrend;
   };
 
+  // ── Approve actions ──────────────────────────────────────────────────────
+
+  const approveAsIs = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/approve`,
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Refrendo aprobado.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al aprobar.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
+  const approveFullPayment = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/approve-full`,
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Pago al 100% aplicado.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al aplicar pago al 100%.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   // ── Payment situation ─────────────────────────────────────────────────────
 
   const recordPaymentSituation = async (
@@ -552,6 +588,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     notifyStudent,
     submitPaymentVerify,
     recalculateRefrend,
+    approveAsIs,
+    approveFullPayment,
     recordPaymentSituation,
   };
 });

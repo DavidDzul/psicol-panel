@@ -189,13 +189,17 @@ export interface BulkRefrendRow {
   incident_description: string | null
   incident_category: string | null
   incident_type: string | null
+  semester_lates_unconsumed: number
+  month_absent: number
+  has_retardos_discount: boolean
+  has_falta_discount: boolean
 }
 
 export interface BulkTableParams {
   year: number
   month: number
-  campus?: string | null
-  generation_id?: number | null
+  campus: string
+  generation_id: number
   page?: number
   per_page?: number
 }
@@ -320,7 +324,8 @@ export interface ScholarshipProfileForm {
 export interface GeneratePeriodForm {
   year: number
   month: number
-  campus?: string | null
+  campus: string
+  generation_id: number
 }
 
 export interface ReviewForm {

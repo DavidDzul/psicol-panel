@@ -10,9 +10,10 @@ export function useScholarshipPage() {
   const { refrends } = storeToRefs(store);
   const { filteredCampus } = storeToRefs(useAuthStore());
 
-  const selectedYear   = ref<number>(new Date().getFullYear());
-  const selectedMonth  = ref<number>(new Date().getMonth() + 1);
-  const selectedCampus = ref<string | null>(null);
+  const selectedYear         = ref<number>(new Date().getFullYear());
+  const selectedMonth        = ref<number>(new Date().getMonth() + 1);
+  const selectedCampus       = ref<string | null>(null);
+  const selectedGenerationId = ref<number | null>(null);
   const generating     = ref<boolean>(false);
   const generateDialog = ref<boolean>(false);
 
@@ -46,7 +47,8 @@ export function useScholarshipPage() {
     const form: GeneratePeriodForm = {
       year: selectedYear.value,
       month: selectedMonth.value,
-      campus: selectedCampus.value,
+      campus: selectedCampus.value!,
+      generation_id: selectedGenerationId.value!,
     };
     await store.generatePeriod(form);
     await loadPeriod();
@@ -58,6 +60,7 @@ export function useScholarshipPage() {
     selectedYear,
     selectedMonth,
     selectedCampus,
+    selectedGenerationId,
     filteredCampus,
     generating,
     generateDialog,

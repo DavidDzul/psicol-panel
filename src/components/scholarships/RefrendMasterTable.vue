@@ -1,29 +1,33 @@
 <template>
   <div class="refrend-master-table-wrapper">
     <div class="d-flex align-center ga-3 mb-2 px-1">
-      <span class="text-subtitle-2 font-weight-medium">{{ tableInfo.campus }}</span>
+      <span class="text-subtitle-2 font-weight-medium">{{
+        tableInfo.campus
+      }}</span>
       <v-divider vertical class="mx-1" />
-      <span class="text-caption text-medium-emphasis">{{ tableInfo.generation }}</span>
+      <span class="text-caption text-medium-emphasis">{{
+        tableInfo.generation
+      }}</span>
       <v-divider vertical class="mx-1" />
-      <span class="text-caption text-medium-emphasis">{{ tableInfo.period }}</span>
+      <span class="text-caption text-medium-emphasis">{{
+        tableInfo.period
+      }}</span>
       <v-spacer />
-      <span class="text-caption text-medium-emphasis">{{ rows.length }} becarios</span>
+      <span class="text-caption text-medium-emphasis"
+        >{{ rows.length }} becarios</span
+      >
     </div>
 
     <v-data-table
-      v-model:expanded="expanded"
       :headers="headers"
       :items="rows"
       :loading="loading"
-      density="compact"
-      fixed-header
-      height="calc(100vh - 280px)"
       class="elevation-1 refrend-master-table"
-      :items-per-page="50"
+      :items-per-page="-1"
       hover
       item-value="refrend.id"
-      show-expand
     >
+      <template #bottom />
       <!-- ── IDENTIDAD ─────────────────────────────────────────────────────── -->
 
       <template #item.snapshot_name="{ item }">
@@ -32,10 +36,19 @@
             item.refrend.snapshot_name
           }}</span>
           <v-chip
+            v-if="item.refrend.snapshot_scholarship_type"
+            size="x-small"
+            color="primary"
+            variant="plain"
+            label
+          >
+            {{ item.refrend.snapshot_scholarship_type }}
+          </v-chip>
+          <v-chip
             v-if="item.incidents_count > 0"
             :color="item.incidents_count >= 3 ? 'error' : 'warning'"
             size="x-small"
-            variant="tonal"
+            variant="flat"
             >{{ item.incidents_count }}</v-chip
           >
         </div>
@@ -51,12 +64,6 @@
         }}</span>
       </template>
 
-      <template #item.snapshot_scholarship_type="{ item }">
-        <v-chip size="x-small" variant="outlined" label>{{
-          item.refrend.snapshot_scholarship_type
-        }}</v-chip>
-      </template>
-
       <!-- ── ACADÉMICO ────────────────────────────────────────────────────── -->
 
       <template #item.last_grade="{ item }">
@@ -67,49 +74,68 @@
 
       <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
-      <template #item.attendance_present="{ item }">
-        <span class="text-success font-weight-medium text-caption">{{
-          item.attendance_present
-        }}</span>
+      <template #item.attendance_total="{ item }">
+        <v-btn
+          variant="text"
+          size="x-small"
+          color="primary"
+          title="Ver detalle de asistencias"
+          @click="openAttendanceDetail(item)"
+        >
+          <v-icon size="13" start>mdi-calendar-check-outline</v-icon>
+          {{ item.attendance_total }}
+        </v-btn>
       </template>
 
-      <template #item.attendance_absent="{ item }">
-        <span class="text-error font-weight-medium text-caption">{{
-          item.attendance_absent
-        }}</span>
+      <!-- Faltas injustificadas en el mes del refrendo (dispara suspensión) -->
+      <template #item.month_absent="{ item }">
+        <v-chip
+          :color="item.month_absent >= 1 ? 'error' : 'default'"
+          size="x-small"
+          :variant="item.month_absent >= 1 ? 'tonal' : 'text'"
+          label
+        >
+          {{ item.month_absent }}
+        </v-chip>
       </template>
 
-      <template #item.attendance_absent_justified="{ item }">
-        <span class="text-caption">{{ item.attendance_absent_justified }}</span>
-      </template>
-
-      <template #item.attendance_late="{ item }">
-        <span class="text-warning font-weight-medium text-caption">{{
-          item.attendance_late
-        }}</span>
-      </template>
-
-      <template #item.attendance_late_justified="{ item }">
-        <span class="text-caption">{{ item.attendance_late_justified }}</span>
-      </template>
-
-      <template #item.attendance_late_consumed="{ item }">
-        <span class="text-caption">{{ item.attendance_late_consumed }}</span>
-      </template>
-
-      <template #item.attendance_late_unconsumed="{ item }">
+      <!-- Retardos acumulados en el semestre (2 = suspensión) -->
+      <template #item.semester_lates_unconsumed="{ item }">
         <v-chip
           :color="
-            item.attendance_late_unconsumed >= 2
+            item.has_retardos_discount || item.semester_lates_unconsumed >= 2
               ? 'error'
-              : item.attendance_late_unconsumed === 1
+              : item.semester_lates_unconsumed === 1
                 ? 'warning'
                 : 'default'
           "
           size="x-small"
-          :variant="item.attendance_late_unconsumed > 0 ? 'tonal' : 'text'"
+          :variant="
+            item.has_retardos_discount || item.semester_lates_unconsumed >= 1
+              ? 'tonal'
+              : 'text'
+          "
+          label
         >
-          {{ item.attendance_late_unconsumed }}
+          {{
+            item.has_retardos_discount
+              ? item.attendance_late
+              : item.semester_lates_unconsumed
+          }}/2
+        </v-chip>
+      </template>
+
+      <!-- Impacto en pago -->
+      <template #item.attendance_impact="{ item }">
+        <v-chip
+          :color="attendanceImpact(item).color"
+          size="x-small"
+          :variant="
+            attendanceImpact(item).color === 'success' ? 'text' : 'tonal'
+          "
+          label
+        >
+          {{ attendanceImpact(item).label }}
         </v-chip>
       </template>
 
@@ -230,24 +256,32 @@
       </template>
 
       <template #item.projected_amount="{ item }">
-        <span class="text-caption font-weight-medium">{{ fmt(item.refrend.final_amount) }}</span>
+        <span class="text-caption font-weight-medium">{{
+          fmt(item.refrend.final_amount)
+        }}</span>
       </template>
 
       <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
 
       <template #item.payment_verify="{ item }">
-        <div class="d-flex align-center ga-1 flex-wrap">
-          <!-- Recalculate (DRAFT only) -->
+        <div class="d-flex align-center ga-1">
+          <!-- Aprobar al monto actual -->
           <v-btn
-            v-if="item.refrend.workflow_status === 'DRAFT'"
-            :loading="recalcLoading === item.refrend.id"
-            icon="mdi-refresh"
+            v-if="
+              item.refrend.workflow_status != null &&
+              ['DRAFT', 'CON_INCIDENCIA'].includes(item.refrend.workflow_status)
+            "
+            :loading="approveLoading === item.refrend.id"
             size="x-small"
-            variant="text"
-            color="teal"
-            title="Recalcular refrendo"
-            @click="onRecalculate(item)"
-          />
+            variant="tonal"
+            color="green"
+            title="Aprobar al monto actual"
+            @click="onApprove(item)"
+          >
+            <v-icon size="14" start>mdi-check</v-icon>
+            Aprobar
+          </v-btn>
+
           <!-- Clear flag (CON_INCIDENCIA only) -->
           <v-btn
             v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
@@ -259,36 +293,43 @@
             title="Quitar incidencia (vuelve a Borrador)"
             @click="onClearFlag(item)"
           />
-          <!-- Situation quick-access bar -->
+
+          <!-- Otras acciones: Pago 100%, Recalcular, Situaciones especiales -->
           <RefrendSituationBar
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="isLocked(item.refrend)"
-            :active-type="situationLoadingId === item.refrend.id ? situationLoadingType : null"
-            @submit-direct="(type) => onSituationDirect(item, type)"
+            :loading="
+              situationLoadingId === item.refrend.id ||
+              recalcLoading === item.refrend.id
+            "
+            @approve-full="onApproveFullPayment(item)"
+            @recalculate="onRecalculate(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
         </div>
       </template>
-
-      <!-- ── EXPANDED ROW ─────────────────────────────────────────────────── -->
-
-      <template #expanded-row="{ columns, item }">
-        <tr>
-          <td :colspan="columns.length" class="pa-4 bg-grey-lighten-5">
-            <div
-              class="text-caption font-weight-medium text-medium-emphasis mb-2"
-            >
-              DETALLE DE ASISTENCIAS — {{ item.refrend.snapshot_name }}
-            </div>
-            <ScholarshipAttendanceSummary
-              :user-id="item.refrend.user_id"
-              :year="year"
-              :month="month"
-            />
-          </td>
-        </tr>
-      </template>
     </v-data-table>
+
+    <!-- ── Dialog: detalle asistencias ──────────────────────────────────── -->
+    <v-dialog v-model="attendanceDialogOpen" max-width="680" scrollable>
+      <v-card v-if="attendanceDialogRow">
+        <v-card-title class="text-subtitle-2 font-weight-medium pa-4 pb-2">
+          Asistencias — {{ attendanceDialogRow.refrend.snapshot_name }}
+        </v-card-title>
+        <v-card-text class="pa-4 pt-0">
+          <ScholarshipAttendanceSummary
+            :user-id="attendanceDialogRow.refrend.user_id"
+            :year="year"
+            :month="month"
+          />
+        </v-card-text>
+        <v-card-actions class="justify-end pa-3">
+          <v-btn variant="text" @click="attendanceDialogOpen = false"
+            >Cerrar</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
 
@@ -375,22 +416,48 @@ const props = defineProps<{
 // ── Table title ────────────────────────────────────────────────────────────
 
 const MONTHS_ES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 const tableInfo = computed(() => {
   const first = props.rows[0]?.refrend;
   return {
-    campus:     first?.snapshot_campus     ?? "—",
+    campus: first?.snapshot_campus ?? "—",
     generation: first?.snapshot_generation ?? "—",
-    period:     `${MONTHS_ES[(props.month - 1)] ?? props.month} ${props.year}`,
+    period: `${MONTHS_ES[props.month - 1] ?? props.month} ${props.year}`,
   };
 });
 
 // ── Store ──────────────────────────────────────────────────────────────────
 
 const store = useScholarshipStore();
+
+// ── Attendance impact helpers ───────────────────────────────────────────────
+
+type ImpactInfo = { label: string; color: string };
+
+const attendanceImpact = (item: BulkRefrendRow): ImpactInfo => {
+  // Prioridad: descuentos ya aplicados en el refrendo (más preciso que conteos en vivo,
+  // porque los retardos se marcan como consumidos al generar el refrendo).
+  const hasFalta = item.has_falta_discount || item.month_absent >= 1;
+  const hasRet =
+    item.has_retardos_discount || item.semester_lates_unconsumed >= 2;
+  if (hasFalta && hasRet) return { label: "Falta + Ret.", color: "error" };
+  if (hasFalta) return { label: "Falta", color: "error" };
+  if (hasRet) return { label: "Retardos", color: "error" };
+  return { label: "Sin impacto", color: "success" };
+};
 
 // ── Table headers ──────────────────────────────────────────────────────────
 
@@ -412,43 +479,19 @@ const headers = [
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Notif.", key: "notificado", width: 65, sortable: false },
   // ASISTENCIAS
-  { title: "Pres.", key: "attendance_present", width: 60, sortable: true },
-  { title: "Faltas", key: "attendance_absent", width: 65, sortable: true },
+  { title: "Clases", key: "attendance_total", width: 65, sortable: true },
+  { title: "F.mes", key: "month_absent", width: 70, sortable: true },
   {
-    title: "F.J.",
-    key: "attendance_absent_justified",
-    width: 55,
-    sortable: false,
-  },
-  { title: "Ret.", key: "attendance_late", width: 55, sortable: true },
-  {
-    title: "R.J.",
-    key: "attendance_late_justified",
-    width: 50,
-    sortable: false,
-  },
-  {
-    title: "R.C.",
-    key: "attendance_late_consumed",
-    width: 50,
-    sortable: false,
-  },
-  {
-    title: "R.nc.",
-    key: "attendance_late_unconsumed",
-    width: 65,
+    title: "Ret.acum.",
+    key: "semester_lates_unconsumed",
+    width: 90,
     sortable: true,
   },
+  { title: "Impacto", key: "attendance_impact", width: 150, sortable: false },
   // ACADÉMICO
   { title: "Promedio", key: "last_grade", width: 90, sortable: true },
   // IDENTIDAD (referencia, menos frecuente)
 
-  {
-    title: "Tipo",
-    key: "snapshot_scholarship_type",
-    width: 70,
-    sortable: false,
-  },
   // ECONÓMICO
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 70, sortable: false },
@@ -457,9 +500,15 @@ const headers = [
   { title: "", key: "payment_verify", width: 80, sortable: false },
 ] as const;
 
-// ── Expanded rows ──────────────────────────────────────────────────────────
+// ── Attendance detail dialog ────────────────────────────────────────────────
 
-const expanded = ref<string[]>([]);
+const attendanceDialogOpen = ref(false);
+const attendanceDialogRow = ref<BulkRefrendRow | null>(null);
+
+const openAttendanceDetail = (item: BulkRefrendRow): void => {
+  attendanceDialogRow.value = item;
+  attendanceDialogOpen.value = true;
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -576,19 +625,33 @@ const situationSubmitLoading = ref(false);
 const situationLoadingId = ref<number | null>(null);
 const situationLoadingType = ref<SituationKey | null>(null);
 
-const openSituationDialog = (item: BulkRefrendRow, type: SituationKey): void => {
+const openSituationDialog = (
+  item: BulkRefrendRow,
+  type: SituationKey,
+): void => {
   activeRow.value = item;
   situationDialogs.value[type] = true;
 };
 
-const onSituationDirect = async (item: BulkRefrendRow, type: ResolutionType): Promise<void> => {
-  situationLoadingId.value = item.refrend.id;
-  situationLoadingType.value = type;
+// ── Approve ────────────────────────────────────────────────────────────────
+
+const approveLoading = ref<number | null>(null);
+
+const onApprove = async (item: BulkRefrendRow): Promise<void> => {
+  approveLoading.value = item.refrend.id;
   try {
-    await store.recordPaymentSituation(item.refrend.id, { resolution_type: type });
+    await store.approveAsIs(item.refrend.id);
+  } finally {
+    approveLoading.value = null;
+  }
+};
+
+const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
+  situationLoadingId.value = item.refrend.id;
+  try {
+    await store.approveFullPayment(item.refrend.id);
   } finally {
     situationLoadingId.value = null;
-    situationLoadingType.value = null;
   }
 };
 
@@ -597,9 +660,10 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   situationSubmitLoading.value = true;
   try {
     await store.recordPaymentSituation(activeRow.value.refrend.id, form);
-    const key = (form.carryover_months_count && form.resolution_type === "BECA_MES")
-      ? "PAGO_MESES"
-      : form.resolution_type as SituationKey;
+    const key =
+      form.carryover_months_count && form.resolution_type === "BECA_MES"
+        ? "PAGO_MESES"
+        : (form.resolution_type as SituationKey);
     situationDialogs.value[key] = false;
   } finally {
     situationSubmitLoading.value = false;
@@ -650,11 +714,21 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
     recalcLoading.value = null;
   }
 };
-
 </script>
 
 <style scoped>
 .refrend-master-table-wrapper {
+  position: relative;
   width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* Sticky header sin contenedor de scroll propio en la tabla */
+.refrend-master-table :deep(thead tr th) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgb(var(--v-theme-surface));
 }
 </style>

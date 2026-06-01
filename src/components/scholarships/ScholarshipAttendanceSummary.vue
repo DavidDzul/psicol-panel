@@ -37,9 +37,9 @@
         density="compact"
         class="mb-3"
       >
-        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) no consumido(s)
-        en el semestre — cada par equivale a 1 falta injustificada; aplica
-        suspensión del pago mensual (reglamento art. 5).
+        <strong>{{ summary.late_unconsumed }}</strong> retardo(s) acumulado(s)
+        en el semestre — equivale a una falta injustificada; el pago de la beca
+        de este mes quedará suspendido (reglamento art. 5).
       </v-alert>
       <v-alert
         v-else-if="summary.late_unconsumed === 1"
@@ -49,7 +49,7 @@
         class="mb-3"
       >
         1 retardo pendiente — se necesita 1 más en el semestre para generar
-        penalización (reglamento art. 5).
+        suspensión del pago (reglamento art. 5).
       </v-alert>
 
       <!-- Records table -->

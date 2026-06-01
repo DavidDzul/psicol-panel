@@ -19,9 +19,10 @@
           color="primary"
           prepend-icon="mdi-refresh"
           :loading="generating"
+          :disabled="!selectedCampus || !selectedGenerationId"
           @click="generateDialog = true"
         >
-          Generar refrendos
+          Generar ref.
         </v-btn>
       </ScholarshipFilters>
     </v-col>
@@ -68,6 +69,7 @@
           color="primary"
           variant="elevated"
           :loading="generating"
+          :disabled="!selectedCampus || !selectedGenerationId"
           @click="onGeneratePeriod"
         >
           Confirmar
@@ -78,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent } from "vue";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
@@ -102,13 +104,12 @@ const {
   selectedYear,
   selectedMonth,
   selectedCampus,
+  selectedGenerationId,
   filteredCampus,
   generating,
   generateDialog,
   onGeneratePeriod,
 } = useScholarshipPage();
-
-const selectedGenerationId = ref<number | null>(null);
 
 // ── Store ──────────────────────────────────────────────────────────────────
 
@@ -117,18 +118,21 @@ const scholarshipStore = useScholarshipStore();
 // ── campusLabel for generate dialog ───────────────────────────────────────
 
 const campusLabel = computed<string>(() => {
-  const found = filteredCampus.value.find((c) => c.value === selectedCampus.value);
+  const found = filteredCampus.value.find(
+    (c) => c.value === selectedCampus.value,
+  );
   return found?.text ?? selectedCampus.value ?? "";
 });
 
 // ── Period change ──────────────────────────────────────────────────────────
 
 const onPeriodChange = async (): Promise<void> => {
+  if (!selectedCampus.value || !selectedGenerationId.value) return;
   await scholarshipStore.fetchBulkTable({
     year: selectedYear.value,
     month: selectedMonth.value,
-    campus: selectedCampus.value,
-    generation_id: selectedGenerationId.value,
+    campus: selectedCampus.value!,
+    generation_id: selectedGenerationId.value!,
   });
 };
 </script>
