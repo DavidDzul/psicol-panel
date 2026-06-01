@@ -240,7 +240,6 @@ export interface AtencionFlagForm {
 
 export interface PedagogiaResolveForm {
   comment?: string | null
-  notify_student: boolean
 }
 
 export interface RefrendPaymentVerifyForm {

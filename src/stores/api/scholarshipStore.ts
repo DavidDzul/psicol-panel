@@ -204,6 +204,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   const atencionFlag = async (id: number, form: AtencionFlagForm): Promise<ScholarshipRefrend | undefined> => {
     try {
+      const currentRow = bulkRows.value.find((r) => r.refrend.id === id);
+      const isEdit = currentRow?.refrend.workflow_status === 'CON_INCIDENCIA';
       const payload = {
         description: form.description,
         incident_category: form.incident_category ?? 'ADMINISTRATIVO',
@@ -219,9 +221,11 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         incident_description: form.description,
         incident_category: form.incident_category ?? 'ADMINISTRATIVO',
         incident_type: payload.incident_type,
-        incidents_count: (bulkRows.value.find((r) => r.refrend.id === id)?.incidents_count ?? 0) + 1,
+        incidents_count: isEdit
+          ? (currentRow?.incidents_count ?? 1)
+          : (currentRow?.incidents_count ?? 0) + 1,
       });
-      showAlert({ title: "Incidencia registrada.", status: "success" });
+      showAlert({ title: isEdit ? "Incidencia actualizada." : "Incidencia registrada.", status: "success" });
       return refrend;
     } catch (error: unknown) {
       const msg = isAxiosError(error)

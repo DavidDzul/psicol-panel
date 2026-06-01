@@ -44,13 +44,24 @@
           >
             {{ item.refrend.snapshot_scholarship_type }}
           </v-chip>
-          <v-chip
+          <v-tooltip
             v-if="item.incidents_count > 0"
-            :color="item.incidents_count >= 3 ? 'error' : 'warning'"
-            size="x-small"
-            variant="flat"
-            >{{ item.incidents_count }}</v-chip
+            location="bottom"
+            max-width="280"
           >
+            <template #activator="{ props: tooltipProps }">
+              <v-icon
+                v-bind="tooltipProps"
+                :icon="item.incidents_count >= 3 ? 'mdi-alert-circle' : 'mdi-alert-circle-outline'"
+                size="15"
+                :color="item.incidents_count >= 3 ? 'error' : 'warning'"
+              />
+            </template>
+            <div class="text-caption">
+              <div class="font-weight-bold mb-1">{{ item.incidents_count }} incidencia(s)</div>
+              <div v-if="item.incident_description">{{ item.incident_description }}</div>
+            </div>
+          </v-tooltip>
         </div>
       </template>
 
@@ -64,13 +75,6 @@
         }}</span>
       </template>
 
-      <!-- ── ACADÉMICO ────────────────────────────────────────────────────── -->
-
-      <template #item.last_grade="{ item }">
-        <v-chip :color="academicColor(item.academic_status)" size="small" label>
-          {{ item.last_grade ?? "—" }}
-        </v-chip>
-      </template>
 
       <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
@@ -154,7 +158,6 @@
 
       <template #item.atencion="{ item }">
         <div class="d-flex align-center ga-1">
-          <!-- Flag: habilitado en DRAFT (registrar) y CON_INCIDENCIA (editar) -->
           <v-btn
             icon="mdi-flag-outline"
             size="x-small"
@@ -172,31 +175,6 @@
             "
             @click="openAtencionDialog(item)"
           />
-
-          <!-- Tooltip con detalle de incidencia activa -->
-          <v-tooltip
-            v-if="item.incident_description"
-            location="bottom"
-            max-width="280"
-          >
-            <template #activator="{ props: tooltipProps }">
-              <v-icon
-                v-bind="tooltipProps"
-                icon="mdi-alert-circle-outline"
-                size="14"
-                color="orange-darken-2"
-                class="flex-shrink-0"
-              />
-            </template>
-            <div class="text-caption">
-              <div class="font-weight-bold mb-1">
-                {{ item.incident_category }} — {{ item.incident_type }}
-              </div>
-              <div>{{ item.incident_description }}</div>
-            </div>
-          </v-tooltip>
-
-          <!-- Observación (solo lectura, truncada) -->
           <span
             v-if="item.refrend.atencion_observations"
             class="text-caption text-medium-emphasis text-truncate"
@@ -336,7 +314,7 @@
     <RefrendAtencionDialog
       v-model="atencionOpen"
       :loading="atencionLoading"
-      :initial-description="activeRow?.refrend.atencion_observations ?? null"
+      :initial-description="activeRow?.incident_description ?? null"
       :initial-category="(activeRow?.incident_category as any) ?? null"
       @submit="onAtencionSubmit"
     />
@@ -345,6 +323,7 @@
       v-model="pedagogiaOpen"
       :loading="pedagogiaLoading"
       :atencion-observations="activeRow?.refrend.atencion_observations ?? null"
+      :initial-comment="activeRow?.refrend.pedagogia_observations ?? null"
       @submit="onPedagogiaSubmit"
     />
 
@@ -489,7 +468,6 @@ const headers = [
   },
   { title: "Impacto", key: "attendance_impact", width: 150, sortable: false },
   // ACADÉMICO
-  { title: "Promedio", key: "last_grade", width: 90, sortable: true },
   // IDENTIDAD (referencia, menos frecuente)
 
   // ECONÓMICO
@@ -522,13 +500,7 @@ const fmt = (value: string | number): string =>
     Number(value),
   );
 
-const academicColor = (status: BulkRefrendRow["academic_status"]): string =>
-  ({
-    ok: "green",
-    low_grade: "orange",
-    missing_subjects: "red",
-    inactive: "grey",
-  })[status] ?? "grey";
+
 
 const workflowColor = (status: WorkflowStatus | null): string => {
   const map: Record<string, string> = {
@@ -553,7 +525,7 @@ const workflowLabel = (status: WorkflowStatus | null): string => {
 };
 
 const canPedagogia = (status: WorkflowStatus | null): boolean =>
-  status === "CON_INCIDENCIA" || status === "PENDIENTE_NOTIFICACION";
+  status === "CON_INCIDENCIA";
 
 // ── Active row state ───────────────────────────────────────────────────────
 
@@ -573,14 +545,7 @@ const onAtencionSubmit = async (form: AtencionFlagForm): Promise<void> => {
   if (!activeRow.value) return;
   atencionLoading.value = true;
   try {
-    const isEdit = activeRow.value.refrend.workflow_status === "CON_INCIDENCIA";
-    if (isEdit) {
-      await store.patchInline(activeRow.value.refrend.id, {
-        atencion_observations: form.description.trim() || null,
-      });
-    } else {
-      await store.atencionFlag(activeRow.value.refrend.id, form);
-    }
+    await store.atencionFlag(activeRow.value.refrend.id, form);
     atencionOpen.value = false;
   } finally {
     atencionLoading.value = false;

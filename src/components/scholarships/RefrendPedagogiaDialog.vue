@@ -27,13 +27,6 @@
           class="mb-2"
         />
 
-        <v-checkbox
-          v-model="form.notify_student"
-          label="Marcar como notificado al becario"
-          color="deep-purple"
-          density="compact"
-          hide-details
-        />
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
@@ -59,6 +52,7 @@ import type { PedagogiaResolveForm } from "@/interfaces/scholarship";
 const props = defineProps<{
   loading?: boolean;
   atencionObservations?: string | null;
+  initialComment?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -69,20 +63,17 @@ const model = defineModel<boolean>();
 
 const form = reactive<PedagogiaResolveForm>({
   comment: null,
-  notify_student: false,
 });
 
 watch(model, (v) => {
   if (v) {
-    form.comment = null;
-    form.notify_student = false;
+    form.comment = props.initialComment ?? null;
   }
 });
 
 const submit = (): void => {
   emit("submit", {
     comment: form.comment?.trim() || null,
-    notify_student: form.notify_student,
   });
 };
 </script>
