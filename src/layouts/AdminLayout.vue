@@ -1,8 +1,15 @@
 <template>
   <v-layout id="app">
-    <v-app-bar color="black" :order="0">
+    <v-app-bar :color="'appbar'" border="b" :elevation="0" height="60" :order="0">
       <v-app-bar-nav-icon @click="onClick"></v-app-bar-nav-icon>
-      <v-toolbar-title>Impulso Universitario A.C.</v-toolbar-title>
+
+      <div class="brand-inline">
+        <img src="@/assets/img/logo-black.png" alt="Impulso" class="brand-logo" />
+        <div class="brand-text">
+          <span class="brand-name">Impulso Universitario</span>
+          <span class="brand-suffix">A.C.</span>
+        </div>
+      </div>
 
       <v-spacer></v-spacer>
 
@@ -15,7 +22,7 @@
         @logout="logout"
       />
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" :permanent="!mobile" width="280">
+    <v-navigation-drawer v-model="drawer" :permanent="!mobile" width="280" style="background-color: #FFFFFF">
       <NavMenu />
     </v-navigation-drawer>
 
@@ -55,7 +62,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDisplay } from "vuetify";
 
@@ -94,5 +101,28 @@ watch(
 .container__main {
   height: calc(100svh - var(--v-layout-top));
   overflow-y: auto;
+  padding-top: 8px;
+}
+:deep(.v-navigation-drawer) {
+  border-right: 1px solid rgba(0, 0, 0, 0.07) !important;
+}
+.brand-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 2px;
+}
+.brand-logo { height: 28px; width: auto; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+.brand-suffix {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(17, 24, 39, 0.40);
 }
 </style>

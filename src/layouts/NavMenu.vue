@@ -117,45 +117,63 @@ const can = (permission) => {
 };
 </script>
 
-<style scoped>
-.nav-list {
-  margin-top: 0;
-  padding: 4px;
-}
+<style lang="scss" scoped>
+.nav-list { margin-top: 4px; padding: 4px 8px; }
+:deep(.v-list) { background: transparent !important; }
 
-/* ITEM PRINCIPAL */
-.nav-item {
-  min-height: 40px !important;
+.nav-item { min-height: 40px !important; border-radius: 8px; transition: background 0.15s ease; }
+.nav-item :deep(.v-list-item-title) {
   font-size: 13px;
-  font-weight: 600;
-  color: #000000; /* gris elegante */
-
-  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #000000;
+  transition: color 0.15s ease;
 }
+.nav-item :deep(.v-icon) { color: #000000; transition: color 0.15s ease; }
+.nav-item:hover { background: rgba(39, 95, 252, 0.06); }
+.nav-item:hover :deep(.v-list-item-title) { color: #275FFC; }
+.nav-item:hover :deep(.v-icon) { color: #275FFC; }
 
-/* HOVER */
-.nav-item:hover {
-  background: rgba(189, 189, 189, 0.596);
-}
-
-/* SUBITEM */
 .nav-subitem {
   padding-left: 36px !important;
   min-height: 34px !important;
-  font-size: 12.5px;
-  color: #6b7280; /* gris más suave */
+  border-radius: 8px;
+  transition: background 0.15s ease;
 }
-
-/* ACTIVO */
-:deep(.v-list-item--active) {
-  background: rgba(25, 118, 210, 0.08);
+.nav-subitem :deep(.v-list-item-title) {
+  font-size: 12.5px;
+  font-weight: 400;
   color: #000000;
+  transition: color 0.15s ease;
+}
+.nav-subitem:hover { background: rgba(39, 95, 252, 0.06); }
+.nav-subitem:hover :deep(.v-list-item-title) { color: #275FFC; }
+
+:deep(.v-list-group) { margin-bottom: 4px; }
+
+:deep(.v-list-item--active) {
+  background: rgba(39, 95, 252, 0.08) !important;
+  position: relative;
+}
+:deep(.v-list-item--active .v-list-item-title) {
+  color: #275FFC !important;
   font-weight: 600;
 }
-
-/* ICONOS más pequeños */
-:deep(.v-list-item__prepend > .v-icon) {
-  font-size: 19px;
-  opacity: 0.8;
+:deep(.v-list-item--active .v-icon) { color: #275FFC !important; }
+:deep(.v-list-item--active)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: #275FFC;
 }
+
+:deep(.v-list-item:focus-visible) {
+  outline: 2px solid #275FFC;
+  outline-offset: -2px;
+}
+
+:deep(.v-list-item__overlay) { display: none; }
 </style>

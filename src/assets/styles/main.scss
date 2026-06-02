@@ -1,26 +1,43 @@
-// @font-face {
-//   font-family: "RoobertPRO";
-//   src: url("@/assets/fonts/RoobertPRO-Regular.ttf") format("truetype");
-//   font-weight: normal;
-//   font-style: normal;
-//   font-display: swap;
-// }
+@font-face {
+  font-family: "Geist";
+  src: url("@/assets/fonts/Geist-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-// @import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
-// @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@font-face {
+  font-family: "Geist";
+  src: url("@/assets/fonts/Geist-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("@/assets/fonts/Geist-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-display: "Geist", system-ui, sans-serif;
+}
+
 html {
   overflow-y: auto;
   background-color: #f1f5f8;
 
-  font-family: "Inter", sans-serif;
+  font-family: "Geist", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .full-width {
-  width: 100%; /* Cambiado de 100vw a 100% */
-  margin: 0 auto; /* Centrado */
+  width: 100%;
+  margin: 0 auto;
   position: relative;
   margin-top: calc((100% - 100vw) / 2);
 }
@@ -39,7 +56,6 @@ html {
   justify-content: center;
   align-items: center;
   color: white;
-  // background: rgba(0, 0, 0, 0.4);
 }
 
 .bg-img-title {
@@ -48,12 +64,7 @@ html {
 }
 
 .extension-bar .v-btn--variant-text .v-btn__overlay {
-  background: rgba(
-    255,
-    251,
-    0,
-    0.877
-  ); /* Cambia el color y la opacidad según lo que necesites */
+  background: rgba(255, 251, 0, 0.877);
 }
 
 .extension-bar .v-btn.v-btn--density-default {
