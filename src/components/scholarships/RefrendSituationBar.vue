@@ -1,15 +1,5 @@
 <template>
   <div class="d-flex align-center ga-1">
-    <v-chip
-      v-if="currentResolution"
-      :color="resolutionColor(currentResolution)"
-      size="x-small"
-      label
-      variant="tonal"
-    >
-      {{ resolutionLabel(currentResolution) }}
-    </v-chip>
-
     <v-menu v-if="!locked" :close-on-content-click="true">
       <template #activator="{ props: menuProps }">
         <v-btn
@@ -84,27 +74,4 @@ const menuItems: { key: SituationKey; icon: string; label: string; color: string
   { key: "EGRESADO",        icon: "mdi-school-outline",      label: "Egresado",             color: "indigo"          },
 ];
 
-const resolutionColor = (type: ResolutionType): string => {
-  const map: Record<ResolutionType, string> = {
-    BECA_MES:        "green",
-    SIN_PAGO:        "grey-darken-2",
-    RETENIDA:        "orange-darken-2",
-    SUSPENDIDA:      "deep-orange",
-    BAJA_DEFINITIVA: "red-darken-2",
-    EGRESADO:        "indigo",
-  };
-  return map[type] ?? "default";
-};
-
-const resolutionLabel = (type: ResolutionType): string => {
-  const map: Record<ResolutionType, string> = {
-    BECA_MES:        "Aprobado",
-    SIN_PAGO:        "Sin pago",
-    RETENIDA:        "Retenida",
-    SUSPENDIDA:      "Suspendida",
-    BAJA_DEFINITIVA: "Baja",
-    EGRESADO:        "Egresado",
-  };
-  return map[type] ?? type;
-};
 </script>

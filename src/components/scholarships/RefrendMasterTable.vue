@@ -20,7 +20,7 @@
 
     <v-data-table
       :headers="headers"
-      :items="rows"
+      :items="displayRows"
       :loading="loading"
       class="elevation-1 refrend-master-table"
       :items-per-page="-1"
@@ -35,15 +35,6 @@
           <span class="font-weight-medium">{{
             item.refrend.snapshot_name
           }}</span>
-          <v-chip
-            v-if="item.refrend.snapshot_scholarship_type"
-            size="x-small"
-            color="primary"
-            variant="plain"
-            label
-          >
-            {{ item.refrend.snapshot_scholarship_type }}
-          </v-chip>
           <v-tooltip
             v-if="item.incidents_count > 0"
             location="bottom"
@@ -52,17 +43,38 @@
             <template #activator="{ props: tooltipProps }">
               <v-icon
                 v-bind="tooltipProps"
-                :icon="item.incidents_count >= 3 ? 'mdi-alert-circle' : 'mdi-alert-circle-outline'"
+                :icon="
+                  item.incidents_count >= 3
+                    ? 'mdi-alert-circle'
+                    : 'mdi-alert-circle-outline'
+                "
                 size="15"
                 :color="item.incidents_count >= 3 ? 'error' : 'warning'"
               />
             </template>
             <div class="text-caption">
-              <div class="font-weight-bold mb-1">{{ item.incidents_count }} incidencia(s)</div>
-              <div v-if="item.incident_description">{{ item.incident_description }}</div>
+              <div class="font-weight-bold mb-1">
+                {{ item.incidents_count }} incidencia(s)
+              </div>
+              <div v-if="item.incident_description">
+                {{ item.incident_description }}
+              </div>
             </div>
           </v-tooltip>
         </div>
+      </template>
+
+      <template #item.scholarship_type="{ item }">
+        <v-chip
+          v-if="item.refrend.snapshot_scholarship_type"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          label
+        >
+          {{ item.refrend.snapshot_scholarship_type }}
+        </v-chip>
+        <span v-else class="text-caption text-disabled">—</span>
       </template>
 
       <template #item.snapshot_campus="{ item }">
@@ -74,7 +86,6 @@
           item.refrend.snapshot_generation ?? "—"
         }}</span>
       </template>
-
 
       <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
@@ -147,17 +158,18 @@
 
       <template #item.workflow_status="{ item }">
         <v-chip
-          :color="workflowColor(item.refrend.workflow_status)"
+          :color="statusChip(item.refrend).color"
           size="small"
           label
           variant="tonal"
         >
-          {{ workflowLabel(item.refrend.workflow_status) }}
+          {{ statusChip(item.refrend).label }}
         </v-chip>
       </template>
 
       <template #item.atencion="{ item }">
-        <div class="d-flex align-center ga-1">
+        <!-- Atención mode: botón de bandera + texto editable -->
+        <div v-if="mode === 'atencion'" class="d-flex align-center ga-1">
           <v-btn
             icon="mdi-flag-outline"
             size="x-small"
@@ -175,6 +187,16 @@
             "
             @click="openAtencionDialog(item)"
           />
+          <v-btn
+            v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
+            :loading="clearFlagLoading === item.refrend.id"
+            icon="mdi-flag-remove-outline"
+            size="x-small"
+            variant="text"
+            color="orange-darken-2"
+            title="Quitar incidencia (vuelve a Borrador)"
+            @click="onClearFlag(item)"
+          />
           <span
             v-if="item.refrend.atencion_observations"
             class="text-caption text-medium-emphasis text-truncate"
@@ -182,6 +204,49 @@
             :title="item.refrend.atencion_observations"
             >{{ item.refrend.atencion_observations }}</span
           >
+        </div>
+
+        <!-- Pedagogía mode: solo lectura — descripción + observaciones de Atención -->
+        <div v-else class="d-flex flex-column ga-0" style="max-width: 160px">
+          <span
+            v-if="item.incident_description"
+            class="text-caption font-weight-medium text-truncate"
+            :title="item.incident_description"
+            >{{ item.incident_description }}</span
+          >
+          <span
+            v-if="item.refrend.atencion_observations"
+            class="text-caption text-medium-emphasis text-truncate"
+            :title="item.refrend.atencion_observations"
+            >{{ item.refrend.atencion_observations }}</span
+          >
+          <span
+            v-if="
+              !item.incident_description && !item.refrend.atencion_observations
+            "
+            class="text-caption text-disabled"
+            >—</span
+          >
+        </div>
+      </template>
+
+      <template #item.pedagogia_readonly="{ item }">
+        <div class="d-flex align-center ga-1">
+          <v-icon
+            icon="mdi-school-outline"
+            size="x-small"
+            :color="
+              item.refrend.pedagogia_observations ? 'deep-purple' : 'disabled'
+            "
+          />
+          <span
+            v-if="item.refrend.pedagogia_observations"
+            class="text-caption text-medium-emphasis text-truncate"
+            style="max-width: 120px"
+            :title="item.refrend.pedagogia_observations"
+            >{{ item.refrend.pedagogia_observations }}</span
+          >
+          <span v-else class="text-caption text-disabled">—</span>
         </div>
       </template>
 
@@ -211,8 +276,12 @@
           color="teal"
           density="compact"
           hide-details
-          :disabled="notificadoLoading === item.refrend.id"
-          @update:model-value="toggleNotificado(item, $event)"
+          :disabled="
+            mode === 'pedagogia' || notificadoLoading === item.refrend.id
+          "
+          @update:model-value="
+            mode === 'atencion' && toggleNotificado(item, $event)
+          "
         />
       </template>
 
@@ -243,36 +312,22 @@
 
       <template #item.payment_verify="{ item }">
         <div class="d-flex align-center ga-1">
-          <!-- Aprobar al monto actual -->
           <v-btn
             v-if="
-              item.refrend.workflow_status != null &&
-              ['DRAFT', 'CON_INCIDENCIA'].includes(item.refrend.workflow_status)
+              ['DRAFT', 'CON_INCIDENCIA'].includes(
+                item.refrend.workflow_status ?? '',
+              )
             "
             :loading="approveLoading === item.refrend.id"
             size="x-small"
             variant="tonal"
             color="green"
-            title="Aprobar al monto actual"
+            title="Validar pago al monto actual"
             @click="onApprove(item)"
           >
             <v-icon size="14" start>mdi-check</v-icon>
-            Aprobar
+            Validar
           </v-btn>
-
-          <!-- Clear flag (CON_INCIDENCIA only) -->
-          <v-btn
-            v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
-            :loading="clearFlagLoading === item.refrend.id"
-            icon="mdi-flag-remove-outline"
-            size="x-small"
-            variant="text"
-            color="orange-darken-2"
-            title="Quitar incidencia (vuelve a Borrador)"
-            @click="onClearFlag(item)"
-          />
-
-          <!-- Otras acciones: Pago 100%, Recalcular, Situaciones especiales -->
           <RefrendSituationBar
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="isLocked(item.refrend)"
@@ -390,7 +445,12 @@ const props = defineProps<{
   loading?: boolean;
   year: number;
   month: number;
+  mode?: "atencion" | "pedagogia";
 }>();
+
+const mode = computed(() => props.mode ?? "atencion");
+
+const displayRows = computed(() => props.rows);
 
 // ── Table title ────────────────────────────────────────────────────────────
 
@@ -435,29 +495,32 @@ const attendanceImpact = (item: BulkRefrendRow): ImpactInfo => {
   if (hasFalta && hasRet) return { label: "Falta + Ret.", color: "error" };
   if (hasFalta) return { label: "Falta", color: "error" };
   if (hasRet) return { label: "Retardos", color: "error" };
-  return { label: "Sin impacto", color: "success" };
+  return { label: "Sin novedad", color: "success" };
 };
 
 // ── Table headers ──────────────────────────────────────────────────────────
 
-const headers = [
-  // IDENTIDAD (ancla fija)
+const BASE_HEADERS = [
+  { title: "Becario", key: "snapshot_name", fixed: true, sortable: true },
+  { title: "Tipo", key: "scholarship_type", width: 70, sortable: false },
+  { title: "Estado", key: "workflow_status", width: 160, sortable: false },
+];
+
+const ATENCION_HEADERS = [
+  { title: "Atención a Becarios/as", key: "atencion", sortable: false },
   {
-    title: "Becario",
-    key: "snapshot_name",
-    fixed: true,
-    sortable: true,
-  },
-  // REVISIÓN (lo más importante para el operador)
-  { title: "Estado", key: "workflow_status", sortable: false },
-  {
-    title: "Atención a Becarios/as",
-    key: "atencion",
+    title: "Pedagogía",
+    key: "pedagogia_readonly",
+    width: 180,
     sortable: false,
   },
-  { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Notif.", key: "notificado", width: 65, sortable: false },
-  // ASISTENCIAS
+  {
+    title: "Consecuencia",
+    key: "attendance_impact",
+    width: 150,
+    sortable: false,
+  },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
   { title: "F.mes", key: "month_absent", width: 70, sortable: true },
   {
@@ -466,17 +529,27 @@ const headers = [
     width: 90,
     sortable: true,
   },
-  { title: "Impacto", key: "attendance_impact", width: 150, sortable: false },
-  // ACADÉMICO
-  // IDENTIDAD (referencia, menos frecuente)
+];
 
-  // ECONÓMICO
+const PEDAGOGIA_HEADERS = [
+  { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
+  { title: "Notif.", key: "notificado", width: 65, sortable: false },
+  {
+    title: "Consecuencia",
+    key: "attendance_impact",
+    width: 150,
+    sortable: false,
+  },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 70, sortable: false },
   { title: "Final", key: "projected_amount", sortable: false },
-  // ACCIONES
   { title: "", key: "payment_verify", width: 80, sortable: false },
-] as const;
+];
+
+const headers = computed(() => [
+  ...BASE_HEADERS,
+  ...(mode.value === "atencion" ? ATENCION_HEADERS : PEDAGOGIA_HEADERS),
+]);
 
 // ── Attendance detail dialog ────────────────────────────────────────────────
 
@@ -500,28 +573,39 @@ const fmt = (value: string | number): string =>
     Number(value),
   );
 
+const statusChip = (
+  refrend: BulkRefrendRow["refrend"],
+): { label: string; color: string } => {
+  const s = refrend.workflow_status;
+  const r = refrend.resolution_type;
 
+  if (s === "DRAFT") return { label: "Borrador", color: "grey" };
+  if (s === "CON_INCIDENCIA")
+    return { label: "Con incidencia", color: "orange" };
+  if (s === "PENDIENTE_NOTIFICACION")
+    return { label: "Pend. notif.", color: "blue" };
+  if (s === "CLOSED") return { label: "Pagado", color: "teal" };
+  if (s === "CANCELLED") return { label: "Baja", color: "red-darken-3" };
 
-const workflowColor = (status: WorkflowStatus | null): string => {
-  const map: Record<string, string> = {
-    DRAFT: "grey",
-    CON_INCIDENCIA: "orange",
-    PENDIENTE_NOTIFICACION: "blue",
-    LISTO_PARA_PAGO: "green",
-    CLOSED: "teal",
-  };
-  return map[status ?? "DRAFT"] ?? "grey";
-};
+  // LISTO_PARA_PAGO — mostrar resolución
+  if (s === "LISTO_PARA_PAGO") {
+    if (r === "BECA_MES") return { label: "Aprobado", color: "green" };
+    if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
+    if (r === "RETENIDA") return { label: "Retenida", color: "amber-darken-2" };
+    if (r === "EGRESADO") return { label: "Egresado", color: "blue-grey" };
+    if (r === "BAJA_DEFINITIVA")
+      return { label: "Baja definitiva", color: "red-darken-3" };
+    if (r === "SUSPENDIDA") {
+      const pct = refrend.suspension_percentage ?? null;
+      return {
+        label: pct ? `Suspendido ${pct}%` : "Suspendido",
+        color: "deep-orange",
+      };
+    }
+    return { label: "Listo para pago", color: "green" };
+  }
 
-const workflowLabel = (status: WorkflowStatus | null): string => {
-  const map: Record<string, string> = {
-    DRAFT: "Borrador",
-    CON_INCIDENCIA: "Con incidencia",
-    PENDIENTE_NOTIFICACION: "Pend. notif.",
-    LISTO_PARA_PAGO: "Listo para pago",
-    CLOSED: "Cerrado",
-  };
-  return map[status ?? "DRAFT"] ?? status ?? "—";
+  return { label: s ?? "—", color: "grey" };
 };
 
 const canPedagogia = (status: WorkflowStatus | null): boolean =>

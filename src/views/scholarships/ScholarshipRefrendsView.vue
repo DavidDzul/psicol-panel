@@ -16,6 +16,7 @@
         @search="onPeriodChange"
       >
         <v-btn
+          v-if="props.mode === 'atencion'"
           color="primary"
           prepend-icon="mdi-refresh"
           :loading="generating"
@@ -44,6 +45,7 @@
         :loading="scholarshipStore.bulkLoading"
         :year="selectedYear"
         :month="selectedMonth"
+        :mode="props.mode"
       />
     </v-col>
   </v-row>
@@ -87,16 +89,24 @@ import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue";
 import type { LinkInterface } from "@/interfaces";
 
+const props = defineProps<{
+  mode: "atencion" | "pedagogia";
+}>();
+
 const RefrendMasterTable = defineAsyncComponent(
   () => import("@/components/scholarships/RefrendMasterTable.vue"),
 );
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
 
-const links: LinkInterface[] = [
+const sectionTitle = computed(() =>
+  props.mode === "pedagogia" ? "Pedagogía" : "Atención a Becarios",
+);
+
+const links = computed<LinkInterface[]>(() => [
   { title: "Inicio", disabled: false, href: "/" },
-  { title: "Refrendos", disabled: true, href: "/scholarships" },
-];
+  { title: sectionTitle.value, disabled: true, href: "#" },
+]);
 
 // ── Shared composable ──────────────────────────────────────────────────────
 

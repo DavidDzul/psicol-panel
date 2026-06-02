@@ -280,6 +280,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         incident_description: null,
         incident_category: null,
         incident_type: null,
+        incidents_count: 0,
       });
       return refrend;
     } catch (error: unknown) {
