@@ -559,6 +559,23 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const bulkApprove = async (ids: number[]): Promise<void> => {
+    try {
+      const res = await axios.post("api/admin/scholarship-refrends/bulk/approve", { ids });
+      const { approved, skipped } = res.data.data ?? {};
+      if (bulkParams.value) await fetchBulkTable(bulkParams.value);
+      const msg = skipped > 0
+        ? `${approved} aprobado(s), ${skipped} omitido(s).`
+        : `${approved} refrendo(s) aprobado(s).`;
+      showAlert({ title: msg, status: "success" });
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al aprobar refrendos.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   return {
     refrends,
     profiles,
@@ -596,5 +613,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     approveAsIs,
     approveFullPayment,
     recordPaymentSituation,
+    bulkApprove,
   };
 });
+
+

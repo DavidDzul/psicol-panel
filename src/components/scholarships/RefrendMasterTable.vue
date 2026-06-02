@@ -1,21 +1,45 @@
 <template>
   <div class="refrend-master-table-wrapper">
-    <div class="d-flex align-center ga-3 mb-2 px-1">
-      <span class="text-subtitle-2 font-weight-medium">{{
-        tableInfo.campus
-      }}</span>
-      <v-divider vertical class="mx-1" />
-      <span class="text-caption text-medium-emphasis">{{
-        tableInfo.generation
-      }}</span>
-      <v-divider vertical class="mx-1" />
-      <span class="text-caption text-medium-emphasis">{{
-        tableInfo.period
-      }}</span>
-      <v-spacer />
-      <span class="text-caption text-medium-emphasis"
-        >{{ rows.length }} becarios</span
-      >
+    <div class="table-header mb-3">
+      <div class="d-flex align-center ga-2 flex-wrap">
+        <!-- Identidad del periodo -->
+        <div class="d-flex align-center ga-2">
+          <v-icon icon="mdi-map-marker-outline" size="16" color="primary" />
+          <span class="text-subtitle-2 font-weight-bold">{{
+            tableInfo.campus
+          }}</span>
+        </div>
+        <v-chip size="x-small" variant="tonal" color="primary" label>
+          {{ tableInfo.generation }}
+        </v-chip>
+        <v-chip size="x-small" variant="outlined" color="grey-darken-1" label>
+          <v-icon start size="12">mdi-calendar-month-outline</v-icon>
+          {{ tableInfo.period }}
+        </v-chip>
+
+        <v-spacer />
+
+        <!-- Bulk approve -->
+        <v-btn
+          v-if="mode === 'pedagogia' && cleanDraftIds.length > 0"
+          color="green-darken-1"
+          variant="elevated"
+          size="small"
+          :loading="bulkLoading"
+          :disabled="bulkLoading"
+          prepend-icon="mdi-check-all"
+          rounded="lg"
+          @click="onBulkApproveClean"
+        >
+          Aprobar {{ cleanDraftIds.length }} sin consecuencias
+        </v-btn>
+
+        <!-- Total -->
+        <v-chip size="small" variant="tonal" color="grey-darken-1" label>
+          <v-icon start size="13">mdi-account-group-outline</v-icon>
+          {{ rows.length }} becarios
+        </v-chip>
+      </div>
     </div>
 
     <v-data-table
@@ -26,55 +50,57 @@
       :items-per-page="-1"
       hover
       item-value="refrend.id"
+      :row-props="({ item }) => ({ class: rowClass(item) })"
     >
       <template #bottom />
       <!-- ── IDENTIDAD ─────────────────────────────────────────────────────── -->
 
       <template #item.snapshot_name="{ item }">
-        <div class="d-flex align-center ga-1 text-no-wrap">
-          <span class="font-weight-medium">{{
-            item.refrend.snapshot_name
-          }}</span>
-          <v-tooltip
-            v-if="item.incidents_count > 0"
-            location="bottom"
-            max-width="280"
-          >
-            <template #activator="{ props: tooltipProps }">
-              <v-icon
-                v-bind="tooltipProps"
-                :icon="
-                  item.incidents_count >= 3
-                    ? 'mdi-alert-circle'
-                    : 'mdi-alert-circle-outline'
-                "
-                size="15"
-                :color="item.incidents_count >= 3 ? 'error' : 'warning'"
-              />
-            </template>
-            <div class="text-caption">
-              <div class="font-weight-bold mb-1">
-                {{ item.incidents_count }} incidencia(s)
-              </div>
-              <div v-if="item.incident_description">
-                {{ item.incident_description }}
-              </div>
+        <div class="d-flex align-center ga-2 text-no-wrap py-1">
+          <div class="d-flex flex-column">
+            <div class="d-flex align-center ga-1">
+              <span class="font-weight-medium text-body-2">{{
+                item.refrend.snapshot_name
+              }}</span>
+              <v-tooltip
+                v-if="item.incidents_count > 0"
+                location="bottom"
+                max-width="280"
+              >
+                <template #activator="{ props: tooltipProps }">
+                  <v-icon
+                    v-bind="tooltipProps"
+                    :icon="
+                      item.incidents_count >= 3
+                        ? 'mdi-alert-circle'
+                        : 'mdi-alert-circle-outline'
+                    "
+                    size="14"
+                    :color="item.incidents_count >= 3 ? 'error' : 'warning'"
+                  />
+                </template>
+                <div class="text-caption">
+                  <div class="font-weight-bold mb-1">
+                    {{ item.incidents_count }} incidencia(s)
+                  </div>
+                  <div v-if="item.incident_description">
+                    {{ item.incident_description }}
+                  </div>
+                </div>
+              </v-tooltip>
             </div>
-          </v-tooltip>
+            <div class="d-flex align-center ga-1 mt-1">
+              <v-chip
+                v-if="item.refrend.snapshot_scholarship_type"
+                size="x-small"
+                color="primary"
+                variant="tonal"
+                label
+                >{{ item.refrend.snapshot_scholarship_type }}</v-chip
+              >
+            </div>
+          </div>
         </div>
-      </template>
-
-      <template #item.scholarship_type="{ item }">
-        <v-chip
-          v-if="item.refrend.snapshot_scholarship_type"
-          size="x-small"
-          color="primary"
-          variant="tonal"
-          label
-        >
-          {{ item.refrend.snapshot_scholarship_type }}
-        </v-chip>
-        <span v-else class="text-caption text-disabled">—</span>
       </template>
 
       <template #item.snapshot_campus="{ item }">
@@ -102,19 +128,17 @@
         </v-btn>
       </template>
 
-      <!-- Faltas injustificadas en el mes del refrendo (dispara suspensión) -->
+      <!-- Faltas mes + Retardos acumulados combinados -->
       <template #item.month_absent="{ item }">
         <v-chip
           :color="item.month_absent >= 1 ? 'error' : 'default'"
           size="x-small"
-          :variant="item.month_absent >= 1 ? 'tonal' : 'text'"
+          :variant="item.month_absent >= 1 ? 'flat' : 'text'"
           label
+          >{{ item.month_absent }}</v-chip
         >
-          {{ item.month_absent }}
-        </v-chip>
       </template>
 
-      <!-- Retardos acumulados en el semestre (2 = suspensión) -->
       <template #item.semester_lates_unconsumed="{ item }">
         <v-chip
           :color="
@@ -127,17 +151,16 @@
           size="x-small"
           :variant="
             item.has_retardos_discount || item.semester_lates_unconsumed >= 1
-              ? 'tonal'
+              ? 'flat'
               : 'text'
           "
           label
-        >
-          {{
+          >{{
             item.has_retardos_discount
               ? item.attendance_late
               : item.semester_lates_unconsumed
-          }}/2
-        </v-chip>
+          }}/2</v-chip
+        >
       </template>
 
       <!-- Impacto en pago -->
@@ -146,7 +169,7 @@
           :color="attendanceImpact(item).color"
           size="x-small"
           :variant="
-            attendanceImpact(item).color === 'success' ? 'text' : 'tonal'
+            attendanceImpact(item).color === 'success' ? 'text' : 'flat'
           "
           label
         >
@@ -234,7 +257,7 @@
         <div class="d-flex align-center ga-1">
           <v-icon
             icon="mdi-school-outline"
-            size="x-small"
+            size="18"
             :color="
               item.refrend.pedagogia_observations ? 'deep-purple' : 'disabled'
             "
@@ -246,7 +269,6 @@
             :title="item.refrend.pedagogia_observations"
             >{{ item.refrend.pedagogia_observations }}</span
           >
-          <span v-else class="text-caption text-disabled">—</span>
         </div>
       </template>
 
@@ -277,10 +299,14 @@
           density="compact"
           hide-details
           :disabled="
-            mode === 'pedagogia' || notificadoLoading === item.refrend.id
+            mode === 'pedagogia' ||
+            item.refrend.workflow_status !== 'LISTO_PARA_PAGO' ||
+            notificadoLoading === item.refrend.id
           "
           @update:model-value="
-            mode === 'atencion' && toggleNotificado(item, $event)
+            mode === 'atencion' &&
+            item.refrend.workflow_status === 'LISTO_PARA_PAGO' &&
+            toggleNotificado(item, $event)
           "
         />
       </template>
@@ -295,11 +321,12 @@
         <span
           class="text-caption"
           :class="
-            Number(item.refrend.discount_percentage) > 0 ? 'text-error' : ''
+            Number(item.refrend.discount_percentage) > 0
+              ? 'text-error'
+              : 'text-medium-emphasis'
           "
+          >{{ item.refrend.discount_percentage }}%</span
         >
-          {{ item.refrend.discount_percentage }}%
-        </span>
       </template>
 
       <template #item.projected_amount="{ item }">
@@ -312,23 +339,31 @@
 
       <template #item.payment_verify="{ item }">
         <div class="d-flex align-center ga-1">
+          <!-- apply-or-not: DRAFT con consecuencia o CON_INCIDENCIA -->
           <v-btn
             v-if="
-              ['DRAFT', 'CON_INCIDENCIA'].includes(
-                item.refrend.workflow_status ?? '',
-              )
+              item.refrend.workflow_status === 'CON_INCIDENCIA' ||
+              (item.refrend.workflow_status === 'DRAFT' &&
+                (item.has_falta_discount ||
+                  item.has_retardos_discount ||
+                  item.month_absent >= 1 ||
+                  item.semester_lates_unconsumed >= 2 ||
+                  item.incidents_count > 0))
             "
             :loading="approveLoading === item.refrend.id"
-            size="x-small"
-            variant="tonal"
+            size="small"
+            variant="elevated"
             color="green"
-            title="Validar pago al monto actual"
+            title="Aprobar pago al monto actual"
             @click="onApprove(item)"
           >
-            <v-icon size="14" start>mdi-check</v-icon>
-            Validar
+            <v-icon size="16" start>mdi-check</v-icon>
+            Aprobar
           </v-btn>
+
+          <!-- situación especial: barra de resolución -->
           <RefrendSituationBar
+            v-if="!isLocked(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="isLocked(item.refrend)"
             :loading="
@@ -417,6 +452,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { campusMap } from "@/constants";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
@@ -472,7 +508,10 @@ const MONTHS_ES = [
 const tableInfo = computed(() => {
   const first = props.rows[0]?.refrend;
   return {
-    campus: first?.snapshot_campus ?? "—",
+    campus:
+      campusMap.get(first?.snapshot_campus ?? "")?.text ??
+      first?.snapshot_campus ??
+      "—",
     generation: first?.snapshot_generation ?? "—",
     period: `${MONTHS_ES[props.month - 1] ?? props.month} ${props.year}`,
   };
@@ -501,8 +540,13 @@ const attendanceImpact = (item: BulkRefrendRow): ImpactInfo => {
 // ── Table headers ──────────────────────────────────────────────────────────
 
 const BASE_HEADERS = [
-  { title: "Becario", key: "snapshot_name", fixed: true, sortable: true },
-  { title: "Tipo", key: "scholarship_type", width: 70, sortable: false },
+  {
+    title: "Becario",
+    key: "snapshot_name",
+    fixed: true,
+    minWidth: "200px",
+    sortable: true,
+  },
   { title: "Estado", key: "workflow_status", width: 160, sortable: false },
 ];
 
@@ -522,7 +566,7 @@ const ATENCION_HEADERS = [
     sortable: false,
   },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
-  { title: "F.mes", key: "month_absent", width: 70, sortable: true },
+  { title: "F.mes", key: "month_absent", width: 75, sortable: true },
   {
     title: "Ret.acum.",
     key: "semester_lates_unconsumed",
@@ -533,7 +577,6 @@ const ATENCION_HEADERS = [
 
 const PEDAGOGIA_HEADERS = [
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
-  { title: "Notif.", key: "notificado", width: 65, sortable: false },
   {
     title: "Consecuencia",
     key: "attendance_impact",
@@ -541,9 +584,9 @@ const PEDAGOGIA_HEADERS = [
     sortable: false,
   },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
-  { title: "Desc.%", key: "discount_pct", width: 70, sortable: false },
-  { title: "Final", key: "projected_amount", sortable: false },
-  { title: "", key: "payment_verify", width: 80, sortable: false },
+  { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
+  { title: "Final", key: "projected_amount", width: 110, sortable: false },
+  { title: "", key: "payment_verify", width: 160, sortable: false },
 ];
 
 const headers = computed(() => [
@@ -587,9 +630,7 @@ const statusChip = (
   if (s === "CLOSED") return { label: "Pagado", color: "teal" };
   if (s === "CANCELLED") return { label: "Baja", color: "red-darken-3" };
 
-  // LISTO_PARA_PAGO — mostrar resolución
   if (s === "LISTO_PARA_PAGO") {
-    if (r === "BECA_MES") return { label: "Aprobado", color: "green" };
     if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
     if (r === "RETENIDA") return { label: "Retenida", color: "amber-darken-2" };
     if (r === "EGRESADO") return { label: "Egresado", color: "blue-grey" };
@@ -606,6 +647,13 @@ const statusChip = (
   }
 
   return { label: s ?? "—", color: "grey" };
+};
+
+const rowClass = (item: BulkRefrendRow): string => {
+  const s = item.refrend.workflow_status;
+  if (s === "CON_INCIDENCIA") return "row-incident";
+  if (s === "DRAFT") return "row-pending";
+  return "";
 };
 
 const canPedagogia = (status: WorkflowStatus | null): boolean =>
@@ -685,6 +733,21 @@ const openSituationDialog = (
 // ── Approve ────────────────────────────────────────────────────────────────
 
 const approveLoading = ref<number | null>(null);
+const bulkLoading = ref(false);
+
+const cleanDraftIds = computed(() =>
+  displayRows.value
+    .filter(
+      (r) =>
+        r.refrend.workflow_status === "DRAFT" &&
+        !r.has_falta_discount &&
+        !r.has_retardos_discount &&
+        r.month_absent === 0 &&
+        r.semester_lates_unconsumed < 2 &&
+        r.incidents_count === 0,
+    )
+    .map((r) => r.refrend.id),
+);
 
 const onApprove = async (item: BulkRefrendRow): Promise<void> => {
   approveLoading.value = item.refrend.id;
@@ -692,6 +755,16 @@ const onApprove = async (item: BulkRefrendRow): Promise<void> => {
     await store.approveAsIs(item.refrend.id);
   } finally {
     approveLoading.value = null;
+  }
+};
+
+const onBulkApproveClean = async (): Promise<void> => {
+  if (!cleanDraftIds.value.length) return;
+  bulkLoading.value = true;
+  try {
+    await store.bulkApprove(cleanDraftIds.value);
+  } finally {
+    bulkLoading.value = false;
   }
 };
 
@@ -773,11 +846,48 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
   overflow-y: visible;
 }
 
-/* Sticky header sin contenedor de scroll propio en la tabla */
+/* Table info header */
+.table-header {
+  padding: 6px 2px;
+}
+
+/* Columna fija: fondo sólido para ocultar el scroll */
+.refrend-master-table :deep(td.v-data-table__td--fixed-start),
+.refrend-master-table :deep(th.v-data-table__th--fixed-start) {
+  background: rgb(var(--v-theme-surface));
+  z-index: 3;
+}
+.refrend-master-table :deep(tr.row-pending td.v-data-table__td--fixed-start) {
+  background-color: rgb(255, 249, 235);
+}
+.refrend-master-table :deep(tr.row-incident td.v-data-table__td--fixed-start) {
+  background-color: rgb(255, 248, 242);
+}
+
+/* Sticky header */
 .refrend-master-table :deep(thead tr th) {
   position: sticky;
   top: 0;
   z-index: 2;
   background: rgb(var(--v-theme-surface));
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
+/* Filas con acción pendiente */
+.refrend-master-table :deep(tr.row-pending td) {
+  background-color: rgba(255, 193, 7, 0.06);
+}
+.refrend-master-table :deep(tr.row-incident td) {
+  background-color: rgba(255, 152, 0, 0.08);
+}
+
+/* Separador más visible entre filas */
+.refrend-master-table :deep(tbody tr td) {
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
 </style>
