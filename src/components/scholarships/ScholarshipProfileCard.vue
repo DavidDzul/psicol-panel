@@ -107,6 +107,16 @@
             clearable
           />
         </v-col>
+        <v-col cols="12">
+          <v-text-field
+            v-model="form.discount_reason"
+            label="Motivo del descuento"
+            maxlength="200"
+            clearable
+            density="compact"
+            variant="outlined"
+          />
+        </v-col>
       </v-row>
 
       <div class="d-flex ga-2 mt-1">
@@ -160,6 +170,7 @@ const emptyForm = (): ScholarshipProfileForm => ({
   scholarship_type: "IU",
   monthly_amount: 0,
   active_discount_percentage: null,
+  discount_reason: null,
   discount_valid_until: null,
 });
 
@@ -178,6 +189,7 @@ const startEdit = (): void => {
     form.active_discount_percentage = profile.value.active_discount_percentage
       ? Number(profile.value.active_discount_percentage)
       : null;
+    form.discount_reason = profile.value.discount_reason ?? null;
     form.discount_valid_until = profile.value.discount_valid_until ?? null;
   } else {
     Object.assign(form, emptyForm());

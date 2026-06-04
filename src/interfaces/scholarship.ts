@@ -81,6 +81,7 @@ export interface ScholarshipProfile {
   scholarship_type: ScholarshipType
   monthly_amount: string
   active_discount_percentage: string | null
+  discount_reason: string | null
   discount_valid_until: string | null
   reticula_start_date: string | null
   reticula_end_date: string | null
@@ -137,6 +138,8 @@ export interface ScholarshipRefrend {
   carryover_months_count: number | null
   carryover_months_detail: string | null
   base_amount: string
+  snapshot_discount_percentage: string | null
+  snapshot_discount_reason: string | null
   discount_percentage: string
   discount_amount: string
   final_amount: string
@@ -317,6 +320,7 @@ export interface ScholarshipProfileForm {
   scholarship_type: ScholarshipType
   monthly_amount: number
   active_discount_percentage?: number | null
+  discount_reason?: string | null
   discount_valid_until?: string | null
 }
 

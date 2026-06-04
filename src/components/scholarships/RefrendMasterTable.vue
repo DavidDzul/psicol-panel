@@ -314,7 +314,29 @@
       <!-- ── ECONÓMICO ────────────────────────────────────────────────────── -->
 
       <template #item.base_amount="{ item }">
-        <span class="text-caption">{{ fmt(item.refrend.base_amount) }}</span>
+        <div class="d-flex flex-column">
+          <span class="text-caption">{{ fmt(item.refrend.base_amount) }}</span>
+          <div
+            v-if="item.refrend.snapshot_discount_percentage"
+            class="d-flex align-center ga-1 mt-1"
+          >
+            <span class="text-caption text-orange-darken-1">
+              -{{ item.refrend.snapshot_discount_percentage }}%
+            </span>
+            <v-tooltip
+              :text="
+                item.refrend.snapshot_discount_reason ?? 'Sin motivo registrado'
+              "
+              location="bottom"
+            >
+              <template #activator="{ props }">
+                <v-icon v-bind="props" size="12" color="orange-darken-1">
+                  mdi-information-outline
+                </v-icon>
+              </template>
+            </v-tooltip>
+          </div>
+        </div>
       </template>
 
       <template #item.discount_pct="{ item }">
@@ -466,6 +488,7 @@ import SituationEgresadoDialog from "@/components/scholarships/SituationEgresado
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type {
   BulkRefrendRow,
+  RefrendStatus,
   ScholarshipRefrend,
   WorkflowStatus,
   ResolutionType,
@@ -606,10 +629,14 @@ const openAttendanceDetail = (item: BulkRefrendRow): void => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const LOCKED_STATUSES = new Set(["PAID", "AUTHORIZED"]);
+const LOCKED_STATUSES = new Set<RefrendStatus>([
+  "PAID",
+  "AUTHORIZED",
+  "CANCELLED",
+]);
 
 const isLocked = (refrend: ScholarshipRefrend): boolean =>
-  LOCKED_STATUSES.has(refrend.status);
+  LOCKED_STATUSES.has(refrend.status) || refrend.workflow_status === "CLOSED";
 
 const fmt = (value: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(

@@ -60,6 +60,25 @@
             <div class="text-body-1 font-weight-medium">
               {{ fmt(refrend.base_amount) }}
             </div>
+            <v-tooltip
+              v-if="refrend.snapshot_discount_percentage"
+              :text="refrend.snapshot_discount_reason ?? 'Sin motivo registrado'"
+              location="bottom"
+            >
+              <template #activator="{ props }">
+                <v-chip
+                  v-bind="props"
+                  size="x-small"
+                  color="orange-darken-1"
+                  variant="tonal"
+                  label
+                  prepend-icon="mdi-percent"
+                  class="mt-1"
+                >
+                  Desc. perfil {{ refrend.snapshot_discount_percentage }}%
+                </v-chip>
+              </template>
+            </v-tooltip>
           </v-col>
           <v-col
             v-if="Number(refrend.discount_amount) > 0"
