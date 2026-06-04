@@ -23,12 +23,6 @@
           <v-list-item-title class="text-body-2">Pago al 100%</v-list-item-title>
         </v-list-item>
 
-        <v-list-item @click="emit('recalculate')">
-          <template #prepend>
-            <v-icon color="teal" size="18">mdi-refresh</v-icon>
-          </template>
-          <v-list-item-title class="text-body-2">Recalcular</v-list-item-title>
-        </v-list-item>
 
         <v-divider class="my-1" />
 

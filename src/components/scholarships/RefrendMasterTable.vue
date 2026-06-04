@@ -31,7 +31,7 @@
           rounded="lg"
           @click="onBulkApproveClean"
         >
-          Aprobar {{ cleanDraftIds.length }} sin consecuencias
+          APROBAR {{ cleanDraftIds.length }} SIN OBS.
         </v-btn>
 
         <!-- Total -->
@@ -52,6 +52,20 @@
       item-value="refrend.id"
       :row-props="({ item }) => ({ class: rowClass(item) })"
     >
+      <template #top>
+        <div class="px-3 pt-3 pb-2">
+          <v-text-field
+            v-model="searchQuery"
+            placeholder="Buscar por nombre becario..."
+            prepend-inner-icon="mdi-magnify"
+            variant="filled"
+            density="compact"
+            hide-details
+            clearable
+          />
+        </div>
+      </template>
+
       <template #bottom />
       <!-- ── IDENTIDAD ─────────────────────────────────────────────────────── -->
 
@@ -190,9 +204,28 @@
         </v-chip>
       </template>
 
+      <template #item.resolution_cause_label="{ item }">
+        <v-tooltip
+          v-if="resolutionCauseLabel(item.refrend)"
+          location="bottom"
+          max-width="260"
+          :text="resolutionCauseLabel(item.refrend)!"
+        >
+          <template #activator="{ props: tp }">
+            <span
+              v-bind="tp"
+              class="text-caption text-medium-emphasis text-truncate d-block"
+              style="max-width: 170px; cursor: default"
+            >
+              {{ resolutionCauseLabel(item.refrend) }}
+            </span>
+          </template>
+        </v-tooltip>
+        <span v-else class="text-caption text-disabled">—</span>
+      </template>
+
       <template #item.atencion="{ item }">
-        <!-- Atención mode: botón de bandera + texto editable -->
-        <div v-if="mode === 'atencion'" class="d-flex align-center ga-1">
+        <div class="d-flex align-center ga-1">
           <v-btn
             icon="mdi-flag-outline"
             size="x-small"
@@ -226,29 +259,6 @@
             style="max-width: 110px"
             :title="item.refrend.atencion_observations"
             >{{ item.refrend.atencion_observations }}</span
-          >
-        </div>
-
-        <!-- Pedagogía mode: solo lectura — descripción + observaciones de Atención -->
-        <div v-else class="d-flex flex-column ga-0" style="max-width: 160px">
-          <span
-            v-if="item.incident_description"
-            class="text-caption font-weight-medium text-truncate"
-            :title="item.incident_description"
-            >{{ item.incident_description }}</span
-          >
-          <span
-            v-if="item.refrend.atencion_observations"
-            class="text-caption text-medium-emphasis text-truncate"
-            :title="item.refrend.atencion_observations"
-            >{{ item.refrend.atencion_observations }}</span
-          >
-          <span
-            v-if="
-              !item.incident_description && !item.refrend.atencion_observations
-            "
-            class="text-caption text-disabled"
-            >—</span
           >
         </div>
       </template>
@@ -393,10 +403,24 @@
               recalcLoading === item.refrend.id
             "
             @approve-full="onApproveFullPayment(item)"
-            @recalculate="onRecalculate(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
         </div>
+      </template>
+
+      <template #item.atencion_actions="{ item }">
+        <v-btn
+          v-if="item.refrend.workflow_status === 'DRAFT'"
+          :loading="recalcLoading === item.refrend.id"
+          icon
+          size="x-small"
+          variant="text"
+          color="teal"
+          @click="onRecalculate(item)"
+        >
+          <v-icon size="16">mdi-refresh</v-icon>
+          <v-tooltip activator="parent" location="top">Recalcular</v-tooltip>
+        </v-btn>
       </template>
     </v-data-table>
 
@@ -509,7 +533,15 @@ const props = defineProps<{
 
 const mode = computed(() => props.mode ?? "atencion");
 
-const displayRows = computed(() => props.rows);
+const searchQuery = ref("");
+
+const displayRows = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return props.rows;
+  return props.rows.filter((r) =>
+    r.refrend.snapshot_name.toLowerCase().includes(q),
+  );
+});
 
 // ── Table title ────────────────────────────────────────────────────────────
 
@@ -556,8 +588,8 @@ const attendanceImpact = (item: BulkRefrendRow): ImpactInfo => {
     item.has_retardos_discount || item.semester_lates_unconsumed >= 2;
   if (hasFalta && hasRet) return { label: "Falta + Ret.", color: "error" };
   if (hasFalta) return { label: "Falta", color: "error" };
-  if (hasRet) return { label: "Retardos", color: "error" };
-  return { label: "Sin novedad", color: "success" };
+  if (hasRet) return { label: "Retardos acumulados", color: "error" };
+  return { label: "", color: "success" };
 };
 
 // ── Table headers ──────────────────────────────────────────────────────────
@@ -583,7 +615,7 @@ const ATENCION_HEADERS = [
   },
   { title: "Notif.", key: "notificado", width: 65, sortable: false },
   {
-    title: "Consecuencia",
+    title: "Asist. Penalización",
     key: "attendance_impact",
     width: 150,
     sortable: false,
@@ -596,16 +628,12 @@ const ATENCION_HEADERS = [
     width: 90,
     sortable: true,
   },
+  { title: "", key: "atencion_actions", width: 50, sortable: false },
 ];
 
 const PEDAGOGIA_HEADERS = [
+  { title: "Motivo", key: "resolution_cause_label", width: 180, sortable: false },
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
-  {
-    title: "Consecuencia",
-    key: "attendance_impact",
-    width: 150,
-    sortable: false,
-  },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
   { title: "Final", key: "projected_amount", width: 110, sortable: false },
@@ -655,7 +683,7 @@ const statusChip = (
   if (s === "PENDIENTE_NOTIFICACION")
     return { label: "Pend. notif.", color: "blue" };
   if (s === "CLOSED") return { label: "Pagado", color: "teal" };
-  if (s === "CANCELLED") return { label: "Baja", color: "red-darken-3" };
+  if (refrend.status === "CANCELLED") return { label: "Baja", color: "red-darken-3" };
 
   if (s === "LISTO_PARA_PAGO") {
     if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
@@ -674,6 +702,26 @@ const statusChip = (
   }
 
   return { label: s ?? "—", color: "grey" };
+};
+
+const CAUSE_LABELS: Record<string, string> = {
+  FALTAS_FI:                              "Faltas a F.I.",
+  SIN_ENTREVISTA_CALIFICACIONES:          "Sin entrevista de calificaciones",
+  NO_ENTREGO_CALIFICACIONES_PROVISIONALES:"No entregó cal. provisionales",
+  NO_ENTREGO_CALIFICACIONES_ORIGINALES:   "No entregó cal. originales",
+  BAJO_PROMEDIO:                          "Bajo promedio",
+  FALTAS_FORMACION_INTEGRAL:              "Faltas a F.I.",
+  LLEVARSE_EXTRAORDINARIO:                "Por llevarse a extraordinario",
+  DEJO_ESCUELA_PERSONALES:                "Dejó la escuela (personal)",
+  DEJO_ESCUELA_VOCACIONAL:                "Dejó la escuela (vocacional)",
+  DESAPARECIO:                            "Desapareció sin avisar",
+  FALTAS_REGLAMENTO:                      "Faltas al reglamento",
+};
+
+const resolutionCauseLabel = (refrend: ScholarshipRefrend): string | null => {
+  if (!refrend.resolution_cause) return null;
+  if (refrend.resolution_cause === "OTRO") return refrend.resolution_notes ?? null;
+  return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
 };
 
 const rowClass = (item: BulkRefrendRow): string => {
@@ -879,16 +927,15 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 }
 
 /* Columna fija: fondo sólido para ocultar el scroll */
-.refrend-master-table :deep(td.v-data-table__td--fixed-start),
-.refrend-master-table :deep(th.v-data-table__th--fixed-start) {
+.refrend-master-table :deep(.v-data-table-column--fixed) {
   background: rgb(var(--v-theme-surface));
   z-index: 3;
 }
-.refrend-master-table :deep(tr.row-pending td.v-data-table__td--fixed-start) {
-  background-color: rgb(255, 249, 235);
+.refrend-master-table :deep(tr.row-pending .v-data-table-column--fixed) {
+  background-color: rgb(255, 249, 235) !important;
 }
-.refrend-master-table :deep(tr.row-incident td.v-data-table__td--fixed-start) {
-  background-color: rgb(255, 248, 242);
+.refrend-master-table :deep(tr.row-incident .v-data-table-column--fixed) {
+  background-color: rgb(255, 248, 242) !important;
 }
 
 /* Sticky header */
