@@ -164,6 +164,12 @@ export interface ScholarshipRefrend {
   locked_by_id: number | null
   created_at: string
   updated_at: string
+  attendance_summary_snapshot?: {
+    present: number
+    late: number
+    absent: number
+    late_unconsumed: number
+  } | null
   // relations (optional when loaded)
   discounts?: ScholarshipRefrendDiscount[]
   logs?: ScholarshipRefrendLog[]

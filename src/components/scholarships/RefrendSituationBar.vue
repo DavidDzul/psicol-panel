@@ -1,5 +1,18 @@
 <template>
   <div class="d-flex align-center ga-1">
+    <!-- Primary action when there are pending retained months -->
+    <v-btn
+      v-if="hasPending && !locked"
+      size="x-small"
+      color="teal"
+      variant="tonal"
+      prepend-icon="mdi-cash-refund"
+      :loading="loading"
+      @click="emit('open', 'PAGO_MESES')"
+    >
+      Pagar retenidos
+    </v-btn>
+
     <v-menu v-if="!locked" :close-on-content-click="true">
       <template #activator="{ props: menuProps }">
         <v-btn
@@ -43,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { ResolutionType } from "@/interfaces/scholarship";
 
 type SituationKey = ResolutionType | "PAGO_MESES";
@@ -51,6 +65,7 @@ const props = defineProps<{
   currentResolution: ResolutionType | null;
   locked: boolean;
   loading?: boolean;
+  amountPending?: string | number;
 }>();
 
 const emit = defineEmits<{
@@ -58,6 +73,8 @@ const emit = defineEmits<{
   "approve-full": [];
   recalculate:    [];
 }>();
+
+const hasPending = computed(() => Number(props.amountPending ?? 0) > 0);
 
 const menuItems: { key: SituationKey; icon: string; label: string; color: string }[] = [
   { key: "SIN_PAGO",        icon: "mdi-cash-off",           label: "Sin pago (0%)",        color: "grey-darken-2"   },

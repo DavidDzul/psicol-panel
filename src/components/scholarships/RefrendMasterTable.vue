@@ -398,6 +398,7 @@
             v-if="!isLocked(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="isLocked(item.refrend)"
+            :amount-pending="item.refrend.amount_pending_from_previous"
             :loading="
               situationLoadingId === item.refrend.id ||
               recalcLoading === item.refrend.id

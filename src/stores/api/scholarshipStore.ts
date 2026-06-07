@@ -297,7 +297,14 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/recalculate`
       );
       const refrend = _mergeRefrend(res.data.data);
-      _mergeBulkRow(refrend);
+      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS') ?? false;
+      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA') ?? false;
+      _mergeBulkRow(refrend, {
+        has_retardos_discount:     hasRetardos,
+        has_falta_discount:        hasFalta,
+        semester_lates_unconsumed: refrend.attendance_summary_snapshot?.late_unconsumed ?? 0,
+        attendance_late:           refrend.attendance_summary_snapshot?.late ?? 0,
+      });
       showAlert({ title: "Refrendo recalculado.", status: "success" });
       return refrend;
     } catch (error: unknown) {
