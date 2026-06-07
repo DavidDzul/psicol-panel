@@ -362,9 +362,17 @@
       </template>
 
       <template #item.projected_amount="{ item }">
-        <span class="text-caption font-weight-medium">{{
-          fmt(item.refrend.final_amount)
-        }}</span>
+        <div class="d-flex flex-column">
+          <span class="text-caption font-weight-medium">{{ fmt(item.refrend.final_amount) }}</span>
+          <template v-if="Number(item.refrend.amount_pending_from_previous) > 0">
+            <span class="text-caption text-teal-darken-1">
+              + {{ fmt(item.refrend.amount_pending_from_previous) }} ret.
+            </span>
+            <span class="text-caption font-weight-bold text-teal-darken-2">
+              = {{ fmt(item.refrend.total_to_pay) }}
+            </span>
+          </template>
+        </div>
       </template>
 
       <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
@@ -477,6 +485,7 @@
     <SituationPagoMesesDialog
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
+      :amount-pending="activeRow?.refrend.amount_pending_from_previous"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog

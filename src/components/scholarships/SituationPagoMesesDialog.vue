@@ -7,6 +7,17 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
+          <v-alert
+          v-if="amountPending && Number(amountPending) > 0"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+          icon="mdi-cash-clock"
+        >
+          Monto retenido acumulado: <strong>{{ fmt(amountPending) }}</strong>
+        </v-alert>
+
         <v-text-field
           v-model.number="form.carryover_months_count"
           label="Número de meses *"
@@ -44,7 +55,10 @@
 import { computed, reactive, watch } from "vue";
 import type { RecordSituationForm } from "@/interfaces/scholarship";
 
-const props = defineProps<{ loading?: boolean }>();
+const props = defineProps<{ loading?: boolean; amountPending?: string | number }>();
+
+const fmt = (v: string | number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(v));
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
 
