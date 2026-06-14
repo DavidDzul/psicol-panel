@@ -308,7 +308,9 @@ export interface ScholarshipRefrendLog {
 export interface AttendanceSummaryRecord {
   id: number
   class_date: string | null
+  class_name: string | null
   status: string
+  observations: string | null
   late_penalty_consumed: boolean
 }
 

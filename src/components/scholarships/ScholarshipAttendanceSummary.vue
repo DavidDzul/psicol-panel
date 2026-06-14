@@ -22,34 +22,105 @@
             {{ dayjs(summary.semester_end).format("DD/MM/YYYY") }}
           </div>
         </div>
-        <v-chip
-          v-if="semesterBadge"
-          :color="semesterBadge.color"
-          variant="flat"
-          size="small"
-          label
-        >
-          <v-icon start size="14">{{ semesterBadge.icon }}</v-icon>
-          {{ semesterBadge.label }}
-        </v-chip>
-      </div>
-
-      <!-- Stats strip -->
-      <div class="stat-strip mb-4">
-        <div v-for="(stat, i) in stats" :key="stat.label" class="stat-item">
-          <div class="text-h6 font-weight-bold" :class="`text-${stat.color}`">
-            {{ stat.value }}
-          </div>
-          <div class="text-caption text-medium-emphasis">{{ stat.label }}</div>
-          <v-divider
-            v-if="i < stats.length - 1"
-            vertical
-            class="stat-divider"
-          />
+        <div class="d-flex align-center ga-2">
+          <v-chip
+            v-if="summary.late_unconsumed > 0"
+            color="warning"
+            variant="tonal"
+            size="small"
+            label
+          >
+            <v-icon start size="14">mdi-clock-outline</v-icon>
+            {{ summary.late_unconsumed }} pendiente{{
+              summary.late_unconsumed > 1 ? "s" : ""
+            }}
+          </v-chip>
+          <v-chip
+            v-if="summary.late_consumed > 0"
+            color="error"
+            variant="flat"
+            size="small"
+            label
+          >
+            <v-icon start size="14">mdi-alert-circle</v-icon>
+            Penalización aplicada
+          </v-chip>
         </div>
       </div>
 
-      <!-- Records table -->
+      <!-- Stats grid: two sections -->
+      <div class="stats-grid mb-4">
+        <!-- Asistencia -->
+        <div class="stats-section">
+          <div class="stats-section-label">Asistencia</div>
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-value text-grey-darken-1">
+                {{ summary.total }}
+              </div>
+              <div class="stat-label">Clases</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value text-success">{{ summary.present }}</div>
+              <div class="stat-label">Presentes</div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-value text-blue">
+                {{ summary.late_justified }}
+              </div>
+              <div class="stat-label">Ret. just.</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value text-blue">
+                {{ summary.absent_justified }}
+              </div>
+              <div class="stat-label">F. just.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-separator" />
+
+        <!-- Incidencias -->
+        <div class="stats-section">
+          <div class="stats-section-label">Incidencias</div>
+          <div class="stats-row">
+            <div class="stat-item">
+              <div
+                class="stat-value"
+                :class="
+                  summary.absent_unjustified > 0
+                    ? 'text-error'
+                    : 'text-grey-darken-1'
+                "
+              >
+                {{ summary.absent_unjustified }}
+              </div>
+              <div class="stat-label">Faltas</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value text-warning">{{ summary.late }}</div>
+              <div class="stat-label">Retardos</div>
+            </div>
+            <div class="stat-item">
+              <div
+                class="stat-value"
+                :class="
+                  summary.late_consumed > 0
+                    ? 'text-orange-darken-1'
+                    : 'text-grey-darken-1'
+                "
+              >
+                {{ summary.late_consumed }}
+              </div>
+              <div class="stat-label">R. Consumidos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Records table header -->
       <div class="d-flex align-center justify-space-between mb-2">
         <span
           class="text-caption font-weight-semibold text-uppercase text-medium-emphasis"
@@ -64,9 +135,9 @@
       <v-table density="compact" class="attendance-table rounded-lg" hover>
         <thead>
           <tr>
-            <th class="text-caption font-weight-semibold">Fecha</th>
-            <th class="text-caption font-weight-semibold">Día</th>
+            <th class="text-caption font-weight-semibold">Clase</th>
             <th class="text-caption font-weight-semibold">Estado</th>
+            <th class="text-caption font-weight-semibold">Observaciones</th>
             <th class="text-caption font-weight-semibold text-center">
               Ret. consumido
             </th>
@@ -78,11 +149,13 @@
             :key="rec.id"
             :class="rowClass(rec.status)"
           >
-            <td class="text-body-2 font-weight-medium">
-              {{ formatDate(rec.class_date) }}
-            </td>
-            <td class="text-caption text-medium-emphasis">
-              {{ formatDay(rec.class_date) }}
+            <td style="max-width: 180px">
+              <div class="text-body-2 font-weight-medium text-truncate">
+                {{ rec.class_name ?? formatDate(rec.class_date) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ formatDate(rec.class_date) }}
+              </div>
             </td>
             <td>
               <v-chip
@@ -93,6 +166,16 @@
               >
                 {{ statusLabel(rec.status) }}
               </v-chip>
+            </td>
+            <td style="max-width: 160px">
+              <span
+                v-if="rec.observations"
+                class="text-caption text-truncate d-block"
+                style="max-width: 155px"
+              >
+                {{ rec.observations }}
+              </span>
+              <span v-else class="text-disabled text-caption">—</span>
             </td>
             <td class="text-center">
               <v-icon
@@ -157,53 +240,6 @@ watch(() => `${props.userId}_${props.year}_${props.month}`, load);
 
 // ── Computed ─────────────────────────────────────────────────────────────────
 
-const stats = computed(() => {
-  if (!summary.value) return [];
-  const s = summary.value;
-  return [
-    { label: "Clases", value: s.total, color: "grey" },
-    { label: "Presentes", value: s.present, color: "success" },
-    { label: "Retardos", value: s.late + s.late_justified, color: "warning" },
-    { label: "Consumidos", value: s.late_consumed, color: "orange" },
-    {
-      label: "Pendientes",
-      value: s.late_unconsumed,
-      color:
-        s.late_unconsumed >= 2
-          ? "error"
-          : s.late_unconsumed === 1
-            ? "warning"
-            : "grey",
-    },
-    { label: "F. injust.", value: s.absent_unjustified, color: "error" },
-    { label: "F. just.", value: s.absent_justified, color: "blue" },
-  ];
-});
-
-const semesterBadge = computed<{
-  label: string;
-  color: string;
-  icon: string;
-} | null>(() => {
-  if (!summary.value) return null;
-  const s = summary.value;
-  // Prioritize the consumed-penalty fact so the badge stays stable once a
-  // penalty was applied this semester, even when late_unconsumed drops to 0.
-  if (s.late_consumed > 0)
-    return {
-      label: "Penalización aplicada",
-      color: "error",
-      icon: "mdi-alert-circle",
-    };
-  if (s.late_unconsumed > 0)
-    return {
-      label: `${s.late_unconsumed} retardo${s.late_unconsumed > 1 ? "s" : ""} pendiente${s.late_unconsumed > 1 ? "s" : ""}`,
-      color: "warning",
-      icon: "mdi-clock-outline",
-    };
-  return null;
-});
-
 const sortedRecords = computed<AttendanceSummaryRecord[]>(() => {
   if (!summary.value) return [];
   return [...summary.value.records].sort((a, b) => {
@@ -218,12 +254,6 @@ const sortedRecords = computed<AttendanceSummaryRecord[]>(() => {
 const formatDate = (date: string | null): string => {
   if (!date) return "—";
   return dayjs(date).format("DD/MM/YYYY");
-};
-
-const formatDay = (date: string | null): string => {
-  if (!date) return "";
-  const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-  return days[dayjs(date).day()] ?? "";
 };
 
 const rowClass = (status: string): string => {
@@ -262,13 +292,40 @@ const statusLabel = (status: string): string => {
 </script>
 
 <style scoped>
-.stat-strip {
+/* ── Stats grid ────────────────────────────────────────────── */
+.stats-grid {
   display: flex;
   align-items: stretch;
   gap: 0;
-  /* background: rgba(var(--v-theme-surface-variant), 0.4); */
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 10px;
   overflow: hidden;
+}
+
+.stats-section {
+  flex: 1;
+  padding: 8px 4px 10px;
+}
+
+.stats-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(var(--v-theme-on-surface), 0.45);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.stats-separator {
+  width: 1px;
+  background: rgba(var(--v-border-color), var(--v-border-opacity));
+  margin: 8px 0;
+}
+
+.stats-row {
+  display: flex;
+  align-items: stretch;
 }
 
 .stat-item {
@@ -277,7 +334,7 @@ const statusLabel = (status: string): string => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 6px;
+  padding: 4px 2px;
   position: relative;
   gap: 1px;
 }
@@ -286,12 +343,26 @@ const statusLabel = (status: string): string => {
   content: "";
   position: absolute;
   left: 0;
-  top: 20%;
-  height: 60%;
+  top: 15%;
+  height: 70%;
   width: 1px;
   background: rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  color: rgba(var(--v-theme-on-surface), 0.55);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Table ─────────────────────────────────────────────────── */
 .attendance-table :deep(thead tr th) {
   background: rgba(var(--v-theme-surface-variant), 0.5) !important;
   color: rgba(var(--v-theme-on-surface), 0.7);
