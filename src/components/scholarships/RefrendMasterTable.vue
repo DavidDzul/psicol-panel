@@ -171,7 +171,7 @@
           label
           >{{
             item.has_retardos_discount
-              ? item.attendance_late
+              ? 2
               : item.semester_lates_unconsumed
           }}/2</v-chip
         >
@@ -372,6 +372,15 @@
               = {{ fmt(item.refrend.total_to_pay) }}
             </span>
           </template>
+          <template v-else-if="Number(item.refrend.refund_amount_from_previous) > 0">
+            <span class="text-caption text-green-darken-1">
+              + {{ fmt(item.refrend.refund_amount_from_previous!) }} reemb.
+            </span>
+            <span class="text-caption font-weight-bold text-green-darken-2">
+              = {{ fmt(item.refrend.total_to_pay) }}
+            </span>
+          </template>
+
         </div>
       </template>
 
@@ -486,6 +495,7 @@
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
       :amount-pending="activeRow?.refrend.amount_pending_from_previous"
+      :base-amount="activeRow?.refrend.base_amount"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog
@@ -802,6 +812,7 @@ const situationDialogs = ref<Record<SituationKey, boolean>>({
   SUSPENDIDA: false,
   BAJA_DEFINITIVA: false,
   EGRESADO: false,
+  REEMBOLSO_PARCIAL: false,
 });
 const situationSubmitLoading = ref(false);
 const situationLoadingId = ref<number | null>(null);
@@ -868,7 +879,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   try {
     await store.recordPaymentSituation(activeRow.value.refrend.id, form);
     const key =
-      form.carryover_months_count && form.resolution_type === "BECA_MES"
+      (form.carryover_months_count && form.resolution_type === "BECA_MES")
         ? "PAGO_MESES"
         : (form.resolution_type as SituationKey);
     situationDialogs.value[key] = false;

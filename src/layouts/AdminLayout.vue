@@ -1,10 +1,20 @@
 <template>
   <v-layout id="app">
-    <v-app-bar :color="'appbar'" border="b" :elevation="0" height="60" :order="0">
+    <v-app-bar
+      :color="'appbar'"
+      border="b"
+      :elevation="0"
+      height="60"
+      :order="0"
+    >
       <v-app-bar-nav-icon @click="onClick"></v-app-bar-nav-icon>
 
       <div class="brand-inline">
-        <img src="@/assets/img/logo-black.png" alt="Impulso" class="brand-logo" />
+        <img
+          src="@/assets/img/logo-black.png"
+          alt="Impulso"
+          class="brand-logo"
+        />
         <div class="brand-text">
           <span class="brand-name">Impulso Universitario</span>
           <span class="brand-suffix">A.C.</span>
@@ -22,7 +32,12 @@
         @logout="logout"
       />
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" :permanent="!mobile" width="280" style="background-color: #FFFFFF">
+    <v-navigation-drawer
+      v-model="drawer"
+      :permanent="!mobile"
+      width="280"
+      style="background-color: #ffffff"
+    >
       <NavMenu />
     </v-navigation-drawer>
 
@@ -112,8 +127,15 @@ watch(
   gap: 8px;
   margin-left: 2px;
 }
-.brand-logo { height: 28px; width: auto; }
-.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-logo {
+  height: 28px;
+  width: auto;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
 .brand-name {
   font-family: var(--font-display);
   font-size: 14px;
@@ -123,6 +145,6 @@ watch(
 .brand-suffix {
   font-size: 10px;
   font-weight: 500;
-  color: rgba(17, 24, 39, 0.40);
+  color: rgba(17, 24, 39, 0.4);
 }
 </style>

@@ -3,11 +3,11 @@
     <v-card>
       <v-card-title class="text-h6 pa-4 d-flex align-center ga-2">
         <v-icon color="teal" size="small">mdi-cash-refund</v-icon>
-        Pago de meses retenidos
+        Pago meses retenidos
       </v-card-title>
 
       <v-card-text class="pt-0">
-          <v-alert
+        <v-alert
           v-if="amountPending && Number(amountPending) > 0"
           type="info"
           variant="tonal"
@@ -15,11 +15,11 @@
           class="mb-3"
           icon="mdi-cash-clock"
         >
-          Monto retenido acumulado: <strong>{{ fmt(amountPending) }}</strong>
+          Monto retenido acumulado: <strong>{{ fmt(Number(amountPending)) }}</strong>
         </v-alert>
 
         <v-text-field
-          v-model.number="form.carryover_months_count"
+          v-model.number="pago.months_count"
           label="Número de meses *"
           type="number"
           variant="outlined"
@@ -30,12 +30,24 @@
           hide-details
         />
         <v-textarea
-          v-model="form.carryover_months_detail"
+          v-model="pago.months_detail"
           label="Meses a pagar — especificar *"
           rows="2"
           variant="outlined"
           density="compact"
           placeholder="Ej: enero, febrero 2026"
+          class="mb-3"
+          hide-details
+        />
+        <v-text-field
+          v-model.number="pago.percentage"
+          label="Porcentaje a pagar *"
+          type="number"
+          variant="outlined"
+          density="compact"
+          min="1"
+          max="100"
+          suffix="%"
           hide-details
         />
       </v-card-text>
@@ -55,33 +67,45 @@
 import { computed, reactive, watch } from "vue";
 import type { RecordSituationForm } from "@/interfaces/scholarship";
 
-const props = defineProps<{ loading?: boolean; amountPending?: string | number }>();
+const props = defineProps<{
+  loading?: boolean;
+  amountPending?: string | number;
+  baseAmount?: string | number;
+}>();
 
-const fmt = (v: string | number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(v));
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
 
-const form = reactive({
-  carryover_months_count: null as number | null,
-  carryover_months_detail: null as string | null,
+const fmt = (v: number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(v);
+
+const pago = reactive({
+  months_count: null as number | null,
+  months_detail: null as string | null,
+  percentage: 100 as number,
 });
 
-watch(model, (v) => {
-  if (!v) { form.carryover_months_count = null; form.carryover_months_detail = null; }
+const isValid = computed(() => {
+  const count = pago.months_count ?? 0;
+  const pct   = pago.percentage ?? 0;
+  return count >= 1 && !!pago.months_detail?.trim() && pct >= 1 && pct <= 100;
 });
 
-const isValid = computed(() =>
-  (form.carryover_months_count ?? 0) >= 1 &&
-  !!form.carryover_months_detail?.trim()
-);
+watch(model, (open) => {
+  if (!open) {
+    pago.months_count  = null;
+    pago.months_detail = null;
+    pago.percentage    = 100;
+  }
+});
 
 const submit = () => {
   if (!isValid.value) return;
   emit("submit", {
-    resolution_type: "BECA_MES",
-    carryover_months_count: form.carryover_months_count,
-    carryover_months_detail: form.carryover_months_detail,
+    resolution_type:         "BECA_MES",
+    carryover_months_count:  pago.months_count,
+    carryover_months_detail: pago.months_detail,
+    carryover_percentage:    pago.percentage,
   });
 };
 </script>

@@ -22,8 +22,15 @@
             {{ dayjs(summary.semester_end).format("DD/MM/YYYY") }}
           </div>
         </div>
-        <v-chip :color="overallStatus.color" variant="flat" size="small" label>
-          {{ overallStatus.label }}
+        <v-chip
+          v-if="semesterBadge"
+          :color="semesterBadge.color"
+          variant="flat"
+          size="small"
+          label
+        >
+          <v-icon start size="14">{{ semesterBadge.icon }}</v-icon>
+          {{ semesterBadge.label }}
         </v-chip>
       </div>
 
@@ -41,31 +48,6 @@
           />
         </div>
       </div>
-
-      <!-- Retardos alert -->
-      <v-alert
-        v-if="summary.late_unconsumed >= 2"
-        type="error"
-        variant="tonal"
-        density="compact"
-        rounded="lg"
-        class="mb-4"
-        icon="mdi-clock-alert"
-      >
-        <strong>{{ summary.late_unconsumed }} retardos acumulados</strong> en el
-        semestre — el pago de este mes quedará suspendido (reglamento art. 5).
-      </v-alert>
-      <v-alert
-        v-else-if="summary.late_unconsumed === 1"
-        type="warning"
-        variant="tonal"
-        density="compact"
-        rounded="lg"
-        class="mb-4"
-        icon="mdi-clock-outline"
-      >
-        1 retardo pendiente — se necesita 1 más para suspensión del pago.
-      </v-alert>
 
       <!-- Records table -->
       <div class="d-flex align-center justify-space-between mb-2">
@@ -198,16 +180,28 @@ const stats = computed(() => {
   ];
 });
 
-const overallStatus = computed(() => {
-  if (!summary.value) return { label: "Sin datos", color: "grey" };
+const semesterBadge = computed<{
+  label: string;
+  color: string;
+  icon: string;
+} | null>(() => {
+  if (!summary.value) return null;
   const s = summary.value;
-  if (s.absent_unjustified >= 1)
-    return { label: "Suspensión por falta", color: "error" };
-  if (s.late_unconsumed >= 2)
-    return { label: "Suspensión por retardos", color: "error" };
-  if (s.late_unconsumed === 1)
-    return { label: "1 retardo pendiente", color: "warning" };
-  return { label: "Sin penalidades", color: "success" };
+  // Prioritize the consumed-penalty fact so the badge stays stable once a
+  // penalty was applied this semester, even when late_unconsumed drops to 0.
+  if (s.late_consumed > 0)
+    return {
+      label: "Penalización aplicada",
+      color: "error",
+      icon: "mdi-alert-circle",
+    };
+  if (s.late_unconsumed > 0)
+    return {
+      label: `${s.late_unconsumed} retardo${s.late_unconsumed > 1 ? "s" : ""} pendiente${s.late_unconsumed > 1 ? "s" : ""}`,
+      color: "warning",
+      icon: "mdi-clock-outline",
+    };
+  return null;
 });
 
 const sortedRecords = computed<AttendanceSummaryRecord[]>(() => {
