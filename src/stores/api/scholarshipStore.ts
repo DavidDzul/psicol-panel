@@ -566,6 +566,13 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const resetBulkTable = (): void => {
+    bulkRows.value = [];
+    bulkMeta.value = null;
+    bulkError.value = null;
+    bulkParams.value = null;
+  };
+
   const bulkApprove = async (ids: number[]): Promise<void> => {
     try {
       const res = await axios.post("api/admin/scholarship-refrends/bulk/approve", { ids });
@@ -610,6 +617,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     uploadReticula,
     markAsGraduate,
     fetchBulkTable,
+    resetBulkTable,
     patchInline,
     atencionFlag,
     clearFlag,

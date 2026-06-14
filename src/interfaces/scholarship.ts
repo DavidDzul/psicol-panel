@@ -27,6 +27,7 @@ export type ResolutionType =
   | 'SUSPENDIDA'
   | 'BAJA_DEFINITIVA'
   | 'EGRESADO'
+  | 'REEMBOLSO_PARCIAL'
 
 export type DiscountType =
   | 'RETARDOS'
@@ -137,6 +138,7 @@ export interface ScholarshipRefrend {
   suspension_percentage: string | null
   carryover_months_count: number | null
   carryover_months_detail: string | null
+  carryover_percentage: string | null
   base_amount: string
   snapshot_discount_percentage: string | null
   snapshot_discount_reason: string | null
@@ -144,6 +146,7 @@ export interface ScholarshipRefrend {
   discount_amount: string
   final_amount: string
   amount_pending_from_previous: string
+  refund_amount_from_previous?: string
   total_to_pay: string
   snapshot_name: string
   snapshot_generation: string | null
@@ -169,6 +172,8 @@ export interface ScholarshipRefrend {
     late: number
     absent: number
     late_unconsumed: number
+    total: number
+    month_absent: number
   } | null
   // relations (optional when loaded)
   discounts?: ScholarshipRefrendDiscount[]
@@ -238,6 +243,8 @@ export interface RecordSituationForm {
   suspension_percentage?: number | null
   carryover_months_count?: number | null
   carryover_months_detail?: string | null
+  carryover_percentage?: number | null
+  refund_amount?: number | null
 }
 
 // ── Form interfaces ────────────────────────────────────────────────────────

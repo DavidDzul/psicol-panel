@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from "vue";
+import { computed, defineAsyncComponent, onUnmounted } from "vue";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
@@ -124,6 +124,8 @@ const {
 // ── Store ──────────────────────────────────────────────────────────────────
 
 const scholarshipStore = useScholarshipStore();
+
+onUnmounted(() => scholarshipStore.resetBulkTable());
 
 // ── campusLabel for generate dialog ───────────────────────────────────────
 
