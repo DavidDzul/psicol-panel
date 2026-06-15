@@ -254,23 +254,17 @@
       </template>
 
       <template #item.pedagogia="{ item }">
-        <div class="d-flex align-center ga-1">
-          <v-btn
-            icon="mdi-school-outline"
-            size="x-small"
-            variant="text"
-            color="deep-purple"
-            :disabled="!canPedagogia(item.refrend.workflow_status)"
-            @click="openPedagogiaDialog(item)"
-          />
-          <span
-            v-if="item.refrend.pedagogia_observations"
-            class="text-caption text-medium-emphasis text-truncate"
-            style="max-width: 120px"
-            :title="item.refrend.pedagogia_observations"
-            >{{ item.refrend.pedagogia_observations }}</span
-          >
-        </div>
+        <v-btn
+          :prepend-icon="item.refrend.pedagogia_observations ? 'mdi-school' : 'mdi-school-outline'"
+          size="x-small"
+          :variant="item.refrend.pedagogia_observations ? 'tonal' : 'outlined'"
+          color="deep-purple"
+          :disabled="!canPedagogia(item.refrend.workflow_status)"
+          rounded="lg"
+          @click="openPedagogiaDialog(item)"
+        >
+          {{ item.refrend.pedagogia_observations ? 'Validado' : 'Validar' }}
+        </v-btn>
       </template>
 
       <template #item.notificado="{ item }">
