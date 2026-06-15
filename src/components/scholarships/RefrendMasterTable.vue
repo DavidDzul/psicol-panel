@@ -72,37 +72,9 @@
       <template #item.snapshot_name="{ item }">
         <div class="d-flex align-center ga-2 text-no-wrap py-1">
           <div class="d-flex flex-column">
-            <div class="d-flex align-center ga-1">
-              <span class="font-weight-medium text-body-2">{{
-                item.refrend.snapshot_name
-              }}</span>
-              <v-tooltip
-                v-if="item.incidents_count > 0"
-                location="bottom"
-                max-width="280"
-              >
-                <template #activator="{ props: tooltipProps }">
-                  <v-icon
-                    v-bind="tooltipProps"
-                    :icon="
-                      item.incidents_count >= 3
-                        ? 'mdi-alert-circle'
-                        : 'mdi-alert-circle-outline'
-                    "
-                    size="14"
-                    :color="item.incidents_count >= 3 ? 'error' : 'warning'"
-                  />
-                </template>
-                <div class="text-caption">
-                  <div class="font-weight-bold mb-1">
-                    {{ item.incidents_count }} incidencia(s)
-                  </div>
-                  <div v-if="item.incident_description">
-                    {{ item.incident_description }}
-                  </div>
-                </div>
-              </v-tooltip>
-            </div>
+            <span class="font-weight-medium text-body-2">{{
+              item.refrend.snapshot_name
+            }}</span>
             <div class="d-flex align-center ga-1 mt-1">
               <v-chip
                 v-if="item.refrend.snapshot_scholarship_type"
@@ -194,34 +166,42 @@
       <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
 
       <template #item.workflow_status="{ item }">
-        <v-chip
-          :color="statusChip(item.refrend).color"
-          size="small"
-          label
-          variant="tonal"
-        >
-          {{ statusChip(item.refrend).label }}
-        </v-chip>
+        <div class="d-flex flex-column ga-1 py-1">
+          <v-chip
+            :color="statusChip(item.refrend).color"
+            size="small"
+            label
+            variant="tonal"
+          >
+            {{ statusChip(item.refrend).label }}
+          </v-chip>
+          <span
+            v-if="resolutionCauseLabel(item.refrend)"
+            class="text-caption text-medium-emphasis"
+            style="max-width: 155px"
+          >
+            {{ resolutionCauseLabel(item.refrend) }}
+          </span>
+        </div>
       </template>
 
-      <template #item.resolution_cause_label="{ item }">
+      <template #item.incident_description="{ item }">
         <v-tooltip
-          v-if="resolutionCauseLabel(item.refrend)"
+          v-if="item.incident_description"
           location="bottom"
-          max-width="260"
-          :text="resolutionCauseLabel(item.refrend)!"
+          max-width="320"
+          :text="item.incident_description"
         >
           <template #activator="{ props: tp }">
             <span
               v-bind="tp"
-              class="text-caption text-medium-emphasis text-truncate d-block"
-              style="max-width: 170px; cursor: default"
+              class="text-caption text-medium-emphasis incident-text"
             >
-              {{ resolutionCauseLabel(item.refrend) }}
+              {{ item.incident_description }}
             </span>
           </template>
         </v-tooltip>
-        <span v-else class="text-caption text-disabled">—</span>
+        <span v-else class="text-disabled text-caption">—</span>
       </template>
 
       <template #item.atencion="{ item }">
@@ -622,7 +602,8 @@ const BASE_HEADERS = [
     minWidth: "200px",
     sortable: true,
   },
-  { title: "Estado", key: "workflow_status", width: 160, sortable: false },
+  { title: "Estado", key: "workflow_status", width: 175, sortable: false },
+  { title: "Incidencia", key: "incident_description", width: 180, sortable: false },
 ];
 
 const ATENCION_HEADERS = [
@@ -652,7 +633,6 @@ const ATENCION_HEADERS = [
 ];
 
 const PEDAGOGIA_HEADERS = [
-  { title: "Motivo", key: "resolution_cause_label", width: 180, sortable: false },
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
@@ -935,6 +915,16 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 </script>
 
 <style scoped>
+.incident-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 170px;
+  cursor: default;
+  line-height: 1.4;
+}
+
 .refrend-master-table-wrapper {
   position: relative;
   width: 100%;
