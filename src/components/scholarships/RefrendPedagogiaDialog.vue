@@ -30,15 +30,26 @@
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
+        <v-btn
+          v-if="isEditMode"
+          variant="text"
+          color="error"
+          :loading="clearLoading"
+          :disabled="loading"
+          @click="emit('remove')"
+        >
+          Remover respuesta
+        </v-btn>
         <v-spacer />
-        <v-btn variant="text" :disabled="loading" @click="model = false">Cancelar</v-btn>
+        <v-btn variant="text" :disabled="loading || clearLoading" @click="model = false">Cancelar</v-btn>
         <v-btn
           color="deep-purple"
           variant="elevated"
           :loading="loading"
+          :disabled="clearLoading"
           @click="submit"
         >
-          Guardar validación
+          {{ isEditMode ? 'Guardar cambios' : 'Guardar validación' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -46,18 +57,22 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import type { PedagogiaResolveForm } from "@/interfaces/scholarship";
 
 const props = defineProps<{
   loading?: boolean;
+  clearLoading?: boolean;
   atencionObservations?: string | null;
   initialComment?: string | null;
 }>();
 
 const emit = defineEmits<{
   submit: [form: PedagogiaResolveForm];
+  remove: [];
 }>();
+
+const isEditMode = computed(() => !!props.initialComment);
 
 const model = defineModel<boolean>();
 

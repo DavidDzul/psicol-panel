@@ -449,9 +449,11 @@
     <RefrendPedagogiaDialog
       v-model="pedagogiaOpen"
       :loading="pedagogiaLoading"
+      :clear-loading="clearPedagogiaLoading === activeRow?.refrend.id"
       :atencion-observations="activeRow?.refrend.atencion_observations ?? null"
       :initial-comment="activeRow?.refrend.pedagogia_observations ?? null"
       @submit="onPedagogiaSubmit"
+      @remove="onClearPedagogiaFromDialog"
     />
 
     <SituationSinPagoDialog
@@ -596,7 +598,6 @@ const BASE_HEADERS = [
     sortable: true,
   },
   { title: "Estado", key: "workflow_status", width: 175, sortable: false },
-  { title: "Incidencia", key: "incident_description", width: 180, sortable: false },
 ];
 
 const ATENCION_HEADERS = [
@@ -626,6 +627,7 @@ const ATENCION_HEADERS = [
 ];
 
 const PEDAGOGIA_HEADERS = [
+  { title: "Incidencia", key: "incident_description", width: 180, sortable: false },
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
@@ -756,6 +758,7 @@ const onAtencionSubmit = async (form: AtencionFlagForm): Promise<void> => {
 
 const pedagogiaOpen = ref(false);
 const pedagogiaLoading = ref(false);
+const clearPedagogiaLoading = ref<number | null>(null);
 
 const openPedagogiaDialog = (item: BulkRefrendRow): void => {
   activeRow.value = item;
@@ -770,6 +773,17 @@ const onPedagogiaSubmit = async (form: PedagogiaResolveForm): Promise<void> => {
     pedagogiaOpen.value = false;
   } finally {
     pedagogiaLoading.value = false;
+  }
+};
+
+const onClearPedagogiaFromDialog = async (): Promise<void> => {
+  if (!activeRow.value) return;
+  clearPedagogiaLoading.value = activeRow.value.refrend.id;
+  try {
+    await store.pedagogiaResolve(activeRow.value.refrend.id, { comment: null });
+    pedagogiaOpen.value = false;
+  } finally {
+    clearPedagogiaLoading.value = null;
   }
 };
 
