@@ -205,28 +205,26 @@
       </template>
 
       <template #item.atencion="{ item }">
-        <div class="d-flex align-center ga-1">
+        <div class="d-flex align-center ga-2">
           <v-btn
-            :icon="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'mdi-flag' : 'mdi-flag-outline'"
+            :prepend-icon="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'mdi-flag' : 'mdi-flag-outline'"
             size="x-small"
-            variant="text"
+            :variant="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'tonal' : 'outlined'"
             :color="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'orange-darken-2' : 'blue'"
             :disabled="
               !['DRAFT', 'CON_INCIDENCIA'].includes(
                 item.refrend.workflow_status ?? '',
               )
             "
-            :title="
-              item.refrend.workflow_status === 'CON_INCIDENCIA'
-                ? 'Editar incidencia'
-                : 'Registrar incidencia'
-            "
+            rounded="lg"
             @click="openAtencionDialog(item)"
-          />
+          >
+            {{ item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'Incidencia' : 'Registrar' }}
+          </v-btn>
           <span
             v-if="item.refrend.atencion_observations"
             class="text-caption text-medium-emphasis text-truncate"
-            style="max-width: 110px"
+            style="max-width: 100px"
             :title="item.refrend.atencion_observations"
             >{{ item.refrend.atencion_observations }}</span
           >
@@ -234,22 +232,25 @@
       </template>
 
       <template #item.pedagogia_readonly="{ item }">
-        <div class="d-flex align-center ga-1">
-          <v-icon
-            icon="mdi-school-outline"
-            size="18"
-            :color="
-              item.refrend.pedagogia_observations ? 'deep-purple' : 'disabled'
-            "
-          />
-          <span
-            v-if="item.refrend.pedagogia_observations"
-            class="text-caption text-medium-emphasis text-truncate"
-            style="max-width: 120px"
-            :title="item.refrend.pedagogia_observations"
-            >{{ item.refrend.pedagogia_observations }}</span
-          >
-        </div>
+        <v-tooltip
+          v-if="item.refrend.pedagogia_observations"
+          location="bottom"
+          max-width="300"
+        >
+          <template #activator="{ props: tp }">
+            <span
+              v-bind="tp"
+              class="text-caption text-medium-emphasis incident-text"
+            >
+              {{ item.refrend.pedagogia_observations }}
+            </span>
+          </template>
+          <div class="text-caption">
+            <div class="font-weight-bold mb-1">Revisión Pedagogía</div>
+            {{ item.refrend.pedagogia_observations }}
+          </div>
+        </v-tooltip>
+        <span v-else class="text-caption text-disabled">Sin revisión</span>
       </template>
 
       <template #item.pedagogia="{ item }">
