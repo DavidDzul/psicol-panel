@@ -37,13 +37,23 @@
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
+        <v-btn
+          v-if="isEditMode"
+          variant="text"
+          color="error"
+          :loading="clearLoading"
+          :disabled="loading"
+          @click="emit('remove')"
+        >
+          Remover incidencia
+        </v-btn>
         <v-spacer />
-        <v-btn variant="text" :disabled="loading" @click="model = false">Cancelar</v-btn>
+        <v-btn variant="text" :disabled="loading || clearLoading" @click="model = false">Cancelar</v-btn>
         <v-btn
           :color="isEditMode ? 'orange-darken-2' : 'blue'"
           variant="elevated"
           :loading="loading"
-          :disabled="!form.description.trim()"
+          :disabled="!form.description.trim() || clearLoading"
           @click="submit"
         >
           {{ isEditMode ? 'Guardar cambios' : 'Registrar incidencia' }}
@@ -59,12 +69,14 @@ import type { AtencionFlagForm, IncidentCategory } from "@/interfaces/scholarshi
 
 const props = defineProps<{
   loading?: boolean;
+  clearLoading?: boolean;
   initialDescription?: string | null;
   initialCategory?: IncidentCategory | null;
 }>();
 
 const emit = defineEmits<{
   submit: [form: AtencionFlagForm];
+  remove: [];
 }>();
 
 const model = defineModel<boolean>();

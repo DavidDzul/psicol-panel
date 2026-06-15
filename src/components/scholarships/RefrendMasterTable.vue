@@ -207,10 +207,10 @@
       <template #item.atencion="{ item }">
         <div class="d-flex align-center ga-1">
           <v-btn
-            icon="mdi-flag-outline"
+            :icon="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'mdi-flag' : 'mdi-flag-outline'"
             size="x-small"
             variant="text"
-            color="blue"
+            :color="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'orange-darken-2' : 'blue'"
             :disabled="
               !['DRAFT', 'CON_INCIDENCIA'].includes(
                 item.refrend.workflow_status ?? '',
@@ -222,16 +222,6 @@
                 : 'Registrar incidencia'
             "
             @click="openAtencionDialog(item)"
-          />
-          <v-btn
-            v-if="item.refrend.workflow_status === 'CON_INCIDENCIA'"
-            :loading="clearFlagLoading === item.refrend.id"
-            icon="mdi-flag-remove-outline"
-            size="x-small"
-            variant="text"
-            color="orange-darken-2"
-            title="Quitar incidencia (vuelve a Borrador)"
-            @click="onClearFlag(item)"
           />
           <span
             v-if="item.refrend.atencion_observations"
@@ -448,9 +438,11 @@
     <RefrendAtencionDialog
       v-model="atencionOpen"
       :loading="atencionLoading"
+      :clear-loading="clearFlagLoading === activeRow?.refrend.id"
       :initial-description="activeRow?.incident_description ?? null"
       :initial-category="(activeRow?.incident_category as any) ?? null"
       @submit="onAtencionSubmit"
+      @remove="onClearFlagFromDialog"
     />
 
     <RefrendPedagogiaDialog
@@ -876,6 +868,17 @@ const onClearFlag = async (item: BulkRefrendRow): Promise<void> => {
   clearFlagLoading.value = item.refrend.id;
   try {
     await store.clearFlag(item.refrend.id);
+  } finally {
+    clearFlagLoading.value = null;
+  }
+};
+
+const onClearFlagFromDialog = async (): Promise<void> => {
+  if (!activeRow.value) return;
+  clearFlagLoading.value = activeRow.value.refrend.id;
+  try {
+    await store.clearFlag(activeRow.value.refrend.id);
+    atencionOpen.value = false;
   } finally {
     clearFlagLoading.value = null;
   }
