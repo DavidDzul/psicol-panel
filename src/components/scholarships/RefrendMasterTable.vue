@@ -318,8 +318,8 @@
               : 'mdi-school-outline'
           "
           size="x-small"
-          :variant="item.refrend.pedagogia_observations ? 'tonal' : 'outlined'"
-          color="purple"
+          :variant="item.refrend.pedagogia_observations ? 'tonal' : 'tonal'"
+          :color="item.refrend.pedagogia_observations ? 'gray' : 'purple'"
           :disabled="!canPedagogia(item.refrend.workflow_status)"
           @click="openPedagogiaDialog(item)"
         >
@@ -694,7 +694,7 @@ const PEDAGOGIA_HEADERS = [
     width: 180,
     sortable: false,
   },
-  { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
+  { title: "Respuesta", key: "pedagogia", width: 180, sortable: false },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
   { title: "Final", key: "projected_amount", width: 110, sortable: false },
