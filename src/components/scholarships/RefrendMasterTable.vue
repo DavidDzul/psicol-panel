@@ -103,16 +103,19 @@
             <span class="font-weight-medium text-body-2">{{
               item.refrend.snapshot_name
             }}</span>
-            <div class="d-flex align-center ga-1 mt-1">
+            <!-- TIPO DE BECA -->
+            <!-- <div class="d-flex align-center ga-1 mt-1">
               <v-chip
                 v-if="item.refrend.snapshot_scholarship_type"
                 size="x-small"
                 color="primary"
                 variant="tonal"
                 label
-                >{{ item.refrend.snapshot_scholarship_type }}</v-chip
               >
-            </div>
+                <span></span>
+                {{ item.refrend.snapshot_scholarship_type }}</v-chip
+              >
+            </div> -->
           </div>
         </div>
       </template>
@@ -192,8 +195,9 @@
       <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
 
       <template #item.workflow_status="{ item }">
-        <div class="d-flex flex-column ga-1 py-1">
+        <div class="d-flex flex-column ga-1 py-2 justify-center text-center">
           <v-chip
+            class="justify-center text-center"
             :color="statusChip(item.refrend).color"
             size="small"
             label
@@ -234,33 +238,40 @@
         <div class="d-flex align-center ga-2">
           <v-btn
             :prepend-icon="
-              item.refrend.workflow_status === 'CON_INCIDENCIA'
-                ? 'mdi-flag'
-                : 'mdi-flag-outline'
+              hasPedagogiaResponse(item)
+                ? 'mdi-eye-outline'
+                : item.refrend.workflow_status === 'CON_INCIDENCIA'
+                  ? 'mdi-flag'
+                  : 'mdi-flag-outline'
             "
             size="x-small"
             :variant="
-              item.refrend.workflow_status === 'CON_INCIDENCIA'
+              hasPedagogiaResponse(item)
                 ? 'tonal'
-                : 'outlined'
+                : item.refrend.workflow_status === 'CON_INCIDENCIA'
+                  ? 'tonal'
+                  : 'tonal'
             "
             :color="
-              item.refrend.workflow_status === 'CON_INCIDENCIA'
-                ? 'orange-darken-2'
-                : 'blue'
+              hasPedagogiaResponse(item)
+                ? 'grey'
+                : item.refrend.workflow_status === 'CON_INCIDENCIA'
+                  ? 'orange-darken-2'
+                  : 'blue'
             "
             :disabled="
               !['DRAFT', 'CON_INCIDENCIA'].includes(
                 item.refrend.workflow_status ?? '',
               )
             "
-            rounded="lg"
             @click="openAtencionDialog(item)"
           >
             {{
-              item.refrend.workflow_status === "CON_INCIDENCIA"
+              hasPedagogiaResponse(item)
                 ? "Visualizar"
-                : "Registrar"
+                : item.refrend.workflow_status === "CON_INCIDENCIA"
+                  ? "Editar"
+                  : "Registrar"
             }}
           </v-btn>
           <span
@@ -274,24 +285,28 @@
       </template>
 
       <template #item.pedagogia_readonly="{ item }">
-        <v-tooltip
+        <div
           v-if="item.refrend.pedagogia_observations"
-          location="bottom"
-          max-width="300"
+          class="d-flex flex-column ga-1 py-1"
         >
-          <template #activator="{ props: tp }">
-            <span
-              v-bind="tp"
-              class="text-caption text-medium-emphasis incident-text"
-            >
+          <v-tooltip location="bottom" max-width="300">
+            <template #activator="{ props: tp }">
+              <span
+                v-bind="tp"
+                class="text-caption text-medium-emphasis incident-text"
+              >
+                <v-icon size="xs" color="green"
+                  >mdi-check-circle-outline</v-icon
+                >
+                {{ item.refrend.pedagogia_observations }}
+              </span>
+            </template>
+            <div class="text-caption">
+              <div class="font-weight-bold mb-1">Revisión Pedagogía</div>
               {{ item.refrend.pedagogia_observations }}
-            </span>
-          </template>
-          <div class="text-caption">
-            <div class="font-weight-bold mb-1">Revisión Pedagogía</div>
-            {{ item.refrend.pedagogia_observations }}
-          </div>
-        </v-tooltip>
+            </div>
+          </v-tooltip>
+        </div>
         <span v-else class="text-caption text-disabled">Sin revisión</span>
       </template>
 
@@ -304,12 +319,11 @@
           "
           size="x-small"
           :variant="item.refrend.pedagogia_observations ? 'tonal' : 'outlined'"
-          color="deep-purple"
+          color="purple"
           :disabled="!canPedagogia(item.refrend.workflow_status)"
-          rounded="lg"
           @click="openPedagogiaDialog(item)"
         >
-          {{ item.refrend.pedagogia_observations ? "Validado" : "Validar" }}
+          {{ item.refrend.pedagogia_observations ? "Visualizar" : "Registrar" }}
         </v-btn>
       </template>
 
@@ -404,28 +418,6 @@
 
       <template #item.payment_verify="{ item }">
         <div class="d-flex align-center ga-1">
-          <!-- apply-or-not: DRAFT con consecuencia o CON_INCIDENCIA -->
-          <v-btn
-            v-if="
-              item.refrend.workflow_status === 'CON_INCIDENCIA' ||
-              (item.refrend.workflow_status === 'DRAFT' &&
-                (item.has_falta_discount ||
-                  item.has_retardos_discount ||
-                  item.month_absent >= 1 ||
-                  item.semester_lates_unconsumed >= 2 ||
-                  item.incidents_count > 0))
-            "
-            :loading="approveLoading === item.refrend.id"
-            size="small"
-            variant="elevated"
-            color="green"
-            title="Aprobar pago al monto actual"
-            @click="onApprove(item)"
-          >
-            <v-icon size="16" start>mdi-check</v-icon>
-            Aprobar
-          </v-btn>
-
           <!-- situación especial: barra de resolución -->
           <RefrendSituationBar
             v-if="!isLocked(item.refrend)"
@@ -487,6 +479,7 @@
       :clear-loading="clearFlagLoading === activeRow?.refrend.id"
       :initial-description="activeRow?.incident_description ?? null"
       :initial-category="(activeRow?.incident_category as any) ?? null"
+      :readonly="!!activeRow?.refrend.pedagogia_observations"
       @submit="onAtencionSubmit"
       @remove="onClearFlagFromDialog"
     />
@@ -665,7 +658,7 @@ const BASE_HEADERS = [
 ];
 
 const ATENCION_COMPLETA_HEADERS = [
-  { title: "Atención a Becarios/as", key: "atencion", sortable: false },
+  { title: "Incidencia", key: "atencion", sortable: false },
   {
     title: "Asist. Penalización",
     key: "attendance_impact",
@@ -811,6 +804,9 @@ const rowClass = (item: BulkRefrendRow): string => {
 const canPedagogia = (status: WorkflowStatus | null): boolean =>
   status === "CON_INCIDENCIA";
 
+const hasPedagogiaResponse = (item: BulkRefrendRow): boolean =>
+  !!item.refrend.pedagogia_observations;
+
 // ── Active row state ───────────────────────────────────────────────────────
 
 const activeRow = ref<BulkRefrendRow | null>(null);
@@ -897,7 +893,6 @@ const openSituationDialog = (
 
 // ── Approve ────────────────────────────────────────────────────────────────
 
-const approveLoading = ref<number | null>(null);
 const bulkLoading = ref(false);
 
 const cleanDraftIds = computed(() =>
@@ -913,15 +908,6 @@ const cleanDraftIds = computed(() =>
     )
     .map((r) => r.refrend.id),
 );
-
-const onApprove = async (item: BulkRefrendRow): Promise<void> => {
-  approveLoading.value = item.refrend.id;
-  try {
-    await store.approveAsIs(item.refrend.id);
-  } finally {
-    approveLoading.value = null;
-  }
-};
 
 const onBulkApproveClean = async (): Promise<void> => {
   if (!cleanDraftIds.value.length) return;

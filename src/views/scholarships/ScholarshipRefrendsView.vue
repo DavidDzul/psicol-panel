@@ -7,11 +7,11 @@
         <v-tabs v-model="viewVariant" color="primary" density="compact">
           <v-tab value="completa">
             <v-icon size="small" class="mr-1">mdi-table</v-icon>
-            Completa
+            Consultar por generación
           </v-tab>
           <v-tab value="incidencias">
             <v-icon size="small" class="mr-1">mdi-flag-outline</v-icon>
-            Incidencias
+            Consultar por incidencias del mes
           </v-tab>
         </v-tabs>
       </v-card>
@@ -117,14 +117,16 @@
       <v-card-text>
         <p>
           Esto pasará <strong>{{ cleanDraftIds.length }}</strong> refrendo(s) en
-          Borrador sin incidencia a estado <strong>Listo para pago</strong>.
-          Son becarios que nunca tuvieron una incidencia, por lo que no
-          aparecen en esta tabla.
+          Borrador sin incidencia a estado <strong>Listo para pago</strong>. Son
+          becarios que nunca tuvieron una incidencia, por lo que no aparecen en
+          esta tabla.
         </p>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
-        <v-btn variant="text" @click="closeDraftsDialog = false">Cancelar</v-btn>
+        <v-btn variant="text" @click="closeDraftsDialog = false"
+          >Cancelar</v-btn
+        >
         <v-btn
           color="primary"
           variant="elevated"
@@ -139,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onUnmounted, ref } from "vue";
+import { computed, defineAsyncComponent, onUnmounted, ref, watch } from "vue";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
@@ -155,6 +157,13 @@ const props = defineProps<{
 // Pedagogía queda fija en "incidencias", sin UI para cambiarla.
 const viewVariant = ref<"completa" | "incidencias">(
   props.mode === "pedagogia" ? "incidencias" : "completa",
+);
+
+// When the router reuses this component across atencion/pedagogia routes,
+// the ref above keeps its previous value. Reset it whenever mode changes.
+watch(
+  () => props.mode,
+  (mode) => { viewVariant.value = mode === "pedagogia" ? "incidencias" : "completa"; },
 );
 
 const requireGeneration = computed(() => viewVariant.value === "completa");
@@ -261,9 +270,7 @@ const onPeriodChange = async (): Promise<void> => {
     year: selectedYear.value,
     month: selectedMonth.value,
     campus: selectedCampus.value!,
-    generation_id: requireGeneration.value
-      ? selectedGenerationId.value!
-      : null,
+    generation_id: requireGeneration.value ? selectedGenerationId.value! : null,
     per_page: 500,
   };
   if (viewVariant.value === "incidencias") {
