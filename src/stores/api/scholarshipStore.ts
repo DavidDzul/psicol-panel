@@ -40,12 +40,22 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const selectedRefrend = ref<ScholarshipRefrend | null>(null);
   const attendanceSummaries = ref<Map<string, AttendanceSummary>>(new Map());
 
-  // ── Bulk table (master table) ─────────────────────────────────────────────
+  // ── Bulk table (master table — variante Completa) ─────────────────────────
   const bulkRows = ref<BulkRefrendRow[]>([]);
   const bulkMeta = ref<BulkTableMeta | null>(null);
   const bulkLoading = ref<boolean>(false);
   const bulkError = ref<string | null>(null);
   const bulkParams = ref<BulkTableParams | null>(null);
+
+  // ── Bulk table (master table — variante Incidencias) ──────────────────────
+  // Query independiente de la Completa: no comparten loading/error/params, así
+  // alternar de tab nunca muestra datos de la otra búsqueda (p.ej. filtrados
+  // por una generación que solo aplicaba a la búsqueda Completa).
+  const incidenciasRows = ref<BulkRefrendRow[]>([]);
+  const incidenciasMeta = ref<BulkTableMeta | null>(null);
+  const incidenciasLoading = ref<boolean>(false);
+  const incidenciasError = ref<string | null>(null);
+  const incidenciasParams = ref<BulkTableParams | null>(null);
 
   // ── Profiles ──────────────────────────────────────────────────────────────
 
@@ -204,7 +214,9 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   const atencionFlag = async (id: number, form: AtencionFlagForm): Promise<ScholarshipRefrend | undefined> => {
     try {
-      const currentRow = bulkRows.value.find((r) => r.refrend.id === id);
+      const currentRow =
+        bulkRows.value.find((r) => r.refrend.id === id) ??
+        incidenciasRows.value.find((r) => r.refrend.id === id);
       const isEdit = currentRow?.refrend.workflow_status === 'CON_INCIDENCIA';
       const payload = {
         description: form.description,
@@ -420,12 +432,37 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
-  const patchInline = async (id: number, payload: InlinePatchPayload): Promise<void> => {
-    const rowIdx = bulkRows.value.findIndex((r) => r.refrend.id === id);
-    const previous = rowIdx >= 0 ? structuredClone(toRaw(bulkRows.value[rowIdx])) : null;
+  const fetchIncidenciasTable = async (params: BulkTableParams): Promise<void> => {
+    incidenciasLoading.value = true;
+    incidenciasError.value = null;
+    incidenciasParams.value = params;
+    try {
+      const res = await axios.get("api/admin/scholarship-refrends/bulk-table", { params });
+      incidenciasRows.value = res.data.data;
+      incidenciasMeta.value = res.data.meta;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al cargar la tabla.")
+        : "Error de red.";
+      incidenciasError.value = msg;
+      incidenciasRows.value = [];
+      incidenciasMeta.value = null;
+      showAlert({ title: msg, status: "error" });
+    } finally {
+      incidenciasLoading.value = false;
+    }
+  };
 
-    if (rowIdx >= 0) {
-      const row = bulkRows.value[rowIdx];
+  const patchInline = async (id: number, payload: InlinePatchPayload): Promise<void> => {
+    const locations = _findRowLocations(id);
+    const snapshots = locations.map(({ rows, idx }) => ({
+      rows,
+      idx,
+      previous: structuredClone(toRaw(rows.value[idx])),
+    }));
+
+    for (const { rows, idx } of locations) {
+      const row = rows.value[idx];
       if (payload.atencion_labels !== undefined) {
         row.refrend.atencion_labels = payload.atencion_labels;
       }
@@ -450,18 +487,28 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
     try {
       const res = await axios.patch(`api/admin/scholarship-refrends/${id}/inline`, payload);
-      if (rowIdx >= 0) {
-        bulkRows.value[rowIdx].refrend = res.data.data as ScholarshipRefrend;
+      for (const { rows, idx } of locations) {
+        rows.value[idx].refrend = res.data.data as ScholarshipRefrend;
       }
     } catch (error: unknown) {
-      if (rowIdx >= 0 && previous !== null) {
-        bulkRows.value[rowIdx] = previous;
+      for (const { rows, idx, previous } of snapshots) {
+        rows.value[idx] = previous;
       }
       throw error;
     }
   };
 
   // ── Private helpers ───────────────────────────────────────────────────────
+
+  // Las filas de Completa e Incidencias vienen de queries independientes y
+  // pueden coexistir (un mismo becario puede aparecer en ambas) — las acciones
+  // de workflow deben reflejarse en cualquier array donde la fila esté presente.
+  const _findRowLocations = (
+    id: number
+  ): { rows: typeof bulkRows; idx: number }[] =>
+    [bulkRows, incidenciasRows]
+      .map((rows) => ({ rows, idx: rows.value.findIndex((r) => r.refrend.id === id) }))
+      .filter((loc) => loc.idx >= 0);
 
   const _updateRefrend = async (url: string, data: object): Promise<ScholarshipRefrend | undefined> => {
     try {
@@ -491,9 +538,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     refrend: ScholarshipRefrend,
     extra?: Partial<Omit<BulkRefrendRow, "refrend">>
   ): void => {
-    const idx = bulkRows.value.findIndex((r) => r.refrend.id === refrend.id);
-    if (idx >= 0) {
-      bulkRows.value[idx] = { ...bulkRows.value[idx], refrend, ...extra };
+    for (const { rows, idx } of _findRowLocations(refrend.id)) {
+      rows.value[idx] = { ...rows.value[idx], refrend, ...extra };
     }
   };
 
@@ -573,11 +619,21 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     bulkParams.value = null;
   };
 
+  const resetIncidenciasTable = (): void => {
+    incidenciasRows.value = [];
+    incidenciasMeta.value = null;
+    incidenciasError.value = null;
+    incidenciasParams.value = null;
+  };
+
   const bulkApprove = async (ids: number[]): Promise<void> => {
     try {
       const res = await axios.post("api/admin/scholarship-refrends/bulk/approve", { ids });
       const { approved, skipped } = res.data.data ?? {};
+      // Una fila aprobada puede vivir en cualquiera de las dos queries (Completa
+      // e Incidencias) — refrescamos las que tengan una búsqueda activa.
       if (bulkParams.value) await fetchBulkTable(bulkParams.value);
+      if (incidenciasParams.value) await fetchIncidenciasTable(incidenciasParams.value);
       const msg = skipped > 0
         ? `${approved} aprobado(s), ${skipped} omitido(s).`
         : `${approved} refrendo(s) aprobado(s).`;
@@ -600,6 +656,11 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     bulkLoading,
     bulkError,
     bulkParams,
+    incidenciasRows,
+    incidenciasMeta,
+    incidenciasLoading,
+    incidenciasError,
+    incidenciasParams,
     fetchProfile,
     saveProfile,
     fetchRefrends,
@@ -618,6 +679,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     markAsGraduate,
     fetchBulkTable,
     resetBulkTable,
+    fetchIncidenciasTable,
+    resetIncidenciasTable,
     patchInline,
     atencionFlag,
     clearFlag,

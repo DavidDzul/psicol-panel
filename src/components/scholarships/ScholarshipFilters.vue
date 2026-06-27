@@ -33,7 +33,7 @@
         @update:model-value="emit('update:campus', internalCampus)"
       />
     </v-col>
-    <v-col md="2">
+    <v-col v-if="requireGeneration !== false" md="2">
       <v-autocomplete
         v-model="internalGenerationId"
         :items="generationList"
@@ -52,7 +52,7 @@
         class="mx-3"
         color="grey"
         prepend-icon="mdi-magnify"
-        :disabled="!campus || !generationId"
+        :disabled="!campus || (requireGeneration !== false && !generationId)"
         @click="emit('search')"
       >
         Buscar
@@ -78,6 +78,7 @@ const props = defineProps<{
   campuses?: SelectOption[] | null;
   campus?: string | null;
   generationId?: number | null;
+  requireGeneration?: boolean;
 }>();
 
 const emit = defineEmits<{

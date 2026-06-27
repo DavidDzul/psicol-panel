@@ -46,6 +46,7 @@
       :headers="headers"
       :items="displayRows"
       :loading="loading"
+      :group-by="groupBy"
       class="elevation-1 refrend-master-table"
       :items-per-page="-1"
       hover
@@ -64,6 +65,33 @@
             clearable
           />
         </div>
+      </template>
+
+      <template
+        v-if="viewVariant === 'incidencias'"
+        #group-header="{ item, columns, toggleGroup, isGroupOpen }"
+      >
+        <tr
+          @vue:mounted="
+            !autoOpenedGroupIds.has(item.id) &&
+            !isGroupOpen(item) &&
+            (autoOpenedGroupIds.add(item.id), toggleGroup(item))
+          "
+        >
+          <td :colspan="columns.length" class="group-header-row">
+            <v-btn
+              size="x-small"
+              variant="text"
+              :icon="
+                isGroupOpen(item) ? 'mdi-chevron-down' : 'mdi-chevron-right'
+              "
+              @click="toggleGroup(item)"
+            />
+            <span class="text-caption font-weight-bold text-uppercase">
+              {{ item.value ?? "Sin generación" }}
+            </span>
+          </td>
+        </tr>
       </template>
 
       <template #bottom />
@@ -142,9 +170,7 @@
           "
           label
           >{{
-            item.has_retardos_discount
-              ? 2
-              : item.semester_lates_unconsumed
+            item.has_retardos_discount ? 2 : item.semester_lates_unconsumed
           }}/2</v-chip
         >
       </template>
@@ -207,10 +233,22 @@
       <template #item.atencion="{ item }">
         <div class="d-flex align-center ga-2">
           <v-btn
-            :prepend-icon="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'mdi-flag' : 'mdi-flag-outline'"
+            :prepend-icon="
+              item.refrend.workflow_status === 'CON_INCIDENCIA'
+                ? 'mdi-flag'
+                : 'mdi-flag-outline'
+            "
             size="x-small"
-            :variant="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'tonal' : 'outlined'"
-            :color="item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'orange-darken-2' : 'blue'"
+            :variant="
+              item.refrend.workflow_status === 'CON_INCIDENCIA'
+                ? 'tonal'
+                : 'outlined'
+            "
+            :color="
+              item.refrend.workflow_status === 'CON_INCIDENCIA'
+                ? 'orange-darken-2'
+                : 'blue'
+            "
             :disabled="
               !['DRAFT', 'CON_INCIDENCIA'].includes(
                 item.refrend.workflow_status ?? '',
@@ -219,7 +257,11 @@
             rounded="lg"
             @click="openAtencionDialog(item)"
           >
-            {{ item.refrend.workflow_status === 'CON_INCIDENCIA' ? 'Incidencia' : 'Registrar' }}
+            {{
+              item.refrend.workflow_status === "CON_INCIDENCIA"
+                ? "Visualizar"
+                : "Registrar"
+            }}
           </v-btn>
           <span
             v-if="item.refrend.atencion_observations"
@@ -255,7 +297,11 @@
 
       <template #item.pedagogia="{ item }">
         <v-btn
-          :prepend-icon="item.refrend.pedagogia_observations ? 'mdi-school' : 'mdi-school-outline'"
+          :prepend-icon="
+            item.refrend.pedagogia_observations
+              ? 'mdi-school'
+              : 'mdi-school-outline'
+          "
           size="x-small"
           :variant="item.refrend.pedagogia_observations ? 'tonal' : 'outlined'"
           color="deep-purple"
@@ -263,7 +309,7 @@
           rounded="lg"
           @click="openPedagogiaDialog(item)"
         >
-          {{ item.refrend.pedagogia_observations ? 'Validado' : 'Validar' }}
+          {{ item.refrend.pedagogia_observations ? "Validado" : "Validar" }}
         </v-btn>
       </template>
 
@@ -328,8 +374,12 @@
 
       <template #item.projected_amount="{ item }">
         <div class="d-flex flex-column">
-          <span class="text-caption font-weight-medium">{{ fmt(item.refrend.final_amount) }}</span>
-          <template v-if="Number(item.refrend.amount_pending_from_previous) > 0">
+          <span class="text-caption font-weight-medium">{{
+            fmt(item.refrend.final_amount)
+          }}</span>
+          <template
+            v-if="Number(item.refrend.amount_pending_from_previous) > 0"
+          >
             <span class="text-caption text-teal-darken-1">
               + {{ fmt(item.refrend.amount_pending_from_previous) }} ret.
             </span>
@@ -337,7 +387,9 @@
               = {{ fmt(item.refrend.total_to_pay) }}
             </span>
           </template>
-          <template v-else-if="Number(item.refrend.refund_amount_from_previous) > 0">
+          <template
+            v-else-if="Number(item.refrend.refund_amount_from_previous) > 0"
+          >
             <span class="text-caption text-green-darken-1">
               + {{ fmt(item.refrend.refund_amount_from_previous!) }} reemb.
             </span>
@@ -345,7 +397,6 @@
               = {{ fmt(item.refrend.total_to_pay) }}
             </span>
           </template>
-
         </div>
       </template>
 
@@ -518,19 +569,38 @@ const props = defineProps<{
   year: number;
   month: number;
   mode?: "atencion" | "pedagogia";
+  viewVariant?: "completa" | "incidencias";
 }>();
 
 const mode = computed(() => props.mode ?? "atencion");
+const viewVariant = computed(() => props.viewVariant ?? "completa");
 
 const searchQuery = ref("");
 
 const displayRows = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
-  if (!q) return props.rows;
-  return props.rows.filter((r) =>
-    r.refrend.snapshot_name.toLowerCase().includes(q),
-  );
+  let rows = props.rows;
+  if (viewVariant.value === "incidencias") {
+    rows = rows.filter((r) => r.incidents_count > 0);
+  }
+  if (!q) return rows;
+  return rows.filter((r) => r.refrend.snapshot_name.toLowerCase().includes(q));
 });
+
+// ── Grouping (Incidencias variant only) ─────────────────────────────────────
+// Agrupa por la generación SNAPSHOTEADA en el refrendo de ese periodo,
+// no por la generación actual del becario.
+const groupBy = computed(() =>
+  viewVariant.value === "incidencias"
+    ? [{ key: "refrend.snapshot_generation", order: "asc" as const }]
+    : [],
+);
+
+// ── Group expand/collapse (variante Incidencias) ────────────────────────────
+// Vuetify arranca su Set interno de grupos abiertos vacío (todo colapsado).
+// Abrimos cada grupo la primera vez que su header se monta; si el usuario lo
+// colapsa manualmente después, no lo volvemos a forzar a abrir.
+const autoOpenedGroupIds = new Set<string>();
 
 // ── Table title ────────────────────────────────────────────────────────────
 
@@ -594,15 +664,8 @@ const BASE_HEADERS = [
   { title: "Estado", key: "workflow_status", width: 175, sortable: false },
 ];
 
-const ATENCION_HEADERS = [
+const ATENCION_COMPLETA_HEADERS = [
   { title: "Atención a Becarios/as", key: "atencion", sortable: false },
-  {
-    title: "Pedagogía",
-    key: "pedagogia_readonly",
-    width: 180,
-    sortable: false,
-  },
-  { title: "Notif.", key: "notificado", width: 65, sortable: false },
   {
     title: "Asist. Penalización",
     key: "attendance_impact",
@@ -620,8 +683,24 @@ const ATENCION_HEADERS = [
   { title: "", key: "atencion_actions", width: 50, sortable: false },
 ];
 
+const ATENCION_INCIDENCIAS_HEADERS = [
+  { title: "Incidencia", key: "atencion", sortable: false },
+  {
+    title: "R. Pedagogía",
+    key: "pedagogia_readonly",
+    width: 180,
+    sortable: false,
+  },
+  { title: "¿Notificado?", key: "notificado", width: 65, sortable: false },
+];
+
 const PEDAGOGIA_HEADERS = [
-  { title: "Incidencia", key: "incident_description", width: 180, sortable: false },
+  {
+    title: "Incidencia",
+    key: "incident_description",
+    width: 180,
+    sortable: false,
+  },
   { title: "Pedagogía", key: "pedagogia", width: 180, sortable: false },
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
@@ -629,10 +708,17 @@ const PEDAGOGIA_HEADERS = [
   { title: "", key: "payment_verify", width: 160, sortable: false },
 ];
 
-const headers = computed(() => [
-  ...BASE_HEADERS,
-  ...(mode.value === "atencion" ? ATENCION_HEADERS : PEDAGOGIA_HEADERS),
-]);
+const headers = computed(() => {
+  if (mode.value === "pedagogia") {
+    return [...BASE_HEADERS, ...PEDAGOGIA_HEADERS];
+  }
+  return [
+    ...BASE_HEADERS,
+    ...(viewVariant.value === "incidencias"
+      ? ATENCION_INCIDENCIAS_HEADERS
+      : ATENCION_COMPLETA_HEADERS),
+  ];
+});
 
 // ── Attendance detail dialog ────────────────────────────────────────────────
 
@@ -672,7 +758,8 @@ const statusChip = (
   if (s === "PENDIENTE_NOTIFICACION")
     return { label: "Pend. notif.", color: "blue" };
   if (s === "CLOSED") return { label: "Pagado", color: "teal" };
-  if (refrend.status === "CANCELLED") return { label: "Baja", color: "red-darken-3" };
+  if (refrend.status === "CANCELLED")
+    return { label: "Baja", color: "red-darken-3" };
 
   if (s === "LISTO_PARA_PAGO") {
     if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
@@ -694,22 +781,23 @@ const statusChip = (
 };
 
 const CAUSE_LABELS: Record<string, string> = {
-  FALTAS_FI:                              "Faltas a F.I.",
-  SIN_ENTREVISTA_CALIFICACIONES:          "Sin entrevista de calificaciones",
-  NO_ENTREGO_CALIFICACIONES_PROVISIONALES:"No entregó cal. provisionales",
-  NO_ENTREGO_CALIFICACIONES_ORIGINALES:   "No entregó cal. originales",
-  BAJO_PROMEDIO:                          "Bajo promedio",
-  FALTAS_FORMACION_INTEGRAL:              "Faltas a F.I.",
-  LLEVARSE_EXTRAORDINARIO:                "Por llevarse a extraordinario",
-  DEJO_ESCUELA_PERSONALES:                "Dejó la escuela (personal)",
-  DEJO_ESCUELA_VOCACIONAL:                "Dejó la escuela (vocacional)",
-  DESAPARECIO:                            "Desapareció sin avisar",
-  FALTAS_REGLAMENTO:                      "Faltas al reglamento",
+  FALTAS_FI: "Faltas a F.I.",
+  SIN_ENTREVISTA_CALIFICACIONES: "Sin entrevista de calificaciones",
+  NO_ENTREGO_CALIFICACIONES_PROVISIONALES: "No entregó cal. provisionales",
+  NO_ENTREGO_CALIFICACIONES_ORIGINALES: "No entregó cal. originales",
+  BAJO_PROMEDIO: "Bajo promedio",
+  FALTAS_FORMACION_INTEGRAL: "Faltas a F.I.",
+  LLEVARSE_EXTRAORDINARIO: "Por llevarse a extraordinario",
+  DEJO_ESCUELA_PERSONALES: "Dejó la escuela (personal)",
+  DEJO_ESCUELA_VOCACIONAL: "Dejó la escuela (vocacional)",
+  DESAPARECIO: "Desapareció sin avisar",
+  FALTAS_REGLAMENTO: "Faltas al reglamento",
 };
 
 const resolutionCauseLabel = (refrend: ScholarshipRefrend): string | null => {
   if (!refrend.resolution_cause) return null;
-  if (refrend.resolution_cause === "OTRO") return refrend.resolution_notes ?? null;
+  if (refrend.resolution_cause === "OTRO")
+    return refrend.resolution_notes ?? null;
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
 };
 
@@ -860,7 +948,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   try {
     await store.recordPaymentSituation(activeRow.value.refrend.id, form);
     const key =
-      (form.carryover_months_count && form.resolution_type === "BECA_MES")
+      form.carryover_months_count && form.resolution_type === "BECA_MES"
         ? "PAGO_MESES"
         : (form.resolution_type as SituationKey);
     situationDialogs.value[key] = false;
@@ -947,6 +1035,12 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 /* Table info header */
 .table-header {
   padding: 6px 2px;
+}
+
+/* Group header row (variante Incidencias, agrupado por snapshot_generation) */
+.group-header-row {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  padding: 4px 8px !important;
 }
 
 /* Columna fija: fondo sólido para ocultar el scroll */

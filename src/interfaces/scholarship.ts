@@ -213,7 +213,7 @@ export interface BulkTableParams {
   year: number
   month: number
   campus: string
-  generation_id: number
+  generation_id: number | null
   page?: number
   per_page?: number
 }
