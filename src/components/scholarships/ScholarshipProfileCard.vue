@@ -11,19 +11,31 @@
     <template v-if="!editing">
       <div v-if="profile">
         <!-- ── Sección 1: Tipo de beca y monto ── -->
-        <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3">
+        <div
+          class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
+        >
           <div class="d-flex align-center ga-6">
             <div>
-              <div class="text-caption text-medium-emphasis mb-1">Tipo de beca</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Tipo de beca
+              </div>
               <v-chip label color="primary" variant="tonal">
                 <v-icon start>mdi-school-outline</v-icon>
                 {{ profile.scholarship_type }}
               </v-chip>
             </div>
             <div>
-              <div class="text-caption text-medium-emphasis mb-1">Monto mensual</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Monto mensual
+              </div>
               <div class="text-h6 font-weight-bold">
                 {{ fmt(profile.monthly_amount) }}
+              </div>
+            </div>
+            <div v-if="profile.monto_apoyo && Number(profile.monto_apoyo) > 0">
+              <div class="text-caption text-medium-emphasis mb-1">Apoyo</div>
+              <div class="text-h6 font-weight-bold">
+                {{ fmt(profile.monto_apoyo) }}
               </div>
             </div>
           </div>
@@ -37,18 +49,22 @@
           <v-divider class="mb-3" />
           <v-row dense>
             <v-col cols="6" sm="2">
-              <div class="text-caption text-medium-emphasis mb-1">Descuento</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Descuento
+              </div>
               <v-chip label color="error" variant="tonal" size="small">
                 -{{ profile.active_discount_percentage }}%
               </v-chip>
             </v-col>
             <v-col v-if="profile.discount_valid_until" cols="6" sm="3">
-              <div class="text-caption text-medium-emphasis mb-1">Vigente hasta</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Vigente hasta
+              </div>
               <div class="text-body-2 font-weight-medium">
                 {{ dayjs(profile.discount_valid_until).format("DD/MM/YYYY") }}
               </div>
             </v-col>
-            <v-col v-if="profile.discount_reason" cols="12" sm="7">
+            <v-col v-if="profile.discount_reason" cols="6" sm="3">
               <div class="text-caption text-medium-emphasis mb-1">Motivo</div>
               <div class="text-body-2 font-weight-medium">
                 {{ profile.discount_reason }}
@@ -59,7 +75,9 @@
 
         <!-- ── Sección 3: Retícula ── -->
         <v-divider class="my-3" />
-        <template v-if="profile.reticula_start_date && profile.reticula_end_date">
+        <template
+          v-if="profile.reticula_start_date && profile.reticula_end_date"
+        >
           <v-row dense align="center">
             <v-col cols="6" sm="3">
               <div class="text-caption text-medium-emphasis mb-1">
@@ -77,8 +95,18 @@
                 {{ dayjs(profile.reticula_end_date).format("DD/MM/YYYY") }}
               </div>
             </v-col>
+            <v-col v-if="profile.egreso_administrativo" cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Egreso administrativo
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ dayjs(profile.egreso_administrativo).format("DD/MM/YYYY") }}
+              </div>
+            </v-col>
             <v-col v-if="profile.reticula_original_name" cols="12" sm="6">
-              <div class="text-caption text-medium-emphasis mb-1">Documento</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Documento
+              </div>
               <div class="d-flex align-center ga-1">
                 <v-icon size="small" color="error">mdi-file-pdf-box</v-icon>
                 <span class="text-body-2 text-truncate flex-1-1">
@@ -102,12 +130,7 @@
             </v-col>
           </v-row>
         </template>
-        <v-alert
-          v-else
-          type="info"
-          variant="tonal"
-          density="compact"
-        >
+        <v-alert v-else type="info" variant="tonal" density="compact">
           No se ha registrado la retícula. Es necesaria para validar el periodo
           de pago.
           <template #append>
@@ -164,6 +187,19 @@
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
+            v-model.number="form.monto_apoyo"
+            label="Apoyo adicional"
+            type="number"
+            min="0"
+            step="0.01"
+            variant="outlined"
+            density="compact"
+            prefix="$"
+            clearable
+          />
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-text-field
             v-model.number="form.active_discount_percentage"
             label="Descuento académico %"
             type="number"
@@ -179,7 +215,11 @@
         <v-col cols="12" md="6">
           <v-text-field
             v-model="form.discount_valid_until"
-            :label="form.active_discount_percentage ? 'Descuento vigente hasta *' : 'Descuento vigente hasta'"
+            :label="
+              form.active_discount_percentage
+                ? 'Descuento vigente hasta *'
+                : 'Descuento vigente hasta'
+            "
             type="date"
             variant="outlined"
             density="compact"
@@ -187,10 +227,14 @@
             :rules="[requiredIfDiscount]"
           />
         </v-col>
-        <v-col cols="12">
+        <v-col cols="6">
           <v-text-field
             v-model="form.discount_reason"
-            :label="form.active_discount_percentage ? 'Motivo del descuento *' : 'Motivo del descuento'"
+            :label="
+              form.active_discount_percentage
+                ? 'Motivo del descuento *'
+                : 'Motivo del descuento'
+            "
             maxlength="200"
             clearable
             density="compact"
@@ -289,6 +333,7 @@ const emptyForm = () => ({
   user_id: props.userId,
   scholarship_type: "IU" as ScholarshipType,
   monthly_amount: 0,
+  monto_apoyo: null as number | null,
   active_discount_percentage: null as number | null,
   discount_reason: null as string | null,
   discount_valid_until: null as string | null,
@@ -309,6 +354,9 @@ const startEdit = (): void => {
   if (profile.value) {
     form.scholarship_type = profile.value.scholarship_type;
     form.monthly_amount = Number(profile.value.monthly_amount);
+    form.monto_apoyo = profile.value.monto_apoyo
+      ? Number(profile.value.monto_apoyo)
+      : null;
     form.active_discount_percentage = profile.value.active_discount_percentage
       ? Number(profile.value.active_discount_percentage)
       : null;
@@ -343,6 +391,7 @@ const onSave = async (): Promise<void> => {
     user_id: form.user_id,
     scholarship_type: form.scholarship_type,
     monthly_amount: form.monthly_amount,
+    monto_apoyo: form.monto_apoyo,
     active_discount_percentage: form.active_discount_percentage,
     discount_reason: form.discount_reason,
     discount_valid_until: form.discount_valid_until,
@@ -369,7 +418,10 @@ const required = (v: unknown): boolean | string =>
 
 const requiredIfDiscount = (v: unknown): boolean | string => {
   if (!form.active_discount_percentage) return true;
-  return (v !== null && v !== undefined && v !== "") || "Requerido cuando hay descuento.";
+  return (
+    (v !== null && v !== undefined && v !== "") ||
+    "Requerido cuando hay descuento."
+  );
 };
 
 const positiveNumber = (v: number): boolean | string =>

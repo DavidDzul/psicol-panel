@@ -81,6 +81,7 @@ export interface ScholarshipProfile {
   user_id: number
   scholarship_type: ScholarshipType
   monthly_amount: string
+  monto_apoyo: string | null
   active_discount_percentage: string | null
   discount_reason: string | null
   discount_valid_until: string | null
@@ -88,6 +89,7 @@ export interface ScholarshipProfile {
   reticula_end_date: string | null
   reticula_file_path: string | null
   reticula_original_name: string | null
+  egreso_administrativo: string | null
   created_at: string
   updated_at: string
 }
@@ -139,6 +141,8 @@ export interface ScholarshipRefrend {
   carryover_months_count: number | null
   carryover_months_detail: string | null
   carryover_percentage: string | null
+  snapshot_gross_amount: string | null
+  snapshot_monto_apoyo: string | null
   base_amount: string
   snapshot_discount_percentage: string | null
   snapshot_discount_reason: string | null
@@ -207,6 +211,9 @@ export interface BulkRefrendRow {
   month_absent: number
   has_retardos_discount: boolean
   has_falta_discount: boolean
+  profile_discount_pct: string | null
+  profile_discount_valid_until: string | null
+  profile_discount_reason: string | null
 }
 
 export interface BulkTableParams {
@@ -334,6 +341,7 @@ export interface ScholarshipProfileForm {
   user_id: number
   scholarship_type: ScholarshipType
   monthly_amount: number
+  monto_apoyo?: number | null
   active_discount_percentage?: number | null
   discount_reason?: string | null
   discount_valid_until?: string | null
