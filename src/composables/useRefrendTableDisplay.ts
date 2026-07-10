@@ -1,0 +1,151 @@
+import { campusMap } from "@/constants";
+import type {
+  BulkRefrendRow,
+  RefrendStatus,
+  ScholarshipRefrend,
+} from "@/interfaces/scholarship";
+
+// ── Currency formatting ──────────────────────────────────────────────────────
+
+export const fmt = (value: string | number): string =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    Number(value),
+  );
+
+// ── Locked status ─────────────────────────────────────────────────────────────
+
+export const LOCKED_STATUSES = new Set<RefrendStatus>([
+  "PAID",
+  "AUTHORIZED",
+  "CANCELLED",
+]);
+
+export const isLocked = (refrend: ScholarshipRefrend): boolean =>
+  LOCKED_STATUSES.has(refrend.status) || refrend.workflow_status === "CLOSED";
+
+// ── Workflow status chip ──────────────────────────────────────────────────────
+
+export const statusChip = (
+  refrend: BulkRefrendRow["refrend"],
+): { label: string; color: string } => {
+  const s = refrend.workflow_status;
+  const r = refrend.resolution_type;
+
+  if (s === "DRAFT") return { label: "Borrador", color: "grey" };
+  if (s === "CON_INCIDENCIA")
+    return { label: "Con incidencia", color: "orange" };
+  if (s === "PENDIENTE_NOTIFICACION")
+    return { label: "Pend. notif.", color: "blue" };
+  if (s === "CLOSED") return { label: "Pagado", color: "teal" };
+  if (refrend.status === "CANCELLED")
+    return { label: "Baja", color: "red-darken-3" };
+
+  if (s === "LISTO_PARA_PAGO") {
+    if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
+    if (r === "RETENIDA") return { label: "Retenida", color: "amber-darken-2" };
+    if (r === "EGRESADO") return { label: "Egresado", color: "blue-grey" };
+    if (r === "BAJA_DEFINITIVA")
+      return { label: "Baja definitiva", color: "red-darken-3" };
+    if (r === "SUSPENDIDA") {
+      const pct = refrend.suspension_percentage ?? null;
+      return {
+        label: pct ? `Suspendido ${pct}%` : "Suspendido",
+        color: "deep-orange",
+      };
+    }
+    return { label: "Listo para pago", color: "green" };
+  }
+
+  return { label: s ?? "—", color: "grey" };
+};
+
+// ── Resolution cause label ────────────────────────────────────────────────────
+
+export const CAUSE_LABELS: Record<string, string> = {
+  FALTAS_FI: "Faltas a F.I.",
+  SIN_ENTREVISTA_CALIFICACIONES: "Sin entrevista de calificaciones",
+  NO_ENTREGO_CALIFICACIONES_PROVISIONALES: "No entregó cal. provisionales",
+  NO_ENTREGO_CALIFICACIONES_ORIGINALES: "No entregó cal. originales",
+  BAJO_PROMEDIO: "Bajo promedio",
+  FALTAS_FORMACION_INTEGRAL: "Faltas a F.I.",
+  LLEVARSE_EXTRAORDINARIO: "Por llevarse a extraordinario",
+  DEJO_ESCUELA_PERSONALES: "Dejó la escuela (personal)",
+  DEJO_ESCUELA_VOCACIONAL: "Dejó la escuela (vocacional)",
+  DESAPARECIO: "Desapareció sin avisar",
+  FALTAS_REGLAMENTO: "Faltas al reglamento",
+};
+
+export const resolutionCauseLabel = (
+  refrend: ScholarshipRefrend,
+): string | null => {
+  if (!refrend.resolution_cause) return null;
+  if (refrend.resolution_cause === "OTRO")
+    return refrend.resolution_notes ?? null;
+  return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
+};
+
+// ── Row CSS class ───────────────────────────────────────────────────────────
+
+export const rowClass = (item: BulkRefrendRow): string => {
+  const s = item.refrend.workflow_status;
+  if (s === "CON_INCIDENCIA") return "row-incident";
+  if (s === "DRAFT") return "row-pending";
+  return "";
+};
+
+// ── Base headers (columns every mode always shows) ───────────────────────────
+
+export const BASE_HEADERS = [
+  {
+    title: "Becario",
+    key: "snapshot_name",
+    fixed: true,
+    minWidth: "200px",
+    sortable: true,
+  },
+  { title: "Estado", key: "workflow_status", width: 175, sortable: false },
+];
+
+// ── Table title (campus / generation / period) ────────────────────────────────
+
+const MONTHS_ES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+export const buildTableInfo = (
+  rows: BulkRefrendRow[],
+  year: number,
+  month: number,
+): { campus: string; generation: string; period: string } => {
+  const first = rows[0]?.refrend;
+  return {
+    campus:
+      campusMap.get(first?.snapshot_campus ?? "")?.text ??
+      first?.snapshot_campus ??
+      "—",
+    generation: first?.snapshot_generation ?? "—",
+    period: `${MONTHS_ES[month - 1] ?? month} ${year}`,
+  };
+};
+
+// ── Search filter (by becario name) ───────────────────────────────────────────
+
+export const filterRowsByName = (
+  rows: BulkRefrendRow[],
+  query: string,
+): BulkRefrendRow[] => {
+  const q = query.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((r) => r.refrend.snapshot_name.toLowerCase().includes(q));
+};

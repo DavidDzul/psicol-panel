@@ -69,13 +69,20 @@
       >
         {{ activeError }}
       </v-alert>
-      <RefrendMasterTable
+      <AtencionRefrendTable
+        v-if="props.mode === 'atencion'"
         :rows="activeRows"
         :loading="activeLoading"
         :year="selectedYear"
         :month="selectedMonth"
-        :mode="props.mode"
         :view-variant="viewVariant"
+      />
+      <PedagogiaRefrendTable
+        v-else
+        :rows="activeRows"
+        :loading="activeLoading"
+        :year="selectedYear"
+        :month="selectedMonth"
       />
     </v-col>
   </v-row>
@@ -168,8 +175,11 @@ watch(
 
 const requireGeneration = computed(() => viewVariant.value === "completa");
 
-const RefrendMasterTable = defineAsyncComponent(
-  () => import("@/components/scholarships/RefrendMasterTable.vue"),
+const AtencionRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/AtencionRefrendTable.vue"),
+);
+const PedagogiaRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/PedagogiaRefrendTable.vue"),
 );
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
@@ -227,7 +237,7 @@ onUnmounted(() => {
 // Becarios en DRAFT que nunca tuvieron incidencia (incidents_count === 0) no
 // aparecen en ninguna fila de la tabla de Incidencias — sin este botón nunca
 // avanzan a Listo para pago. `incidenciasRows` trae el fetch SIN filtrar, así
-// que acá sí podemos verlos aunque `RefrendMasterTable` no los renderice.
+// que acá sí podemos verlos aunque `PedagogiaRefrendTable` no los renderice.
 const cleanDraftIds = computed<number[]>(() =>
   scholarshipStore.incidenciasRows
     .filter(
