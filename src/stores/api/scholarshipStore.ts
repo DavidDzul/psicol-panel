@@ -572,6 +572,23 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const atencionApprove = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+    try {
+      const res = await axios.post<ScholarshipRefrendResponse>(
+        `api/admin/scholarship-refrends/${id}/atencion-approve`,
+      );
+      const refrend = _mergeRefrend(res.data.data);
+      _mergeBulkRow(refrend);
+      showAlert({ title: "Refrendo aprobado con descuento.", status: "success" });
+      return refrend;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al aprobar el refrendo.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   // ── Payment situation ─────────────────────────────────────────────────────
 
   const recordPaymentSituation = async (
@@ -672,6 +689,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     submitPaymentVerify,
     recalculateRefrend,
     approveFullPayment,
+    atencionApprove,
     recordPaymentSituation,
     bulkApprove,
   };

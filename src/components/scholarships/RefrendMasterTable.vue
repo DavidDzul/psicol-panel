@@ -132,6 +132,36 @@
 
       <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
+      <template #item.profile_discount="{ item }">
+        <template
+          v-if="
+            item.refrend.snapshot_discount_percentage &&
+            Number(item.refrend.snapshot_discount_percentage) > 0
+          "
+        >
+          <v-tooltip location="bottom" max-width="260">
+            <template #activator="{ props: tp }">
+              <v-chip
+                v-bind="tp"
+                size="x-small"
+                color="orange-darken-1"
+                variant="flat"
+                label
+              >
+                - {{ item.refrend.snapshot_discount_percentage }}%
+              </v-chip>
+            </template>
+            <div class="text-caption">
+              <div v-if="item.refrend.snapshot_discount_reason">
+                <span class="font-weight-bold">Motivo: </span>
+                {{ item.refrend.snapshot_discount_reason }}
+              </div>
+            </div>
+          </v-tooltip>
+        </template>
+        <span v-else class="text-caption text-disabled">—</span>
+      </template>
+
       <template #item.attendance_total="{ item }">
         <v-btn
           variant="text"
@@ -350,26 +380,19 @@
 
       <template #item.base_amount="{ item }">
         <div class="d-flex flex-column">
-          <span class="text-caption">{{ fmt(item.refrend.base_amount) }}</span>
+          <span class="text-caption">{{
+            fmt(item.refrend.snapshot_gross_amount ?? item.refrend.base_amount)
+          }}</span>
           <div
-            v-if="item.refrend.snapshot_discount_percentage"
+            v-if="
+              item.refrend.snapshot_discount_percentage &&
+              Number(item.refrend.snapshot_discount_percentage) > 0
+            "
             class="d-flex align-center ga-1 mt-1"
           >
             <span class="text-caption text-orange-darken-1">
-              -{{ item.refrend.snapshot_discount_percentage }}%
+              - {{ item.refrend.snapshot_discount_percentage }}%
             </span>
-            <v-tooltip
-              :text="
-                item.refrend.snapshot_discount_reason ?? 'Sin motivo registrado'
-              "
-              location="bottom"
-            >
-              <template #activator="{ props }">
-                <v-icon v-bind="props" size="12" color="orange-darken-1">
-                  mdi-information-outline
-                </v-icon>
-              </template>
-            </v-tooltip>
           </div>
         </div>
       </template>
@@ -424,11 +447,13 @@
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="isLocked(item.refrend)"
             :amount-pending="item.refrend.amount_pending_from_previous"
+            :workflow-status="item.refrend.workflow_status"
             :loading="
               situationLoadingId === item.refrend.id ||
               recalcLoading === item.refrend.id
             "
             @approve-full="onApproveFullPayment(item)"
+            @approve-as-is="onApproveAsIs(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
         </div>
@@ -665,6 +690,7 @@ const ATENCION_COMPLETA_HEADERS = [
     width: 150,
     sortable: false,
   },
+  { title: "Desc. acad.", key: "profile_discount", width: 95, sortable: false },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
   { title: "F.mes", key: "month_absent", width: 75, sortable: true },
   {
@@ -923,6 +949,15 @@ const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
   situationLoadingId.value = item.refrend.id;
   try {
     await store.approveFullPayment(item.refrend.id);
+  } finally {
+    situationLoadingId.value = null;
+  }
+};
+
+const onApproveAsIs = async (item: BulkRefrendRow): Promise<void> => {
+  situationLoadingId.value = item.refrend.id;
+  try {
+    await store.atencionApprove(item.refrend.id);
   } finally {
     situationLoadingId.value = null;
   }

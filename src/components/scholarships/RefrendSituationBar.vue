@@ -30,12 +30,24 @@
 
       <v-list density="compact" nav min-width="210">
         <!-- Acciones rápidas -->
+        <v-list-item
+          v-if="workflowStatus === 'CON_INCIDENCIA'"
+          @click="emit('approve-as-is')"
+        >
+          <template #prepend>
+            <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
+          </template>
+          <v-list-item-title class="text-body-2"
+            >Aprobar con descuento</v-list-item-title
+          >
+        </v-list-item>
+
         <v-list-item @click="emit('approve-full')">
           <template #prepend>
             <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
           </template>
           <v-list-item-title class="text-body-2"
-            >Pago al 100%</v-list-item-title
+            >Pago al 100% (sin descuento)</v-list-item-title
           >
         </v-list-item>
 
@@ -61,7 +73,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { ResolutionType } from "@/interfaces/scholarship";
+import type { ResolutionType, WorkflowStatus } from "@/interfaces/scholarship";
 
 type SituationKey = ResolutionType | "PAGO_MESES";
 
@@ -70,11 +82,13 @@ const props = defineProps<{
   locked: boolean;
   loading?: boolean;
   amountPending?: string | number;
+  workflowStatus?: WorkflowStatus | null;
 }>();
 
 const emit = defineEmits<{
   open: [type: SituationKey];
   "approve-full": [];
+  "approve-as-is": [];
   recalculate: [];
 }>();
 
