@@ -1,7 +1,6 @@
 import { campusMap } from "@/constants";
 import type {
   BulkRefrendRow,
-  RefrendStatus,
   ScholarshipRefrend,
 } from "@/interfaces/scholarship";
 
@@ -13,15 +12,12 @@ export const fmt = (value: string | number): string =>
   );
 
 // ── Locked status ─────────────────────────────────────────────────────────────
+//
+// Single source of truth lives in `@/utils/refrendActionability` (design ADR
+// D5). Re-exported here for backward compatibility with existing imports
+// (e.g. `PedagogiaRefrendTable.vue`) — do not re-implement this locally.
 
-export const LOCKED_STATUSES = new Set<RefrendStatus>([
-  "PAID",
-  "AUTHORIZED",
-  "CANCELLED",
-]);
-
-export const isLocked = (refrend: ScholarshipRefrend): boolean =>
-  LOCKED_STATUSES.has(refrend.status) || refrend.workflow_status === "CLOSED";
+export { LOCKED_STATUSES, isLocked } from "@/utils/refrendActionability";
 
 // ── Workflow status chip ──────────────────────────────────────────────────────
 
