@@ -1,5 +1,5 @@
 <template>
-  <div class="refrend-master-table-wrapper">
+  <div class="atencion-refrend-table-wrapper">
     <div class="table-header mb-3">
       <div class="d-flex align-center ga-2 flex-wrap">
         <!-- Identidad del periodo -->
@@ -32,7 +32,7 @@
       :items="displayRows"
       :loading="loading"
       :group-by="groupBy"
-      class="elevation-1 refrend-master-table"
+      class="elevation-1 atencion-refrend-table"
       :items-per-page="-1"
       hover
       item-value="refrend.id"
@@ -89,29 +89,11 @@
               item.refrend.snapshot_name
             }}</span>
           </div>
-        </div>
-      </template>
-
-      <template #item.snapshot_campus="{ item }">
-        <span class="text-caption">{{ item.refrend.snapshot_campus }}</span>
-      </template>
-
-      <template #item.snapshot_generation="{ item }">
-        <span class="text-caption">{{
-          item.refrend.snapshot_generation ?? "—"
-        }}</span>
-      </template>
-
-      <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
-
-      <template #item.profile_discount="{ item }">
-        <template
-          v-if="
-            item.refrend.snapshot_discount_percentage &&
-            Number(item.refrend.snapshot_discount_percentage) > 0
-          "
-        >
-          <v-tooltip location="bottom" max-width="260">
+          <v-tooltip
+            v-if="hasAcademicDiscount(item)"
+            location="bottom"
+            max-width="260"
+          >
             <template #activator="{ props: tp }">
               <v-chip
                 v-bind="tp"
@@ -130,17 +112,28 @@
               </div>
             </div>
           </v-tooltip>
-        </template>
-        <span v-else class="text-caption text-disabled">—</span>
+        </div>
       </template>
+
+      <template #item.snapshot_campus="{ item }">
+        <span class="text-caption">{{ item.refrend.snapshot_campus }}</span>
+      </template>
+
+      <template #item.snapshot_generation="{ item }">
+        <span class="text-caption">{{
+          item.refrend.snapshot_generation ?? "—"
+        }}</span>
+      </template>
+
+      <!-- ── ASISTENCIAS ──────────────────────────────────────────────────── -->
 
       <template #item.attendance_total="{ item }">
         <v-btn
           variant="text"
           size="x-small"
           color="primary"
-          title="Ver detalle de asistencias"
-          @click="openAttendanceDetail(item)"
+          title="Ver detalle"
+          @click="openDetailDrawer(item)"
         >
           <v-icon size="13" start>mdi-calendar-check-outline</v-icon>
           {{ item.attendance_total }}
@@ -178,20 +171,6 @@
             item.has_retardos_discount ? 2 : item.semester_lates_unconsumed
           }}/2</v-chip
         >
-      </template>
-
-      <!-- Impacto en pago -->
-      <template #item.attendance_impact="{ item }">
-        <v-chip
-          :color="attendanceImpact(item).color"
-          size="x-small"
-          :variant="
-            attendanceImpact(item).color === 'success' ? 'text' : 'flat'
-          "
-          label
-        >
-          {{ attendanceImpact(item).label }}
-        </v-chip>
       </template>
 
       <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
@@ -242,11 +221,7 @@
                   ? 'orange-darken-2'
                   : 'blue'
             "
-            :disabled="
-              !['DRAFT', 'CON_INCIDENCIA'].includes(
-                item.refrend.workflow_status ?? '',
-              )
-            "
+            :disabled="!canAtencion(item.refrend)"
             @click="openAtencionDialog(item)"
           >
             {{
@@ -267,30 +242,23 @@
         </div>
       </template>
 
+      <!-- Repurposed as drawer trigger (design ADR D2: pedagogia_readonly → drawer,
+           full observations text now lives in RefrendDetailDrawer) -->
       <template #item.pedagogia_readonly="{ item }">
-        <div
-          v-if="item.refrend.pedagogia_observations"
-          class="d-flex flex-column ga-1 py-1"
+        <v-btn
+          variant="text"
+          size="x-small"
+          :color="hasPedagogiaResponse(item) ? 'green' : 'primary'"
+          title="Ver detalle"
+          @click="openDetailDrawer(item)"
         >
-          <v-tooltip location="bottom" max-width="300">
-            <template #activator="{ props: tp }">
-              <span
-                v-bind="tp"
-                class="text-caption text-medium-emphasis incident-text"
-              >
-                <v-icon size="xs" color="green"
-                  >mdi-check-circle-outline</v-icon
-                >
-                {{ item.refrend.pedagogia_observations }}
-              </span>
-            </template>
-            <div class="text-caption">
-              <div class="font-weight-bold mb-1">Revisión Pedagogía</div>
-              {{ item.refrend.pedagogia_observations }}
-            </div>
-          </v-tooltip>
-        </div>
-        <span v-else class="text-caption text-disabled">Sin revisión</span>
+          <v-icon size="13" start>{{
+            hasPedagogiaResponse(item)
+              ? "mdi-check-circle-outline"
+              : "mdi-eye-outline"
+          }}</v-icon>
+          {{ hasPedagogiaResponse(item) ? "Revisado" : "Ver detalle" }}
+        </v-btn>
       </template>
 
       <template #item.notificado="{ item }">
@@ -310,44 +278,17 @@
         />
       </template>
 
-      <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
-
-      <template #item.atencion_actions="{ item }">
-        <v-btn
-          v-if="item.refrend.workflow_status === 'DRAFT'"
-          :loading="recalcLoading === item.refrend.id"
-          icon
-          size="x-small"
-          variant="text"
-          color="teal"
-          @click="onRecalculate(item)"
-        >
-          <v-icon size="16">mdi-refresh</v-icon>
-          <v-tooltip activator="parent" location="top">Recalcular</v-tooltip>
-        </v-btn>
-      </template>
     </v-data-table>
 
-    <!-- ── Dialog: detalle asistencias ──────────────────────────────────── -->
-    <v-dialog v-model="attendanceDialogOpen" max-width="680" scrollable>
-      <v-card v-if="attendanceDialogRow">
-        <v-card-title class="text-subtitle-2 font-weight-medium pa-4 pb-2">
-          Asistencias — {{ attendanceDialogRow.refrend.snapshot_name }}
-        </v-card-title>
-        <v-card-text class="pa-4 pt-0">
-          <ScholarshipAttendanceSummary
-            :user-id="attendanceDialogRow.refrend.user_id"
-            :year="year"
-            :month="month"
-          />
-        </v-card-text>
-        <v-card-actions class="justify-end pa-3">
-          <v-btn variant="text" @click="attendanceDialogOpen = false"
-            >Cerrar</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- ── Detail drawer (secondary/audit fields, design ADR D1) ───────────── -->
+    <RefrendDetailDrawer
+      v-model="detailDrawerOpen"
+      :row="detailDrawerRow"
+      :year="year"
+      :month="month"
+      :recalc-loading="!!detailDrawerRow && recalcLoading === detailDrawerRow.refrend.id"
+      @recalculate="onRecalculate"
+    />
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
 
@@ -366,8 +307,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
+import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
   BASE_HEADERS,
@@ -377,6 +318,7 @@ import {
   rowClass,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
+import { canAtencion } from "@/utils/refrendActionability";
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -426,33 +368,19 @@ const tableInfo = computed(() =>
 
 const store = useScholarshipStore();
 
-// ── Attendance impact helpers ───────────────────────────────────────────────
+// ── Academic discount helper (relocated chip, design ADR D2) ────────────────
+// `attendance_impact` was removed entirely — fully redundant with
+// `month_absent` + `semester_lates_unconsumed`, both already visible inline
+// (see spec "Primary columns exclude redundant/noise fields").
 
-type ImpactInfo = { label: string; color: string };
-
-const attendanceImpact = (item: BulkRefrendRow): ImpactInfo => {
-  // Prioridad: descuentos ya aplicados en el refrendo (más preciso que conteos en vivo,
-  // porque los retardos se marcan como consumidos al generar el refrendo).
-  const hasFalta = item.has_falta_discount || item.month_absent >= 1;
-  const hasRet =
-    item.has_retardos_discount || item.semester_lates_unconsumed >= 2;
-  if (hasFalta && hasRet) return { label: "Falta + Ret.", color: "error" };
-  if (hasFalta) return { label: "Falta", color: "error" };
-  if (hasRet) return { label: "Retardos acumulados", color: "error" };
-  return { label: "", color: "success" };
-};
+const hasAcademicDiscount = (item: BulkRefrendRow): boolean =>
+  !!item.refrend.snapshot_discount_percentage &&
+  Number(item.refrend.snapshot_discount_percentage) > 0;
 
 // ── Table headers ──────────────────────────────────────────────────────────
 
 const ATENCION_COMPLETA_HEADERS = [
   { title: "Incidencia", key: "atencion", sortable: false },
-  {
-    title: "Asist. Penalización",
-    key: "attendance_impact",
-    width: 150,
-    sortable: false,
-  },
-  { title: "Desc. acad.", key: "profile_discount", width: 95, sortable: false },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
   { title: "F.mes", key: "month_absent", width: 75, sortable: true },
   {
@@ -461,7 +389,6 @@ const ATENCION_COMPLETA_HEADERS = [
     width: 90,
     sortable: true,
   },
-  { title: "", key: "atencion_actions", width: 50, sortable: false },
 ];
 
 const ATENCION_INCIDENCIAS_HEADERS = [
@@ -482,14 +409,17 @@ const headers = computed(() => [
     : ATENCION_COMPLETA_HEADERS),
 ]);
 
-// ── Attendance detail dialog ────────────────────────────────────────────────
+// ── Detail drawer (design ADR D1) ────────────────────────────────────────────
+// Repurposes the former "Clases" attendance-dialog trigger as the shared
+// row detail drawer trigger; also hosts the recalcular action (moved out of
+// the row's action column) and the relocated profile_discount detail.
 
-const attendanceDialogOpen = ref(false);
-const attendanceDialogRow = ref<BulkRefrendRow | null>(null);
+const detailDrawerOpen = ref(false);
+const detailDrawerRow = ref<BulkRefrendRow | null>(null);
 
-const openAttendanceDetail = (item: BulkRefrendRow): void => {
-  attendanceDialogRow.value = item;
-  attendanceDialogOpen.value = true;
+const openDetailDrawer = (item: BulkRefrendRow): void => {
+  detailDrawerRow.value = item;
+  detailDrawerOpen.value = true;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -580,17 +510,7 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 </script>
 
 <style scoped>
-.incident-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-width: 170px;
-  cursor: default;
-  line-height: 1.4;
-}
-
-.refrend-master-table-wrapper {
+.atencion-refrend-table-wrapper {
   position: relative;
   width: 100%;
   overflow-x: auto;
@@ -609,19 +529,19 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 }
 
 /* Columna fija: fondo sólido para ocultar el scroll */
-.refrend-master-table :deep(.v-data-table-column--fixed) {
+.atencion-refrend-table :deep(.v-data-table-column--fixed) {
   background: rgb(var(--v-theme-surface));
   z-index: 3;
 }
-.refrend-master-table :deep(tr.row-pending .v-data-table-column--fixed) {
+.atencion-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
   background-color: rgb(255, 249, 235) !important;
 }
-.refrend-master-table :deep(tr.row-incident .v-data-table-column--fixed) {
+.atencion-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
   background-color: rgb(255, 248, 242) !important;
 }
 
 /* Sticky header */
-.refrend-master-table :deep(thead tr th) {
+.atencion-refrend-table :deep(thead tr th) {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -635,15 +555,15 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 }
 
 /* Filas con acción pendiente */
-.refrend-master-table :deep(tr.row-pending td) {
+.atencion-refrend-table :deep(tr.row-pending td) {
   background-color: rgba(255, 193, 7, 0.06);
 }
-.refrend-master-table :deep(tr.row-incident td) {
+.atencion-refrend-table :deep(tr.row-incident td) {
   background-color: rgba(255, 152, 0, 0.08);
 }
 
 /* Separador más visible entre filas */
-.refrend-master-table :deep(tbody tr td) {
+.atencion-refrend-table :deep(tbody tr td) {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
 </style>
