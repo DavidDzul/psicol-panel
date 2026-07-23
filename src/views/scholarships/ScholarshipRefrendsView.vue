@@ -3,8 +3,13 @@
 
   <v-row>
     <v-col cols="12">
-      <v-card v-if="props.mode === 'atencion'" variant="flat">
-        <v-tabs v-model="viewVariant" color="primary" density="compact">
+      <v-card v-if="props.mode === 'atencion'" color="white" variant="flat">
+        <v-tabs
+          v-model="viewVariant"
+          align-tabs="center"
+          color="primary"
+          bg-color="grey-lighten-3"
+        >
           <v-tab value="completa">
             <v-icon size="small" class="mr-1">mdi-table</v-icon>
             Consultar por generación
@@ -14,47 +19,52 @@
             Consultar por incidencias del mes
           </v-tab>
         </v-tabs>
+
+        <v-card-text>
+          <ScholarshipFilters
+            :year="selectedYear"
+            :month="selectedMonth"
+            :campuses="filteredCampus"
+            :campus="selectedCampus"
+            :generation-id="selectedGenerationId"
+            :require-generation="requireGeneration"
+            @update:year="selectedYear = $event"
+            @update:month="selectedMonth = $event"
+            @update:campus="selectedCampus = $event"
+            @update:generation-id="selectedGenerationId = $event"
+            @search="onPeriodChange"
+          >
+            <v-btn
+              v-if="viewVariant === 'completa'"
+              color="primary"
+              prepend-icon="mdi-refresh"
+              :loading="generating"
+              :disabled="!selectedCampus || !selectedGenerationId"
+              @click="generateDialog = true"
+            >
+              Generar ref.
+            </v-btn>
+          </ScholarshipFilters>
+        </v-card-text>
       </v-card>
-    </v-col>
-  </v-row>
 
-  <v-row>
-    <v-col cols="12">
-      <ScholarshipFilters
-        :year="selectedYear"
-        :month="selectedMonth"
-        :campuses="filteredCampus"
-        :campus="selectedCampus"
-        :generation-id="selectedGenerationId"
-        :require-generation="requireGeneration"
-        @update:year="selectedYear = $event"
-        @update:month="selectedMonth = $event"
-        @update:campus="selectedCampus = $event"
-        @update:generation-id="selectedGenerationId = $event"
-        @search="onPeriodChange"
-      >
-        <v-btn
-          v-if="props.mode === 'atencion' && viewVariant === 'completa'"
-          color="primary"
-          prepend-icon="mdi-refresh"
-          :loading="generating"
-          :disabled="!selectedCampus || !selectedGenerationId"
-          @click="generateDialog = true"
-        >
-          Generar ref.
-        </v-btn>
-
-        <v-btn
-          v-if="props.mode === 'pedagogia'"
-          color="primary"
-          prepend-icon="mdi-check-all"
-          :loading="closingDrafts"
-          :disabled="cleanDraftIds.length === 0"
-          @click="closeDraftsDialog = true"
-        >
-          Cerrar borradores ({{ cleanDraftIds.length }})
-        </v-btn>
-      </ScholarshipFilters>
+      <v-card v-else color="white" variant="flat">
+        <v-card-text>
+          <ScholarshipFilters
+            :year="selectedYear"
+            :month="selectedMonth"
+            :campuses="filteredCampus"
+            :campus="selectedCampus"
+            :generation-id="selectedGenerationId"
+            :require-generation="requireGeneration"
+            @update:year="selectedYear = $event"
+            @update:month="selectedMonth = $event"
+            @update:campus="selectedCampus = $event"
+            @update:generation-id="selectedGenerationId = $event"
+            @search="onPeriodChange"
+          />
+        </v-card-text>
+      </v-card>
     </v-col>
   </v-row>
 
@@ -110,35 +120,6 @@
           :loading="generating"
           :disabled="!selectedCampus || !selectedGenerationId"
           @click="onGeneratePeriod"
-        >
-          Confirmar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-  <!-- Close clean drafts confirmation (Pedagogía) -->
-  <v-dialog v-model="closeDraftsDialog" max-width="440">
-    <v-card>
-      <v-card-title class="pa-4">Cerrar borradores</v-card-title>
-      <v-card-text>
-        <p>
-          Esto pasará <strong>{{ cleanDraftIds.length }}</strong> refrendo(s) en
-          Borrador sin incidencia a estado <strong>Listo para pago</strong>. Son
-          becarios que nunca tuvieron una incidencia, por lo que no aparecen en
-          esta tabla.
-        </p>
-      </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="closeDraftsDialog = false"
-          >Cancelar</v-btn
-        >
-        <v-btn
-          color="primary"
-          variant="elevated"
-          :loading="closingDrafts"
-          @click="onCloseCleanDrafts"
         >
           Confirmar
         </v-btn>
@@ -232,32 +213,6 @@ onUnmounted(() => {
   scholarshipStore.resetBulkTable();
   scholarshipStore.resetIncidenciasTable();
 });
-
-// ── Cerrar borradores sin incidencia (Pedagogía) ────────────────────────────
-// Becarios en DRAFT que nunca tuvieron incidencia (incidents_count === 0) no
-// aparecen en ninguna fila de la tabla de Incidencias — sin este botón nunca
-// avanzan a Listo para pago. `incidenciasRows` trae el fetch SIN filtrar, así
-// que acá sí podemos verlos aunque `PedagogiaRefrendTable` no los renderice.
-const cleanDraftIds = computed<number[]>(() =>
-  scholarshipStore.incidenciasRows
-    .filter(
-      (r) => r.refrend.workflow_status === "DRAFT" && r.incidents_count === 0,
-    )
-    .map((r) => r.refrend.id),
-);
-
-const closeDraftsDialog = ref(false);
-const closingDrafts = ref(false);
-
-const onCloseCleanDrafts = async (): Promise<void> => {
-  closingDrafts.value = true;
-  try {
-    await scholarshipStore.bulkApprove(cleanDraftIds.value);
-    closeDraftsDialog.value = false;
-  } finally {
-    closingDrafts.value = false;
-  }
-};
 
 // ── campusLabel for generate dialog ───────────────────────────────────────
 

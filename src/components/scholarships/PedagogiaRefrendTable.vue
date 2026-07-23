@@ -19,19 +19,17 @@
 
         <v-spacer />
 
-        <!-- Bulk approve -->
+        <!-- Cerrar refrendo (borradores sin nada que analizar) -->
         <v-btn
           v-if="cleanDraftIds.length > 0"
-          color="green-darken-1"
+          color="red"
           variant="elevated"
           size="small"
-          :loading="bulkLoading"
-          :disabled="bulkLoading"
-          prepend-icon="mdi-check-all"
-          rounded="lg"
-          @click="onBulkApproveClean"
+          :loading="closingDrafts"
+          :disabled="closingDrafts"
+          @click="closeDraftsDialog = true"
         >
-          APROBAR {{ cleanDraftIds.length }} SIN OBS.
+          Cerrar refrendo
         </v-btn>
 
         <!-- Total -->
@@ -298,6 +296,42 @@
       :loading="situationSubmitLoading"
       @submit="onSituationSubmit"
     />
+
+    <!-- Cerrar refrendo confirmation -->
+    <v-dialog v-model="closeDraftsDialog" max-width="440">
+      <v-card>
+        <v-card-title class="pa-4">Cerrar refrendo</v-card-title>
+        <v-card-text>
+          <p>
+            Esto aprobará al 100% <strong>{{ cleanDraftIds.length }}</strong>
+            refrendo(s) en Borrador sin nada que analizar (sin incidencia y
+            sin descuento de asistencia aplicado), pasándolos a estado
+            <strong>Listo para pago</strong>. No aparecen en esta tabla
+            porque no tienen ninguna observación pendiente.
+          </p>
+          <v-alert type="warning" variant="tonal" density="compact" class="mt-3">
+            Solo se cierran los becarios <strong>sin incidencia</strong>. Los
+            que sí tienen una incidencia y todavía no tienen ninguna acción
+            registrada sobre ella deben resolverse manualmente — este botón
+            no los afecta.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="closeDraftsDialog = false"
+            >Cancelar</v-btn
+          >
+          <v-btn
+            color="red"
+            variant="elevated"
+            :loading="closingDrafts"
+            @click="onCloseCleanDrafts"
+          >
+            Confirmar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -459,31 +493,38 @@ const openSituationDialog = (
   situationDialogs.value[type] = true;
 };
 
-// ── Approve ────────────────────────────────────────────────────────────────
-
-const bulkLoading = ref(false);
+// ── Cerrar refrendo (borradores sin nada que analizar) ──────────────────────
+// `rows`/`displayRows` ya vienen filtradas a solo incidencias (ver comentario
+// de arriba), así que un becario limpio nunca aparece ahí. Para saber cuántos
+// hay que cerrar, hace falta leer store.incidenciasRows directo (fetch SIN
+// filtrar). "Limpio" = sin incidencia formal Y sin descuento automático de
+// asistencia ya aplicado (retardos/falta no generan incidencia, se aplican
+// directo — ver AttendancePenaltyService), para no aprobar al 100% una fila
+// que en realidad tiene un descuento silencioso sin revisar.
+const closingDrafts = ref(false);
+const closeDraftsDialog = ref(false);
 
 const cleanDraftIds = computed(() =>
-  displayRows.value
+  store.incidenciasRows
     .filter(
       (r) =>
         r.refrend.workflow_status === "DRAFT" &&
+        r.incidents_count === 0 &&
         !r.has_falta_discount &&
         !r.has_retardos_discount &&
         r.month_absent === 0 &&
-        r.semester_lates_unconsumed < 2 &&
-        r.incidents_count === 0,
+        r.semester_lates_unconsumed < 2,
     )
     .map((r) => r.refrend.id),
 );
 
-const onBulkApproveClean = async (): Promise<void> => {
-  if (!cleanDraftIds.value.length) return;
-  bulkLoading.value = true;
+const onCloseCleanDrafts = async (): Promise<void> => {
+  closingDrafts.value = true;
   try {
     await store.bulkApprove(cleanDraftIds.value);
+    closeDraftsDialog.value = false;
   } finally {
-    bulkLoading.value = false;
+    closingDrafts.value = false;
   }
 };
 
