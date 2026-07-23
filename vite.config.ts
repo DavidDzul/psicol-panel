@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from "node:url"
 
 import vue from "@vitejs/plugin-vue"
@@ -52,5 +53,9 @@ export default defineConfig({
         api: "modern-compiler",
       },
     },
+  },
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.ts"],
   },
 })
