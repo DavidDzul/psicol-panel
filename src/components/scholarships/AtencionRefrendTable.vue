@@ -244,24 +244,12 @@
 
       <!-- R. Pedagogía restaurada como columna propia: icono + tooltip con el
            texto completo (mismo patrón que la Incidencia de Pedagogía, ver
-           IncidentTooltipIcon.vue). Ya no abre el drawer — ver
-           row_detail_actions para eso. -->
+           IncidentTooltipIcon.vue). La variante Incidencias no tiene trigger
+           para el detail drawer (removido a pedido del usuario). -->
       <template #item.pedagogia_readonly="{ item }">
         <div class="d-flex justify-center">
           <IncidentTooltipIcon :text="item.refrend.pedagogia_observations" />
         </div>
-      </template>
-
-      <!-- Trigger dedicado para abrir el drawer en la variante Incidencias:
-           ya no depende de pedagogia_readonly (que dejó de ser un botón). -->
-      <template #item.row_detail_actions="{ item }">
-        <v-btn
-          icon="mdi-eye-outline"
-          variant="text"
-          size="x-small"
-          title="Ver detalle"
-          @click="openDetailDrawer(item)"
-        />
       </template>
 
       <template #item.notificado="{ item }">
@@ -405,7 +393,6 @@ const ATENCION_INCIDENCIAS_HEADERS = [
     sortable: false,
   },
   { title: "¿Notificado?", key: "notificado", width: 65, sortable: false },
-  { title: "", key: "row_detail_actions", width: 50, sortable: false },
 ];
 
 const headers = computed(() => [
