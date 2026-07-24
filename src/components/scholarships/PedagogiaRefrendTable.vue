@@ -48,27 +48,191 @@
       />
     </div>
 
-    <div v-if="loading" class="d-flex justify-center pa-6">
-      <v-progress-circular indeterminate color="primary" />
+    <div v-if="displayRows.length === 0 && !loading" class="text-center text-medium-emphasis pa-6">
+      Sin becarios con incidencia en este periodo.
     </div>
 
-    <template v-else>
-      <div v-if="groups.length === 0" class="text-center text-medium-emphasis pa-6">
-        Sin becarios con incidencia en este periodo.
-      </div>
+    <!-- User feedback round 3: "prefiero que este como antes, ya que puedo ir
+         desplegando u ocultando un grupo (generación) y no estar
+         visualizando todos a la vez" — single v-data-table with Vuetify's
+         native collapsible group-by (same pattern as AtencionRefrendTable's
+         Incidencias variant), replacing the always-expanded
+         one-table-per-generación layout from round 2. -->
+    <v-data-table
+      v-else
+      :headers="headers"
+      :items="displayRows"
+      :loading="loading"
+      :group-by="groupBy"
+      class="elevation-1 pedagogia-refrend-table"
+      :items-per-page="-1"
+      hover
+      item-value="refrend.id"
+      :row-props="({ item }) => ({ class: rowClass(item) })"
+    >
+      <template #group-header="{ item, columns, toggleGroup, isGroupOpen }">
+        <tr
+          @vue:mounted="
+            !autoOpenedGroupIds.has(item.id) &&
+            !isGroupOpen(item) &&
+            (autoOpenedGroupIds.add(item.id), toggleGroup(item))
+          "
+        >
+          <td :colspan="columns.length" class="group-header-row">
+            <v-btn
+              size="x-small"
+              variant="text"
+              :icon="
+                isGroupOpen(item) ? 'mdi-chevron-down' : 'mdi-chevron-right'
+              "
+              @click="toggleGroup(item)"
+            />
+            <span class="text-caption font-weight-bold text-uppercase">
+              {{ item.value ?? "Sin generación" }}
+            </span>
+          </td>
+        </tr>
+      </template>
 
-      <PedagogiaGenerationSection
-        v-for="group in groups"
-        :key="group.generation"
-        :generation="group.generation"
-        :rows="group.rows"
-        :situation-loading-id="situationLoadingId"
-        @open-pedagogia="openPedagogiaDialog"
-        @approve-full="onApproveFullPayment"
-        @approve-as-is="onApproveAsIs"
-        @open-situation="openSituationDialog"
-      />
-    </template>
+      <template #bottom />
+
+      <!-- ── IDENTIDAD ─────────────────────────────────────────────────────── -->
+
+      <template #item.snapshot_name="{ item }">
+        <div class="d-flex align-center ga-2 text-no-wrap py-1">
+          <span class="font-weight-medium text-body-2">{{
+            item.refrend.snapshot_name
+          }}</span>
+        </div>
+      </template>
+
+      <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
+
+      <template #item.workflow_status="{ item }">
+        <div class="d-flex flex-column ga-1 py-2 justify-center text-center">
+          <v-chip
+            class="justify-center text-center"
+            :color="statusChip(item.refrend).color"
+            size="small"
+            label
+            variant="tonal"
+          >
+            {{ statusChip(item.refrend).label }}
+          </v-chip>
+          <span
+            v-if="resolutionCauseLabel(item.refrend)"
+            class="text-caption text-medium-emphasis"
+            style="max-width: 155px"
+          >
+            {{ resolutionCauseLabel(item.refrend) }}
+          </span>
+        </div>
+      </template>
+
+      <!-- Incidencia cruda: icono + tooltip con el texto completo, no texto
+           inline (ver IncidentTooltipIcon.vue). -->
+      <template #item.incident_description="{ item }">
+        <div class="d-flex justify-center">
+          <IncidentTooltipIcon :text="item.incident_description" />
+        </div>
+      </template>
+
+      <template #item.pedagogia="{ item }">
+        <v-btn
+          :prepend-icon="
+            item.refrend.pedagogia_observations
+              ? 'mdi-school'
+              : 'mdi-school-outline'
+          "
+          size="x-small"
+          variant="tonal"
+          :color="item.refrend.pedagogia_observations ? 'gray' : 'purple'"
+          :disabled="!canPedagogia(item.refrend)"
+          @click="openPedagogiaDialog(item)"
+        >
+          {{ item.refrend.pedagogia_observations ? "Visualizar" : "Registrar" }}
+        </v-btn>
+      </template>
+
+      <!-- ── ECONÓMICO ────────────────────────────────────────────────────── -->
+
+      <template #item.base_amount="{ item }">
+        <div class="d-flex flex-column">
+          <span class="text-caption">{{
+            fmt(item.refrend.snapshot_gross_amount ?? item.refrend.base_amount)
+          }}</span>
+          <div
+            v-if="
+              item.refrend.snapshot_discount_percentage &&
+              Number(item.refrend.snapshot_discount_percentage) > 0
+            "
+            class="d-flex align-center ga-1 mt-1"
+          >
+            <span class="text-caption text-orange-darken-1">
+              - {{ item.refrend.snapshot_discount_percentage }}%
+            </span>
+          </div>
+        </div>
+      </template>
+
+      <template #item.discount_pct="{ item }">
+        <span
+          class="text-caption"
+          :class="
+            Number(item.refrend.discount_percentage) > 0
+              ? 'text-error'
+              : 'text-medium-emphasis'
+          "
+          >{{ item.refrend.discount_percentage }}%</span
+        >
+      </template>
+
+      <template #item.projected_amount="{ item }">
+        <div class="d-flex flex-column">
+          <span class="text-caption font-weight-medium">{{
+            fmt(item.refrend.final_amount)
+          }}</span>
+          <template
+            v-if="Number(item.refrend.amount_pending_from_previous) > 0"
+          >
+            <span class="text-caption text-teal-darken-1">
+              + {{ fmt(item.refrend.amount_pending_from_previous) }} ret.
+            </span>
+            <span class="text-caption font-weight-bold text-teal-darken-2">
+              = {{ fmt(item.refrend.total_to_pay) }}
+            </span>
+          </template>
+          <template
+            v-else-if="Number(item.refrend.refund_amount_from_previous) > 0"
+          >
+            <span class="text-caption text-green-darken-1">
+              + {{ fmt(item.refrend.refund_amount_from_previous!) }} reemb.
+            </span>
+            <span class="text-caption font-weight-bold text-green-darken-2">
+              = {{ fmt(item.refrend.total_to_pay) }}
+            </span>
+          </template>
+        </div>
+      </template>
+
+      <!-- ── ACCIONES ─────────────────────────────────────────────────────── -->
+
+      <template #item.payment_verify="{ item }">
+        <div class="d-flex align-center ga-1">
+          <RefrendSituationBar
+            v-if="canRecordSituation(item.refrend)"
+            :current-resolution="item.refrend.resolution_type ?? null"
+            :locked="!canRecordSituation(item.refrend)"
+            :amount-pending="item.refrend.amount_pending_from_previous"
+            :workflow-status="item.refrend.workflow_status"
+            :loading="situationLoadingId === item.refrend.id"
+            @approve-full="onApproveFullPayment(item)"
+            @approve-as-is="onApproveAsIs(item)"
+            @open="(type) => openSituationDialog(item, type)"
+          />
+        </div>
+      </template>
+    </v-data-table>
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
 
@@ -155,7 +319,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import PedagogiaGenerationSection from "@/components/scholarships/PedagogiaGenerationSection.vue";
+import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
+import IncidentTooltipIcon from "@/components/scholarships/IncidentTooltipIcon.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
@@ -164,8 +329,16 @@ import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspen
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
-import { groupRowsByGeneration } from "@/composables/useRefrendGrouping";
-import { buildTableInfo, filterRowsByName } from "@/composables/useRefrendTableDisplay";
+import {
+  BASE_HEADERS,
+  buildTableInfo,
+  filterRowsByName,
+  fmt,
+  resolutionCauseLabel,
+  rowClass,
+  statusChip,
+} from "@/composables/useRefrendTableDisplay";
+import { canPedagogia, canRecordSituation } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
 import type {
   BulkRefrendRow,
@@ -176,12 +349,13 @@ import type {
 
 // ── Props ──────────────────────────────────────────────────────────────────
 //
-// User feedback round 2: reverted the board/card presentation back to a
-// table, grouped by generación (see PedagogiaGenerationSection.vue — one
-// `v-data-table` per generación, always expanded, no collapsible
-// group-by). Same prop surface + data scope as before: only
-// `incidents_count > 0` rows are shown (design ADR D3 — no widening of the
-// fetched dataset, only how it's grouped/rendered).
+// User feedback round 3: single v-data-table with Vuetify's native
+// collapsible group-by on `refrend.snapshot_generation` (same mechanism as
+// AtencionRefrendTable's Incidencias variant) — user can expand/collapse
+// each generación group instead of seeing every group at once. Same prop
+// surface + data scope as every prior round: only `incidents_count > 0`
+// rows are shown (design ADR D3 — no widening of the fetched dataset, only
+// how it's grouped/rendered).
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
@@ -197,9 +371,35 @@ const displayRows = computed(() => {
   return filterRowsByName(rows, searchQuery.value);
 });
 
-// ── Grouping (generación section, table per group) ──────────────────────────
+// ── Grouping (collapsible, Vuetify native group-by) ──────────────────────────
 
-const groups = computed(() => groupRowsByGeneration(displayRows.value));
+const groupBy = computed(() => [
+  { key: "refrend.snapshot_generation", order: "asc" as const },
+]);
+
+// Vuetify arranca su Set interno de grupos abiertos vacío (todo colapsado).
+// Abrimos cada grupo la primera vez que su header se monta; si el usuario lo
+// colapsa manualmente después, no lo volvemos a forzar a abrir.
+const autoOpenedGroupIds = new Set<string>();
+
+// ── Table headers ──────────────────────────────────────────────────────────
+
+const PEDAGOGIA_HEADERS = [
+  {
+    title: "Incidencia",
+    key: "incident_description",
+    width: 70,
+    align: "center" as const,
+    sortable: false,
+  },
+  { title: "Respuesta", key: "pedagogia", width: 180, sortable: false },
+  { title: "Base", key: "base_amount", width: 100, sortable: false },
+  { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
+  { title: "Final", key: "projected_amount", width: 110, sortable: false },
+  { title: "", key: "payment_verify", width: 160, sortable: false },
+];
+
+const headers = [...BASE_HEADERS, ...PEDAGOGIA_HEADERS];
 
 // ── Table title ────────────────────────────────────────────────────────────
 
@@ -339,5 +539,25 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
 
 .table-header {
   padding: 6px 2px;
+}
+
+.pedagogia-refrend-table :deep(thead tr th) {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
+.pedagogia-refrend-table :deep(tr.row-pending td) {
+  background-color: rgba(255, 193, 7, 0.06);
+}
+.pedagogia-refrend-table :deep(tr.row-incident td) {
+  background-color: rgba(255, 152, 0, 0.08);
+}
+
+.pedagogia-refrend-table :deep(tbody tr td) {
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
 </style>

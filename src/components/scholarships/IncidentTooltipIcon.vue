@@ -14,7 +14,7 @@
 //
 // Compact reveal for a chunk of raw text that would otherwise crowd a table
 // cell (incident description, pedagogía observations, etc). Used by
-// `PedagogiaGenerationSection.vue` (Incidencia column) and
+// `PedagogiaRefrendTable.vue` (Incidencia column) and
 // `AtencionRefrendTable.vue` (R. Pedagogía column) — user explicitly asked
 // for the same icon+tooltip pattern in both places instead of raw inline
 // text or a drawer-trigger button.
