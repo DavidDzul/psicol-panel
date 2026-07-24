@@ -1,14 +1,14 @@
 <template>
   <v-btn
     v-if="text"
-    icon
     size="x-small"
-    variant="text"
+    variant="tonal"
     color="orange-darken-2"
+    prepend-icon="mdi-alert-circle-outline"
     :title="title"
     @click="open = true"
   >
-    <v-icon size="18">mdi-alert-circle-outline</v-icon>
+    Ver
   </v-btn>
   <span v-else class="text-disabled text-caption">—</span>
 

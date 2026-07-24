@@ -389,7 +389,7 @@ const ATENCION_INCIDENCIAS_HEADERS = [
   {
     title: "R. Pedagogía",
     key: "pedagogia_readonly",
-    width: 70,
+    width: 100,
     align: "center" as const,
     sortable: false,
   },

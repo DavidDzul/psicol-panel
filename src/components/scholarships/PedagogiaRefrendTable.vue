@@ -388,7 +388,7 @@ const PEDAGOGIA_HEADERS = [
   {
     title: "Incidencia",
     key: "incident_description",
-    width: 70,
+    width: 100,
     align: "center" as const,
     sortable: false,
   },
