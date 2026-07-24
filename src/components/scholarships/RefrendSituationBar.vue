@@ -31,7 +31,7 @@
       <v-list density="compact" nav min-width="210">
         <!-- Acciones rápidas -->
         <v-list-item
-          v-if="workflowStatus === 'CON_INCIDENCIA'"
+          v-if="workflowStatus === 'CON_INCIDENCIA' && hasDiscount"
           @click="emit('approve-as-is')"
         >
           <template #prepend>
@@ -83,6 +83,11 @@ const props = defineProps<{
   loading?: boolean;
   amountPending?: string | number;
   workflowStatus?: WorkflowStatus | null;
+  // "Aprobar con descuento" (ApproveRefrendAction) approves as-is with
+  // whatever discount is already calculated — when there is none, it's
+  // functionally identical to "Pago al 100%", so it's hidden entirely
+  // instead of showing a misleading label (user-reported confusion).
+  hasDiscount?: boolean;
 }>();
 
 const emit = defineEmits<{

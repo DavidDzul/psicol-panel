@@ -224,6 +224,7 @@
             :locked="!canRecordSituation(item.refrend)"
             :amount-pending="item.refrend.amount_pending_from_previous"
             :workflow-status="item.refrend.workflow_status"
+            :has-discount="Number(item.refrend.discount_percentage) > 0"
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
             @approve-as-is="onApproveAsIs(item)"
