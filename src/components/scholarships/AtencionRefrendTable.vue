@@ -242,23 +242,26 @@
         </div>
       </template>
 
-      <!-- Repurposed as drawer trigger (design ADR D2: pedagogia_readonly → drawer,
-           full observations text now lives in RefrendDetailDrawer) -->
+      <!-- R. Pedagogía restaurada como columna propia: icono + tooltip con el
+           texto completo (mismo patrón que la Incidencia de Pedagogía, ver
+           IncidentTooltipIcon.vue). Ya no abre el drawer — ver
+           row_detail_actions para eso. -->
       <template #item.pedagogia_readonly="{ item }">
+        <div class="d-flex justify-center">
+          <IncidentTooltipIcon :text="item.refrend.pedagogia_observations" />
+        </div>
+      </template>
+
+      <!-- Trigger dedicado para abrir el drawer en la variante Incidencias:
+           ya no depende de pedagogia_readonly (que dejó de ser un botón). -->
+      <template #item.row_detail_actions="{ item }">
         <v-btn
+          icon="mdi-eye-outline"
           variant="text"
           size="x-small"
-          :color="hasPedagogiaResponse(item) ? 'green' : 'primary'"
           title="Ver detalle"
           @click="openDetailDrawer(item)"
-        >
-          <v-icon size="13" start>{{
-            hasPedagogiaResponse(item)
-              ? "mdi-check-circle-outline"
-              : "mdi-eye-outline"
-          }}</v-icon>
-          {{ hasPedagogiaResponse(item) ? "Revisado" : "Ver detalle" }}
-        </v-btn>
+        />
       </template>
 
       <template #item.notificado="{ item }">
@@ -309,6 +312,7 @@
 import { computed, ref } from "vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
+import IncidentTooltipIcon from "@/components/scholarships/IncidentTooltipIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
   BASE_HEADERS,
@@ -396,10 +400,12 @@ const ATENCION_INCIDENCIAS_HEADERS = [
   {
     title: "R. Pedagogía",
     key: "pedagogia_readonly",
-    width: 180,
+    width: 70,
+    align: "center" as const,
     sortable: false,
   },
   { title: "¿Notificado?", key: "notificado", width: 65, sortable: false },
+  { title: "", key: "row_detail_actions", width: 50, sortable: false },
 ];
 
 const headers = computed(() => [
