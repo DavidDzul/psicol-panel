@@ -3,7 +3,7 @@
     :model-value="modelValue"
     location="right"
     temporary
-    width="420"
+    width="540"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="row">
@@ -48,62 +48,6 @@
       <v-divider />
 
       <div class="pa-4">
-        <!-- ── Financial breakdown ─────────────────────────────────────────── -->
-        <div class="section-label mb-2">Financiero</div>
-        <div class="d-flex flex-wrap ga-4 mb-4">
-          <div>
-            <div class="text-caption text-medium-emphasis">Monto base</div>
-            <div class="text-body-2 font-weight-medium">
-              {{ fmt(row.refrend.base_amount) }}
-            </div>
-          </div>
-          <div v-if="Number(row.refrend.discount_amount) > 0">
-            <div class="text-caption text-medium-emphasis">Descuento</div>
-            <div class="text-body-2 font-weight-medium text-error">
-              - {{ fmt(row.refrend.discount_amount) }} ({{
-                row.refrend.discount_percentage
-              }}%)
-            </div>
-          </div>
-          <div>
-            <div class="text-caption text-medium-emphasis">Monto final</div>
-            <div class="text-body-2 font-weight-bold text-success">
-              {{ fmt(row.refrend.final_amount) }}
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Academic discount (relocated from Atención primary columns) ─── -->
-        <div class="section-label mb-2">Descuento académico</div>
-        <div class="mb-4">
-          <v-tooltip
-            v-if="hasAcademicDiscount"
-            location="bottom"
-            max-width="280"
-          >
-            <template #activator="{ props: tp }">
-              <v-chip
-                v-bind="tp"
-                size="small"
-                color="orange-darken-1"
-                variant="flat"
-                label
-              >
-                - {{ row.refrend.snapshot_discount_percentage }}%
-              </v-chip>
-            </template>
-            <div class="text-caption">
-              <div v-if="row.refrend.snapshot_discount_reason">
-                <span class="font-weight-bold">Motivo: </span>
-                {{ row.refrend.snapshot_discount_reason }}
-              </div>
-            </div>
-          </v-tooltip>
-          <span v-else class="text-caption text-disabled"
-            >Sin descuento académico</span
-          >
-        </div>
-
         <!-- ── Attendance stats-grid (full detail) ──────────────────────────── -->
         <div class="section-label mb-2">Asistencias</div>
         <ScholarshipAttendanceSummary
@@ -111,16 +55,6 @@
           :year="year"
           :month="month"
         />
-
-        <!-- ── Pedagogía (readonly) ─────────────────────────────────────────── -->
-        <div class="section-label mt-4 mb-2">Revisión Pedagogía</div>
-        <div
-          v-if="row.refrend.pedagogia_observations"
-          class="text-body-2 observation-box"
-        >
-          {{ row.refrend.pedagogia_observations }}
-        </div>
-        <span v-else class="text-caption text-disabled">Sin revisión</span>
       </div>
 
       <v-divider />
@@ -154,7 +88,6 @@
 import { computed } from "vue";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import {
-  fmt,
   resolutionCauseLabel,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
@@ -163,11 +96,14 @@ import type { BulkRefrendRow } from "@/interfaces/scholarship";
 
 // ── Props / Emits ────────────────────────────────────────────────────────────
 //
-// Shared right-side detail drawer for Atención (design ADR D1). Hosts
-// secondary/audit fields as grouped stat blocks instead of dense table
-// columns: relocated `profile_discount`, full attendance stats-grid (reused
-// from ScholarshipAttendanceSummary), Pedagogía-readonly, and the recalcular
-// action moved out of the row's action column.
+// Shared right-side detail drawer for Atención (design ADR D1). User feedback
+// round 2: dropped the financial breakdown + relocated `profile_discount`
+// stat block and the "Revisión Pedagogía" section from here — the drawer now
+// focuses on the attendance stats-grid (reused from
+// ScholarshipAttendanceSummary) + the recalcular action. R. Pedagogía moved
+// back to its own icon+tooltip table column (see AtencionRefrendTable.vue /
+// IncidentTooltipIcon.vue). Widened (420px → 540px) per explicit request,
+// even though content shrank.
 
 const props = defineProps<{
   modelValue: boolean;
@@ -203,12 +139,6 @@ const periodLabel = computed(
   () => `${MONTHS_ES[props.month - 1] ?? props.month} ${props.year}`,
 );
 
-const hasAcademicDiscount = computed(
-  () =>
-    !!props.row?.refrend.snapshot_discount_percentage &&
-    Number(props.row.refrend.snapshot_discount_percentage) > 0,
-);
-
 // Recalcular is backend-gated to DRAFT only (RecalculateRefrendService); the
 // isLocked-derived predicate is an extra safety net for the dual state
 // machine (design ADR D5), not a replacement for that specific rule.
@@ -227,13 +157,5 @@ const showRecalculate = computed(
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(var(--v-theme-on-surface), 0.45);
-}
-
-.observation-box {
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
-  line-height: 1.5;
 }
 </style>
