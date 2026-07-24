@@ -24,7 +24,7 @@ export { LOCKED_STATUSES, isLocked } from "@/utils/refrendActionability";
 // Icon added per user request: status is dense/repeated in every row, so it
 // renders as an icon (see StatusIcon.vue) with the label surfaced only via
 // tooltip, instead of a text chip — same space-saving pattern already
-// approved for the raw incident text (IncidentTooltipIcon.vue).
+// approved for the raw incident text (IncidentDetailIcon.vue).
 
 export const statusChip = (
   refrend: BulkRefrendRow["refrend"],

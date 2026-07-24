@@ -101,8 +101,8 @@ import type { BulkRefrendRow } from "@/interfaces/scholarship";
 // stat block and the "Revisión Pedagogía" section from here — the drawer now
 // focuses on the attendance stats-grid (reused from
 // ScholarshipAttendanceSummary) + the recalcular action. R. Pedagogía moved
-// back to its own icon+tooltip table column (see AtencionRefrendTable.vue /
-// IncidentTooltipIcon.vue). Widened (420px → 540px) per explicit request,
+// back to its own icon+modal table column (see AtencionRefrendTable.vue /
+// IncidentDetailIcon.vue). Widened (420px → 540px) per explicit request,
 // even though content shrank.
 
 const props = defineProps<{

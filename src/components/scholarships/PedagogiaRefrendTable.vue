@@ -125,11 +125,14 @@
         </div>
       </template>
 
-      <!-- Incidencia cruda: icono + tooltip con el texto completo, no texto
-           inline (ver IncidentTooltipIcon.vue). -->
+      <!-- Incidencia cruda: botón que abre un modal con el texto completo, no
+           texto inline ni tooltip (ver IncidentDetailIcon.vue). -->
       <template #item.incident_description="{ item }">
         <div class="d-flex justify-center">
-          <IncidentTooltipIcon :text="item.incident_description" />
+          <IncidentDetailIcon
+            :text="item.incident_description"
+            title="Incidencia (Atención a Becarios)"
+          />
         </div>
       </template>
 
@@ -316,7 +319,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
-import IncidentTooltipIcon from "@/components/scholarships/IncidentTooltipIcon.vue";
+import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";

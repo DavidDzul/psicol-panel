@@ -238,13 +238,17 @@
         </div>
       </template>
 
-      <!-- R. Pedagogía restaurada como columna propia: icono + tooltip con el
-           texto completo (mismo patrón que la Incidencia de Pedagogía, ver
-           IncidentTooltipIcon.vue). La variante Incidencias no tiene trigger
-           para el detail drawer (removido a pedido del usuario). -->
+      <!-- R. Pedagogía restaurada como columna propia: botón que abre un
+           modal con el texto completo (mismo patrón que la Incidencia de
+           Pedagogía, ver IncidentDetailIcon.vue). La variante Incidencias no
+           tiene trigger para el detail drawer (removido a pedido del
+           usuario). -->
       <template #item.pedagogia_readonly="{ item }">
         <div class="d-flex justify-center">
-          <IncidentTooltipIcon :text="item.refrend.pedagogia_observations" />
+          <IncidentDetailIcon
+            :text="item.refrend.pedagogia_observations"
+            title="Respuesta de Pedagogía"
+          />
         </div>
       </template>
 
@@ -296,7 +300,7 @@
 import { computed, ref } from "vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
-import IncidentTooltipIcon from "@/components/scholarships/IncidentTooltipIcon.vue";
+import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
