@@ -1,6 +1,6 @@
 <template>
-  <div class="pedagogia-case-board">
-    <div class="board-header mb-3">
+  <div class="pedagogia-refrend-table-wrapper">
+    <div class="table-header mb-3">
       <div class="d-flex align-center ga-2 flex-wrap">
         <!-- Identidad del periodo -->
         <div class="d-flex align-center ga-2">
@@ -57,33 +57,17 @@
         Sin becarios con incidencia en este periodo.
       </div>
 
-      <div
+      <PedagogiaGenerationSection
         v-for="group in groups"
         :key="group.generation"
-        class="generation-section mb-4"
-      >
-        <div class="generation-header d-flex align-center ga-2 mb-2">
-          <span class="text-caption font-weight-bold text-uppercase">{{
-            group.generation
-          }}</span>
-          <v-chip size="x-small" variant="tonal" color="primary" label>
-            {{ group.rows.length }}
-          </v-chip>
-        </div>
-
-        <div class="cards-grid">
-          <PedagogiaCaseCard
-            v-for="row in group.rows"
-            :key="row.refrend.id"
-            :row="row"
-            :situation-loading="situationLoadingId === row.refrend.id"
-            @open-pedagogia="openPedagogiaDialog"
-            @approve-full="onApproveFullPayment"
-            @approve-as-is="onApproveAsIs"
-            @open-situation="openSituationDialog"
-          />
-        </div>
-      </div>
+        :generation="group.generation"
+        :rows="group.rows"
+        :situation-loading-id="situationLoadingId"
+        @open-pedagogia="openPedagogiaDialog"
+        @approve-full="onApproveFullPayment"
+        @approve-as-is="onApproveAsIs"
+        @open-situation="openSituationDialog"
+      />
     </template>
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
@@ -140,7 +124,7 @@
             Esto aprobará al 100% <strong>{{ cleanDraftIds.length }}</strong>
             refrendo(s) en Borrador sin nada que analizar (sin incidencia y
             sin descuento de asistencia aplicado), pasándolos a estado
-            <strong>Listo para pago</strong>. No aparecen en este tablero
+            <strong>Listo para pago</strong>. No aparecen en esta tabla
             porque no tienen ninguna observación pendiente.
           </p>
           <v-alert type="warning" variant="tonal" density="compact" class="mt-3">
@@ -171,7 +155,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import PedagogiaCaseCard from "@/components/scholarships/PedagogiaCaseCard.vue";
+import PedagogiaGenerationSection from "@/components/scholarships/PedagogiaGenerationSection.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
@@ -192,10 +176,12 @@ import type {
 
 // ── Props ──────────────────────────────────────────────────────────────────
 //
-// Same prop surface as `PedagogiaRefrendTable.vue` (drop-in compatible for
-// the Phase 4 cutover). Data scope is UNCHANGED: only `incidents_count > 0`
-// rows are shown (design ADR D3 — no widening of the fetched dataset, only
-// how it's grouped/rendered).
+// User feedback round 2: reverted the board/card presentation back to a
+// table, grouped by generación (see PedagogiaGenerationSection.vue — one
+// `v-data-table` per generación, always expanded, no collapsible
+// group-by). Same prop surface + data scope as before: only
+// `incidents_count > 0` rows are shown (design ADR D3 — no widening of the
+// fetched dataset, only how it's grouped/rendered).
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
@@ -206,19 +192,16 @@ const props = defineProps<{
 
 const searchQuery = ref("");
 
-// Pedagogía solo revisa becarios con incidencia del periodo, agrupados por
-// la generación snapshoteada — mismo alcance de datos que la tabla original
-// (ver comentario equivalente en PedagogiaRefrendTable.vue).
 const displayRows = computed(() => {
   const rows = props.rows.filter((r) => r.incidents_count > 0);
   return filterRowsByName(rows, searchQuery.value);
 });
 
-// ── Grouping (design ADR D3/D4: generación section, workflow_status badge) ──
+// ── Grouping (generación section, table per group) ──────────────────────────
 
 const groups = computed(() => groupRowsByGeneration(displayRows.value));
 
-// ── Board title ────────────────────────────────────────────────────────────
+// ── Table title ────────────────────────────────────────────────────────────
 
 const tableInfo = computed(() =>
   buildTableInfo(props.rows, props.year, props.month),
@@ -295,11 +278,10 @@ const openSituationDialog = (
 // `rows`/`displayRows` ya vienen filtradas a solo incidencias, así que un
 // becario limpio nunca aparece ahí. Para saber cuántos hay que cerrar, hace
 // falta leer `store.incidenciasRows` directo (fetch SIN filtrar) — mismo
-// razonamiento que `PedagogiaRefrendTable.vue`. La condición de "limpio" en
-// sí vive en `getCleanDraftIds` (`@/utils/refrendBulkClose`), portada
-// VERBATIM y cubierta por tests unitarios (ver
-// `src/utils/__tests__/refrendBulkClose.test.ts`) — este es el punto de
-// mayor riesgo de correctitud de todo el cambio.
+// razonamiento que la tabla original. La condición de "limpio" en sí vive en
+// `getCleanDraftIds` (`@/utils/refrendBulkClose`), portada VERBATIM y
+// cubierta por tests unitarios (ver
+// `src/utils/__tests__/refrendBulkClose.test.ts`).
 
 const closingDrafts = ref(false);
 const closeDraftsDialog = ref(false);
@@ -351,21 +333,11 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
 </script>
 
 <style scoped>
-.pedagogia-case-board {
+.pedagogia-refrend-table-wrapper {
   width: 100%;
 }
 
-.board-header {
+.table-header {
   padding: 6px 2px;
-}
-
-.generation-header {
-  color: rgba(var(--v-theme-on-surface), 0.6);
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 12px;
 }
 </style>

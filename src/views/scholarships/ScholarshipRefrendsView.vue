@@ -87,7 +87,7 @@
         :month="selectedMonth"
         :view-variant="viewVariant"
       />
-      <PedagogiaCaseBoard
+      <PedagogiaRefrendTable
         v-else
         :rows="activeRows"
         :loading="activeLoading"
@@ -159,8 +159,8 @@ const requireGeneration = computed(() => viewVariant.value === "completa");
 const AtencionRefrendTable = defineAsyncComponent(
   () => import("@/components/scholarships/AtencionRefrendTable.vue"),
 );
-const PedagogiaCaseBoard = defineAsyncComponent(
-  () => import("@/components/scholarships/PedagogiaCaseBoard.vue"),
+const PedagogiaRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/PedagogiaRefrendTable.vue"),
 );
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
