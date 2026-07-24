@@ -3,7 +3,7 @@
     v-if="text"
     size="x-small"
     variant="tonal"
-    color="orange-darken-2"
+    color="grey-darken-1"
     prepend-icon="mdi-alert-circle-outline"
     :title="title"
     @click="open = true"
