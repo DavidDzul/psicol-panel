@@ -20,39 +20,54 @@ export const fmt = (value: string | number): string =>
 export { LOCKED_STATUSES, isLocked } from "@/utils/refrendActionability";
 
 // ── Workflow status chip ──────────────────────────────────────────────────────
+//
+// Icon added per user request: status is dense/repeated in every row, so it
+// renders as an icon (see StatusIcon.vue) with the label surfaced only via
+// tooltip, instead of a text chip — same space-saving pattern already
+// approved for the raw incident text (IncidentTooltipIcon.vue).
 
 export const statusChip = (
   refrend: BulkRefrendRow["refrend"],
-): { label: string; color: string } => {
+): { label: string; color: string; icon: string } => {
   const s = refrend.workflow_status;
   const r = refrend.resolution_type;
 
-  if (s === "DRAFT") return { label: "Borrador", color: "grey" };
+  if (s === "DRAFT")
+    return { label: "Borrador", color: "grey", icon: "mdi-file-document-edit-outline" };
   if (s === "CON_INCIDENCIA")
-    return { label: "Con incidencia", color: "orange" };
+    return { label: "Con incidencia", color: "orange", icon: "mdi-alert-decagram-outline" };
   if (s === "PENDIENTE_NOTIFICACION")
-    return { label: "Pend. notif.", color: "blue" };
-  if (s === "CLOSED") return { label: "Pagado", color: "teal" };
+    return { label: "Pend. notif.", color: "blue", icon: "mdi-bell-outline" };
+  if (s === "CLOSED")
+    return { label: "Pagado", color: "teal", icon: "mdi-cash-check" };
   if (refrend.status === "CANCELLED")
-    return { label: "Baja", color: "red-darken-3" };
+    return { label: "Baja", color: "red-darken-3", icon: "mdi-account-cancel-outline" };
 
   if (s === "LISTO_PARA_PAGO") {
-    if (r === "SIN_PAGO") return { label: "Sin pago", color: "red" };
-    if (r === "RETENIDA") return { label: "Retenida", color: "amber-darken-2" };
-    if (r === "EGRESADO") return { label: "Egresado", color: "blue-grey" };
+    if (r === "SIN_PAGO")
+      return { label: "Sin pago", color: "red", icon: "mdi-cash-remove" };
+    if (r === "RETENIDA")
+      return { label: "Retenida", color: "amber-darken-2", icon: "mdi-lock-outline" };
+    if (r === "EGRESADO")
+      return { label: "Egresado", color: "blue-grey", icon: "mdi-account-check-outline" };
     if (r === "BAJA_DEFINITIVA")
-      return { label: "Baja definitiva", color: "red-darken-3" };
+      return {
+        label: "Baja definitiva",
+        color: "red-darken-3",
+        icon: "mdi-account-remove-outline",
+      };
     if (r === "SUSPENDIDA") {
       const pct = refrend.suspension_percentage ?? null;
       return {
         label: pct ? `Suspendido ${pct}%` : "Suspendido",
         color: "deep-orange",
+        icon: "mdi-pause-circle-outline",
       };
     }
-    return { label: "Listo para pago", color: "green" };
+    return { label: "Listo para pago", color: "green", icon: "mdi-check-circle-outline" };
   }
 
-  return { label: s ?? "—", color: "grey" };
+  return { label: s ?? "—", color: "grey", icon: "mdi-help-circle-outline" };
 };
 
 // ── Resolution cause label ────────────────────────────────────────────────────
@@ -99,7 +114,7 @@ export const BASE_HEADERS = [
     minWidth: "200px",
     sortable: true,
   },
-  { title: "Estado", key: "workflow_status", width: 175, sortable: false },
+  { title: "Estado", key: "workflow_status", width: 70, sortable: false },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────

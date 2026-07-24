@@ -109,20 +109,16 @@
       <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
 
       <template #item.workflow_status="{ item }">
-        <div class="d-flex flex-column ga-1 py-2 justify-center text-center">
-          <v-chip
-            class="justify-center text-center"
+        <div class="d-flex flex-column ga-1 py-2 justify-center align-center text-center">
+          <StatusIcon
+            :icon="statusChip(item.refrend).icon"
             :color="statusChip(item.refrend).color"
-            size="small"
-            label
-            variant="tonal"
-          >
-            {{ statusChip(item.refrend).label }}
-          </v-chip>
+            :label="statusChip(item.refrend).label"
+          />
           <span
             v-if="resolutionCauseLabel(item.refrend)"
             class="text-caption text-medium-emphasis"
-            style="max-width: 155px"
+            style="max-width: 90px"
           >
             {{ resolutionCauseLabel(item.refrend) }}
           </span>
@@ -321,6 +317,7 @@
 import { computed, ref } from "vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import IncidentTooltipIcon from "@/components/scholarships/IncidentTooltipIcon.vue";
+import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
