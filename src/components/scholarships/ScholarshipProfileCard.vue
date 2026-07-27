@@ -44,9 +44,14 @@
           </v-btn>
         </div>
 
-        <!-- ── Sección 2: Descuento académico (si existe) ── -->
+        <!-- ── Sección 2: Retención temporal de beca (descuento con fecha
+             de vigencia; se auto-desactiva al vencer, ver
+             ScholarshipCalculationService::applyAcademicDiscount) ── -->
         <template v-if="profile.active_discount_percentage">
           <v-divider class="mb-3" />
+          <div class="text-caption text-medium-emphasis mb-2">
+            Retención temporal de beca
+          </div>
           <v-row dense>
             <v-col cols="6" sm="2">
               <div class="text-caption text-medium-emphasis mb-1">
@@ -197,6 +202,12 @@
             prefix="$"
             clearable
           />
+        </v-col>
+        <v-col cols="12">
+          <v-divider class="mb-1" />
+          <div class="text-caption text-medium-emphasis mt-3 mb-1">
+            Retención temporal de beca
+          </div>
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
