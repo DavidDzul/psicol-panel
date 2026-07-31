@@ -55,7 +55,7 @@
 
         <!-- Situaciones especiales -->
         <v-list-item
-          v-for="item in menuItems"
+          v-for="item in visibleMenuItems"
           :key="item.key"
           @click="emit('open', item.key)"
         >
@@ -74,8 +74,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { ResolutionType, WorkflowStatus } from "@/interfaces/scholarship";
-
-type SituationKey = ResolutionType | "PAGO_MESES";
+import {
+  visibleSituationMenuItems,
+  type SituationKey,
+} from "@/composables/useSituationMenuItems";
 
 const props = defineProps<{
   currentResolution: ResolutionType | null;
@@ -99,47 +101,9 @@ const emit = defineEmits<{
 
 const hasPending = computed(() => Number(props.amountPending ?? 0) > 0);
 
-const menuItems: {
-  key: SituationKey;
-  icon: string;
-  label: string;
-  color: string;
-}[] = [
-  {
-    key: "SIN_PAGO",
-    icon: "mdi-cash-off",
-    label: "Sin pago (0%)",
-    color: "grey-darken-2",
-  },
-  {
-    key: "RETENIDA",
-    icon: "mdi-lock-outline",
-    label: "Beca retenida",
-    color: "orange-darken-2",
-  },
-  {
-    key: "PAGO_MESES",
-    icon: "mdi-cash-refund",
-    label: "Pago meses retenidos",
-    color: "teal",
-  },
-  {
-    key: "SUSPENDIDA",
-    icon: "mdi-percent-outline",
-    label: "Suspensión temporal",
-    color: "deep-orange",
-  },
-  {
-    key: "BAJA_DEFINITIVA",
-    icon: "mdi-account-off-outline",
-    label: "Baja definitiva",
-    color: "red-darken-2",
-  },
-  {
-    key: "EGRESADO",
-    icon: "mdi-school-outline",
-    label: "Egresado",
-    color: "indigo",
-  },
-];
+// Catalog + `hidden` filtering live in `useSituationMenuItems.ts` (unit
+// tested there) — SUSPENDIDA is flagged `hidden: true` so it stays in the
+// catalog (its dialog and `situationDialogs` key are untouched) but is no
+// longer offered here.
+const visibleMenuItems = computed(() => visibleSituationMenuItems());
 </script>
