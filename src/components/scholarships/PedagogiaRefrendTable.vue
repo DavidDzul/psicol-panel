@@ -254,6 +254,7 @@
     <SituationRetenidaDialog
       v-model="situationDialogs.RETENIDA"
       :loading="situationSubmitLoading"
+      :base-amount="activeRow?.refrend.base_amount"
       @submit="onSituationSubmit"
     />
     <SituationPagoMesesDialog

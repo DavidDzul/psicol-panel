@@ -9,6 +9,7 @@ import {
   canAtencion,
   canPedagogia,
   canRecordSituation,
+  isFullyWithheld,
   isLocked,
 } from "@/utils/refrendActionability";
 
@@ -29,6 +30,8 @@ const buildRefrend = (
   resolution_cause: null,
   resolution_notes: null,
   suspension_percentage: null,
+  withholding_mode: null,
+  withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
   carryover_percentage: null,
@@ -132,6 +135,23 @@ describe("canPedagogia", () => {
 
   it("is false when legacy status locks the row even though workflow_status is CON_INCIDENCIA", () => {
     expect(canPedagogia(buildRefrend("PAID", "CON_INCIDENCIA"))).toBe(false);
+  });
+});
+
+describe("isFullyWithheld", () => {
+  it("is true when status is WITHHELD and final_amount is 0", () => {
+    const refrend = { ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"), final_amount: "0.00" };
+    expect(isFullyWithheld(refrend)).toBe(true);
+  });
+
+  it("is false when status is WITHHELD but final_amount is positive (partial retention)", () => {
+    const refrend = { ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"), final_amount: "700.00" };
+    expect(isFullyWithheld(refrend)).toBe(false);
+  });
+
+  it("is false when status is not WITHHELD even if final_amount is 0", () => {
+    const refrend = { ...buildRefrend("PAID", "CLOSED"), final_amount: "0.00" };
+    expect(isFullyWithheld(refrend)).toBe(false);
   });
 });
 

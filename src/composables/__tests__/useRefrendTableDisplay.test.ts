@@ -21,6 +21,8 @@ const baseRefrend: ScholarshipRefrend = {
   resolution_cause: null,
   resolution_notes: null,
   suspension_percentage: null,
+  withholding_mode: null,
+  withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
   carryover_percentage: null,

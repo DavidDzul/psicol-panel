@@ -138,6 +138,8 @@ export interface ScholarshipRefrend {
   resolution_cause: string | null
   resolution_notes: string | null
   suspension_percentage: string | null
+  withholding_mode: 'percentage' | 'fixed' | null
+  withholding_value: string | null
   carryover_months_count: number | null
   carryover_months_detail: string | null
   carryover_percentage: string | null
@@ -248,8 +250,13 @@ export interface RecordSituationForm {
   resolution_cause?: string | null
   resolution_notes?: string | null
   suspension_percentage?: number | null
+  withholding_mode?: 'percentage' | 'fixed' | null
+  withholding_value?: number | null
+  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
   carryover_months_count?: number | null
+  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
   carryover_months_detail?: string | null
+  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
   carryover_percentage?: number | null
   refund_amount?: number | null
 }

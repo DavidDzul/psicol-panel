@@ -35,3 +35,12 @@ export const canPedagogia = (refrend: ScholarshipRefrend): boolean =>
 /** Recording a payment situation is allowed for any unlocked row. */
 export const canRecordSituation = (refrend: ScholarshipRefrend): boolean =>
   !isLocked(refrend);
+
+/**
+ * The "Retener refrendo" secondary action must hide only when the refrend
+ * carries a TOTAL withholding (`final_amount === 0`). A PARTIAL withholding
+ * (`final_amount > 0`) behaves like a normal refrend and still shows the
+ * action — see design v3 §7 / Architecture Decisions.
+ */
+export const isFullyWithheld = (refrend: ScholarshipRefrend): boolean =>
+  refrend.status === "WITHHELD" && Number(refrend.final_amount) === 0;
