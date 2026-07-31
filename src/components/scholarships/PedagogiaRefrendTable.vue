@@ -254,14 +254,16 @@
     <SituationRetenidaDialog
       v-model="situationDialogs.RETENIDA"
       :loading="situationSubmitLoading"
-      :base-amount="activeRow?.refrend.base_amount"
+      :final-amount="activeRow?.refrend.final_amount"
       @submit="onSituationSubmit"
     />
+    <!-- base-amount prop is currently unused inside SituationPagoMesesDialog (no calculation reads it yet);
+         passing final_amount here just avoids wiring the wrong field once PR3's ledger rework consumes it -->
     <SituationPagoMesesDialog
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
       :amount-pending="activeRow?.refrend.amount_pending_from_previous"
-      :base-amount="activeRow?.refrend.base_amount"
+      :base-amount="activeRow?.refrend.final_amount"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog

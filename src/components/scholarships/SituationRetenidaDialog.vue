@@ -8,7 +8,7 @@
 
       <v-card-text class="pt-0">
         <v-text-field
-          :model-value="fmt(baseAmount)"
+          :model-value="fmt(finalAmount)"
           label="Monto Final"
           variant="outlined"
           density="compact"
@@ -74,7 +74,7 @@
 import { computed, reactive, watch } from "vue";
 import type { RecordSituationForm } from "@/interfaces/scholarship";
 
-const props = defineProps<{ loading?: boolean; baseAmount?: string | number | null }>();
+const props = defineProps<{ loading?: boolean; finalAmount?: string | number | null }>();
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
 
@@ -94,7 +94,7 @@ watch(model, (v) => {
   }
 });
 
-const baseAmountNumber = computed(() => Number(props.baseAmount ?? 0));
+const finalAmountNumber = computed(() => Number(props.finalAmount ?? 0));
 
 const fmt = (value: number | string | null | undefined): string => {
   const num = Number(value ?? 0);
@@ -104,20 +104,20 @@ const fmt = (value: number | string | null | undefined): string => {
 const withheldAmount = computed(() => {
   const value = form.withholding_value ?? 0;
   if (form.withholding_mode === "fixed") {
-    return Math.min(baseAmountNumber.value, Math.max(0, value));
+    return Math.min(finalAmountNumber.value, Math.max(0, value));
   }
   const pct = Math.min(100, Math.max(0, value));
-  return Math.round(baseAmountNumber.value * (pct / 100) * 100) / 100;
+  return Math.round(finalAmountNumber.value * (pct / 100) * 100) / 100;
 });
 
 const resultingFinalAmount = computed(() =>
-  Math.round((baseAmountNumber.value - withheldAmount.value) * 100) / 100,
+  Math.round((finalAmountNumber.value - withheldAmount.value) * 100) / 100,
 );
 
 const isValid = computed(() => {
   if (form.withholding_value == null || form.withholding_value <= 0) return false;
   if (form.withholding_mode === "percentage" && form.withholding_value > 100) return false;
-  if (form.withholding_mode === "fixed" && form.withholding_value > baseAmountNumber.value) return false;
+  if (form.withholding_mode === "fixed" && form.withholding_value > finalAmountNumber.value) return false;
   return (
     !!form.resolution_cause &&
     (form.resolution_cause !== "OTRO" || !!form.resolution_notes?.trim())
