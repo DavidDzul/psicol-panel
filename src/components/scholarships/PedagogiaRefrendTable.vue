@@ -222,7 +222,6 @@
             v-if="canRecordSituation(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
             :locked="!canRecordSituation(item.refrend)"
-            :amount-pending="item.refrend.amount_pending_from_previous"
             :workflow-status="item.refrend.workflow_status"
             :has-discount="Number(item.refrend.discount_percentage) > 0"
             :loading="situationLoadingId === item.refrend.id"
@@ -257,13 +256,10 @@
       :final-amount="activeRow?.refrend.final_amount"
       @submit="onSituationSubmit"
     />
-    <!-- base-amount prop is currently unused inside SituationPagoMesesDialog (no calculation reads it yet);
-         passing final_amount here just avoids wiring the wrong field once PR3's ledger rework consumes it -->
     <SituationPagoMesesDialog
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
-      :amount-pending="activeRow?.refrend.amount_pending_from_previous"
-      :base-amount="activeRow?.refrend.final_amount"
+      :user-id="activeRow?.refrend.user_id"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog
@@ -525,10 +521,11 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   situationSubmitLoading.value = true;
   try {
     await store.recordPaymentSituation(activeRow.value.refrend.id, form);
-    const key =
-      form.carryover_months_count && form.resolution_type === "BECA_MES"
-        ? "PAGO_MESES"
-        : (form.resolution_type as SituationKey);
+    // SituationPagoMesesDialog is the only emitter of resolution_type
+    // BECA_MES (there is no standalone BECA_MES dialog) — map it to its own
+    // situationDialogs key.
+    const key: SituationKey =
+      form.resolution_type === "BECA_MES" ? "PAGO_MESES" : (form.resolution_type as SituationKey);
     situationDialogs.value[key] = false;
   } finally {
     situationSubmitLoading.value = false;

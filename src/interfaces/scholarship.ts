@@ -243,6 +243,36 @@ export interface InlinePatchPayload {
   notified_at?: string | null
 }
 
+// ── Withholding ledger (retenciones individuales) ──────────────────────────
+
+export interface ScholarshipWithholdingPayment {
+  id: number
+  withholding_id: number
+  applied_refrend_id: number
+  amount: string
+  created_at: string
+  created_by?: { id: number; first_name: string; last_name: string } | null
+}
+
+export interface ScholarshipWithholding {
+  id: number
+  user_id: number
+  origin_refrend_id: number
+  period_year: number
+  period_month: number
+  withheld_amount: string
+  paid_amount: string
+  remaining_amount: string
+  cause: string | null
+  status: 'PENDING' | 'PAID' | 'CANCELLED'
+  payments?: ScholarshipWithholdingPayment[]
+}
+
+export interface WithholdingPaymentInput {
+  withholding_id: number
+  amount: number
+}
+
 // ── Situation form ─────────────────────────────────────────────────────────
 
 export interface RecordSituationForm {
@@ -252,12 +282,7 @@ export interface RecordSituationForm {
   suspension_percentage?: number | null
   withholding_mode?: 'percentage' | 'fixed' | null
   withholding_value?: number | null
-  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
-  carryover_months_count?: number | null
-  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
-  carryover_months_detail?: string | null
-  /** @deprecated Reemplazado por el ledger de retenciones (PR3) */
-  carryover_percentage?: number | null
+  withholding_payments?: WithholdingPaymentInput[]
   refund_amount?: number | null
 }
 

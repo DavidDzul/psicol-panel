@@ -90,11 +90,13 @@ import type {
   StudentDocument,
   AttendanceSummary,
   ScholarshipSemesterGrade,
+  ScholarshipWithholding,
 } from './scholarship'
 
 export interface ScholarshipProfileResponse { data: ScholarshipProfile }
 export interface ScholarshipRefrendsResponse { data: ScholarshipRefrend[] }
 export interface ScholarshipRefrendResponse { data: ScholarshipRefrend }
+export interface ScholarshipWithholdingsResponse { data: ScholarshipWithholding[] }
 export interface ScholarshipDocumentsResponse { data: StudentDocument[] }
 export interface ScholarshipDocumentResponse { data: StudentDocument }
 export interface GenerateRefrendsResponse { data: { created: number; skipped: number; errors: number } }

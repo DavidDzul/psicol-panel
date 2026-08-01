@@ -21,6 +21,7 @@ import type {
   PedagogiaResolveForm,
   RefrendPaymentVerifyForm,
   RecordSituationForm,
+  ScholarshipWithholding,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -30,6 +31,7 @@ import type {
   GenerateRefrendsResponse,
   AttendanceSummaryResponse,
   GraduatePersonResponse,
+  ScholarshipWithholdingsResponse,
 } from "@/interfaces/api";
 
 export const useScholarshipStore = defineStore("scholarshipStore", () => {
@@ -612,6 +614,21 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // ── Withholding ledger (retenciones individuales) ──────────────────────────
+
+  const fetchPendingWithholdings = async (userId: number): Promise<ScholarshipWithholding[]> => {
+    try {
+      const res = await axios.get<ScholarshipWithholdingsResponse>(
+        `api/admin/users/${userId}/scholarship-withholdings`,
+        { params: { status: "pending" } }
+      );
+      return res.data.data;
+    } catch {
+      showAlert({ title: "Error al cargar retenciones pendientes.", status: "error" });
+      return [];
+    }
+  };
+
   const resetBulkTable = (): void => {
     bulkRows.value = [];
     bulkMeta.value = null;
@@ -692,6 +709,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     atencionApprove,
     recordPaymentSituation,
     bulkApprove,
+    fetchPendingWithholdings,
   };
 });
 

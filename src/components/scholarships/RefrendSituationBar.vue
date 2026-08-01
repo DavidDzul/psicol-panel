@@ -1,18 +1,5 @@
 <template>
   <div class="d-flex align-center ga-1">
-    <!-- Primary action when there are pending retained months -->
-    <v-btn
-      v-if="hasPending && !locked"
-      size="x-small"
-      color="teal"
-      variant="tonal"
-      prepend-icon="mdi-cash-refund"
-      :loading="loading"
-      @click="emit('open', 'PAGO_MESES')"
-    >
-      Pagar retenidos
-    </v-btn>
-
     <v-menu v-if="!locked" :close-on-content-click="true">
       <template #activator="{ props: menuProps }">
         <v-btn
@@ -83,7 +70,6 @@ const props = defineProps<{
   currentResolution: ResolutionType | null;
   locked: boolean;
   loading?: boolean;
-  amountPending?: string | number;
   workflowStatus?: WorkflowStatus | null;
   // "Aprobar con descuento" (ApproveRefrendAction) approves as-is with
   // whatever discount is already calculated — when there is none, it's
@@ -99,7 +85,14 @@ const emit = defineEmits<{
   recalculate: [];
 }>();
 
-const hasPending = computed(() => Number(props.amountPending ?? 0) > 0);
+// "Pago meses retenidos" (PAGO_MESES) used to be gated behind a quick-action
+// button driven by `amountPending` — but under the retention ledger
+// (sdd/pedagogia-acciones-visibilidad-y-beca-retenida-montos, PR3),
+// amount_pending_from_previous means "liquidated by THIS refrend", not
+// "this becario has pending retentions", so it can no longer decide
+// relevance here. PAGO_MESES stays a regular, always-offered entry in the
+// "Acciones" menu below; the dialog itself shows an empty state when the
+// becario has nothing pending.
 
 // Catalog + `hidden` filtering live in `useSituationMenuItems.ts` (unit
 // tested there) — SUSPENDIDA is flagged `hidden: true` so it stays in the
