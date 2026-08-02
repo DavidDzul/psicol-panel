@@ -9,6 +9,7 @@ import {
   canAtencion,
   canPedagogia,
   canRecordSituation,
+  computeDueAmount,
   isFullyWithheld,
   isLocked,
 } from "@/utils/refrendActionability";
@@ -170,5 +171,43 @@ describe("canRecordSituation", () => {
     expect(
       canRecordSituation(buildRefrend("AUTHORIZED", "DRAFT")),
     ).toBe(false);
+  });
+});
+
+describe("computeDueAmount", () => {
+  it("applies the active profile discount over the gross snapshot", () => {
+    const refrend = {
+      ...buildRefrend("DRAFT", "DRAFT"),
+      snapshot_gross_amount: "1000",
+      snapshot_discount_percentage: "20",
+      base_amount: "1000",
+      final_amount: "800",
+    };
+    expect(computeDueAmount(refrend)).toBe(800);
+  });
+
+  it("falls back to base_amount when snapshot_gross_amount is missing", () => {
+    const refrend = {
+      ...buildRefrend("DRAFT", "DRAFT"),
+      snapshot_gross_amount: null,
+      snapshot_discount_percentage: null,
+      base_amount: "1000",
+      final_amount: "1000",
+    };
+    expect(computeDueAmount(refrend)).toBe(1000);
+  });
+
+  it("does not use final_amount even when it disagrees with the due amount", () => {
+    // Simulates a refrend already resolved as RETENIDA (final_amount=600),
+    // about to be re-resolved as BECA_MES — the due amount the backend will
+    // actually charge is 800, not the stale 600 sitting on final_amount.
+    const refrend = {
+      ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"),
+      snapshot_gross_amount: "1000",
+      snapshot_discount_percentage: "20",
+      base_amount: "1000",
+      final_amount: "600",
+    };
+    expect(computeDueAmount(refrend)).toBe(800);
   });
 });

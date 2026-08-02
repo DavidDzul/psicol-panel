@@ -99,9 +99,13 @@
             </template>
           </v-list>
 
+          <div class="text-caption text-medium-emphasis mb-1">
+            Mes actual {{ fmt(currentMonthAmountNumber) }} + retenciones seleccionadas
+            {{ fmt(totalToPay) }}
+          </div>
           <v-text-field
-            :model-value="fmt(totalToPay)"
-            label="Monto a pagar"
+            :model-value="fmt(grandTotal)"
+            label="Monto final a pagar"
             variant="outlined"
             density="compact"
             readonly
@@ -156,6 +160,7 @@ import VoidWithholdingPaymentDialog, {
 const props = defineProps<{
   loading?: boolean;
   userId?: number | null;
+  currentMonthAmount?: string | number | null;
 }>();
 
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
@@ -189,6 +194,12 @@ const formatDate = (value: string): string => new Date(value).toLocaleDateString
 
 const totalToPay = computed(() => calculateTotalToPay(rows.value));
 const isValid = computed(() => isSelectionValid(rows.value));
+
+// BECA_MES (the resolution_type this dialog always submits) pays the current
+// refrendo's own due amount in full — the grand total the admin actually
+// disburses is that amount plus whichever retained months got selected here.
+const currentMonthAmountNumber = computed(() => Number(props.currentMonthAmount ?? 0));
+const grandTotal = computed(() => currentMonthAmountNumber.value + totalToPay.value);
 
 const onToggleSelected = (row: Row): void => {
   if (row.selected && (row.amount === null || row.amount <= 0)) {

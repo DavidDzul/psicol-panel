@@ -257,13 +257,14 @@
     <SituationRetenidaDialog
       v-model="situationDialogs.RETENIDA"
       :loading="situationSubmitLoading"
-      :final-amount="activeRow?.refrend.final_amount"
+      :final-amount="activeRowDueAmount"
       @submit="onSituationSubmit"
     />
     <SituationPagoMesesDialog
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
       :user-id="activeRow?.refrend.user_id"
+      :current-month-amount="activeRowDueAmount"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog
@@ -343,7 +344,7 @@ import {
   rowClass,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
-import { canPedagogia, canRecordSituation } from "@/utils/refrendActionability";
+import { canPedagogia, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
 import type {
   BulkRefrendRow,
@@ -421,6 +422,13 @@ const store = useScholarshipStore();
 // ── Active row state ───────────────────────────────────────────────────────
 
 const activeRow = ref<BulkRefrendRow | null>(null);
+
+// Passed to SituationRetenidaDialog/SituationPagoMesesDialog instead of raw
+// refrend.final_amount, which can carry a previous resolution's effect on
+// this same refrend (see computeDueAmount's docblock).
+const activeRowDueAmount = computed(() =>
+  activeRow.value ? computeDueAmount(activeRow.value.refrend) : null,
+);
 
 // ── Pedagogia dialog ───────────────────────────────────────────────────────
 

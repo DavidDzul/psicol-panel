@@ -4,6 +4,9 @@ import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
+import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
+import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
+import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // ── Test harness ─────────────────────────────────────────────────────────────
@@ -177,5 +180,33 @@ describe("PedagogiaRefrendTable — row filter", () => {
     expect(wrapper.text()).toContain("Incluido Incidencia");
     expect(wrapper.text()).toContain("Incluido Retencion");
     expect(wrapper.text()).not.toContain("Excluido Limpio");
+  });
+});
+
+describe("PedagogiaRefrendTable — due amount passed to RETENIDA/PAGO_MESES dialogs", () => {
+  it("passes the recomputed due amount, not the stale final_amount left by a prior resolution", async () => {
+    // Simulates a refrend already resolved as RETENIDA once (final_amount=600
+    // is what's left over from that), now being re-resolved: the amount the
+    // backend will actually charge is 800 (1000 gross, 20% profile discount),
+    // not the stale 600 sitting on final_amount.
+    const row = buildRow(8, "Elena Redue", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_gross_amount: "1000",
+      snapshot_discount_percentage: "20",
+      base_amount: "1000",
+      final_amount: "600",
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "RETENIDA");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationRetenidaDialog).props("finalAmount")).toBe(800);
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("currentMonthAmount")).toBe(
+      800,
+    );
   });
 });

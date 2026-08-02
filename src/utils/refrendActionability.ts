@@ -28,6 +28,21 @@ export const canAtencion = (refrend: ScholarshipRefrend): boolean =>
   (refrend.workflow_status === "DRAFT" ||
     refrend.workflow_status === "CON_INCIDENCIA");
 
+/**
+ * The amount actually due this month, mirroring
+ * RecordPaymentSituationAction's $dueAmount formula exactly: gross snapshot
+ * with the active profile discount applied, falling back to base_amount when
+ * snapshot_gross_amount isn't set (legacy rows). NOT refrend.final_amount —
+ * that field carries whatever the last-applied resolution set it to (e.g. a
+ * prior RETENIDA), and re-resolving from a stale display value would show an
+ * amount the backend is about to overwrite with a different one.
+ */
+export const computeDueAmount = (refrend: ScholarshipRefrend): number => {
+  const gross = Number(refrend.snapshot_gross_amount ?? refrend.base_amount);
+  const academicPct = Number(refrend.snapshot_discount_percentage ?? 0);
+  return Math.round(gross * (1 - academicPct / 100) * 100) / 100;
+};
+
 /** Pedagogía may act on a row only while it carries an open incidencia. */
 export const canPedagogia = (refrend: ScholarshipRefrend): boolean =>
   !isLocked(refrend) && refrend.workflow_status === "CON_INCIDENCIA";
