@@ -629,6 +629,27 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  const voidWithholdingPayment = async (
+    withholdingId: number,
+    paymentId: number,
+    reason: string,
+  ): Promise<boolean> => {
+    try {
+      await axios.patch(
+        `api/admin/scholarship-withholdings/${withholdingId}/payments/${paymentId}/void`,
+        { void_reason: reason },
+      );
+      showAlert({ title: "Abono revertido.", status: "success" });
+      return true;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al revertir el abono.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+      return false;
+    }
+  };
+
   const resetBulkTable = (): void => {
     bulkRows.value = [];
     bulkMeta.value = null;
@@ -710,6 +731,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     recordPaymentSituation,
     bulkApprove,
     fetchPendingWithholdings,
+    voidWithholdingPayment,
   };
 });
 
