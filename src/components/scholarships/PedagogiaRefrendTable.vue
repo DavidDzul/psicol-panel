@@ -49,7 +49,7 @@
     </div>
 
     <div v-if="displayRows.length === 0 && !loading" class="text-center text-medium-emphasis pa-6">
-      Sin becarios con incidencia en este periodo.
+      Sin becarios con incidencia o retención pendiente en este periodo.
     </div>
 
     <!-- User feedback round 3: "prefiero que este como antes, ya que puedo ir
@@ -123,6 +123,10 @@
             {{ resolutionCauseLabel(item.refrend) }}
           </span>
         </div>
+      </template>
+
+      <template #item.pending_withholding_amount="{ item }">
+        <PendingWithholdingChip :row="item" />
       </template>
 
       <!-- Incidencia cruda: botón que abre un modal con el texto completo, no
@@ -320,6 +324,7 @@
 import { computed, ref } from "vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
+import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -353,9 +358,9 @@ import type {
 // collapsible group-by on `refrend.snapshot_generation` (same mechanism as
 // AtencionRefrendTable's Incidencias variant) — user can expand/collapse
 // each generación group instead of seeing every group at once. Same prop
-// surface + data scope as every prior round: only `incidents_count > 0`
-// rows are shown (design ADR D3 — no widening of the fetched dataset, only
-// how it's grouped/rendered).
+// surface as every prior round; the row-filter criterion below was widened
+// to also include becarios with a pending withholding and no incidencia
+// (spec "Criterio de inclusión de filas en Pedagogía").
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
@@ -367,7 +372,9 @@ const props = defineProps<{
 const searchQuery = ref("");
 
 const displayRows = computed(() => {
-  const rows = props.rows.filter((r) => r.incidents_count > 0);
+  const rows = props.rows.filter(
+    (r) => r.incidents_count > 0 || r.pending_withholding_count > 0,
+  );
   return filterRowsByName(rows, searchQuery.value);
 });
 

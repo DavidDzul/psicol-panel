@@ -216,6 +216,8 @@ export interface BulkRefrendRow {
   profile_discount_pct: string | null
   profile_discount_valid_until: string | null
   profile_discount_reason: string | null
+  pending_withholding_count: number
+  pending_withholding_amount: string | null
 }
 
 export interface BulkTableParams {

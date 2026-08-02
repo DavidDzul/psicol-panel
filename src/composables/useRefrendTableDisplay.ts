@@ -95,6 +95,27 @@ export const resolutionCauseLabel = (
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
 };
 
+// ── Pending withholding chip (shared cell, design ADR D5) ──────────────────
+//
+// Purely informational: label with the formatted amount, tooltip with count
+// + total. Returns null when there is nothing pending (design ADR D4 — the
+// backend emits `null`, never "0.00", so a single truthiness check suffices).
+
+export const pendingWithholdingChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  const count = row.pending_withholding_count ?? 0;
+  if (count < 1 || !row.pending_withholding_amount) return null;
+  const amount = fmt(row.pending_withholding_amount);
+  return {
+    label: amount,
+    tooltip:
+      count === 1
+        ? `1 retención pendiente · ${amount}`
+        : `${count} retenciones pendientes · ${amount} en total`,
+  };
+};
+
 // ── Row CSS class ───────────────────────────────────────────────────────────
 
 export const rowClass = (item: BulkRefrendRow): string => {
@@ -115,6 +136,13 @@ export const BASE_HEADERS = [
     sortable: true,
   },
   { title: "Estado", key: "workflow_status", width: 70, sortable: false },
+  {
+    title: "Retención",
+    key: "pending_withholding_amount",
+    width: 110,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────

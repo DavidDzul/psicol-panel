@@ -192,6 +192,10 @@
         </div>
       </template>
 
+      <template #item.pending_withholding_amount="{ item }">
+        <PendingWithholdingChip :row="item" />
+      </template>
+
       <template #item.atencion="{ item }">
         <div class="d-flex align-center ga-2">
           <v-btn
@@ -301,6 +305,7 @@ import { computed, ref } from "vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
+import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {

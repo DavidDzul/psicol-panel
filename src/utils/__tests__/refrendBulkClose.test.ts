@@ -90,6 +90,8 @@ const buildRow = (
   profile_discount_pct: null,
   profile_discount_valid_until: null,
   profile_discount_reason: null,
+  pending_withholding_count: 0,
+  pending_withholding_amount: null,
   ...rowOverrides,
 });
 
