@@ -99,8 +99,28 @@
             </template>
           </v-list>
 
+          <v-checkbox
+            v-model="payCurrentMonth"
+            density="compact"
+            hide-details
+            color="teal"
+            label="¿Pagar mes en curso?"
+            class="mb-1"
+          />
+          <v-alert
+            v-if="!payCurrentMonth"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            El mes en curso quedará como <strong>Sin pago</strong>. Esta es
+            una resolución definitiva — no se puede revertir desde este
+            diálogo, no es lo mismo que posponer el pago.
+          </v-alert>
+
           <div class="text-caption text-medium-emphasis mb-1">
-            Mes actual {{ fmt(currentMonthAmountNumber) }} + retenciones seleccionadas
+            Mes actual {{ fmt(currentMonthDisplayAmount) }} + retenciones seleccionadas
             {{ fmt(totalToPay) }}
           </div>
           <v-text-field
@@ -195,11 +215,20 @@ const formatDate = (value: string): string => new Date(value).toLocaleDateString
 const totalToPay = computed(() => calculateTotalToPay(rows.value));
 const isValid = computed(() => isSelectionValid(rows.value));
 
-// BECA_MES (the resolution_type this dialog always submits) pays the current
-// refrendo's own due amount in full — the grand total the admin actually
-// disburses is that amount plus whichever retained months got selected here.
+// Whether the admin wants to pay the current refrendo's own due amount in
+// this same action. Default true (preexisting behavior — this dialog always
+// used to pay it). Unchecking it resolves the current month as SIN_PAGO
+// (definitive, see submit()) instead of deferring it.
+const payCurrentMonth = ref(true);
+
+// currentMonthAmount keeps arriving unchanged from the parent (the real due
+// amount via computeDueAmount) — only the display/total gating is internal
+// to this dialog when the checkbox is off.
 const currentMonthAmountNumber = computed(() => Number(props.currentMonthAmount ?? 0));
-const grandTotal = computed(() => currentMonthAmountNumber.value + totalToPay.value);
+const currentMonthDisplayAmount = computed(() =>
+  payCurrentMonth.value ? currentMonthAmountNumber.value : 0,
+);
+const grandTotal = computed(() => currentMonthDisplayAmount.value + totalToPay.value);
 
 const onToggleSelected = (row: Row): void => {
   if (row.selected && (row.amount === null || row.amount <= 0)) {
@@ -238,16 +267,28 @@ watch(model, (open) => {
     load();
   } else {
     rows.value = [];
+    payCurrentMonth.value = true;
   }
 });
 
 const submit = () => {
   if (!isValid.value) return;
+  const withholdingPayments = rows.value
+    .filter((row) => row.selected)
+    .map((row) => ({ withholding_id: row.id, amount: row.amount as number }));
+
+  if (payCurrentMonth.value) {
+    emit("submit", {
+      resolution_type: "BECA_MES",
+      withholding_payments: withholdingPayments,
+    });
+    return;
+  }
+
   emit("submit", {
-    resolution_type: "BECA_MES",
-    withholding_payments: rows.value
-      .filter((row) => row.selected)
-      .map((row) => ({ withholding_id: row.id, amount: row.amount as number })),
+    resolution_type: "SIN_PAGO",
+    resolution_cause: "PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL",
+    withholding_payments: withholdingPayments,
   });
 };
 

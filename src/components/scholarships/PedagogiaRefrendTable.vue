@@ -480,11 +480,19 @@ const situationDialogs = ref<Record<SituationKey, boolean>>({
 const situationSubmitLoading = ref(false);
 const situationLoadingId = ref<number | null>(null);
 
+// Tracks which situationDialogs entry is currently open so onSituationSubmit
+// can close the exact dialog the user opened, instead of inferring it from
+// the submitted resolution_type (fragile: SituationPagoMesesDialog can emit
+// either BECA_MES or SIN_PAGO depending on its "pagar mes en curso" checkbox,
+// and SIN_PAGO is also its own standalone dialog's key).
+const activeSituationKey = ref<SituationKey | null>(null);
+
 const openSituationDialog = (
   item: BulkRefrendRow,
   type: SituationKey,
 ): void => {
   activeRow.value = item;
+  activeSituationKey.value = type;
   situationDialogs.value[type] = true;
 };
 
@@ -536,12 +544,15 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   situationSubmitLoading.value = true;
   try {
     await store.recordPaymentSituation(activeRow.value.refrend.id, form);
-    // SituationPagoMesesDialog is the only emitter of resolution_type
-    // BECA_MES (there is no standalone BECA_MES dialog) — map it to its own
-    // situationDialogs key.
-    const key: SituationKey =
-      form.resolution_type === "BECA_MES" ? "PAGO_MESES" : (form.resolution_type as SituationKey);
-    situationDialogs.value[key] = false;
+    // Close the dialog the user actually opened (activeSituationKey), not
+    // the one inferred from form.resolution_type — SituationPagoMesesDialog
+    // can emit either BECA_MES or SIN_PAGO depending on its "pagar mes en
+    // curso" checkbox, and inferring from SIN_PAGO would close the wrong
+    // (standalone) dialog.
+    if (activeSituationKey.value) {
+      situationDialogs.value[activeSituationKey.value] = false;
+      activeSituationKey.value = null;
+    }
   } finally {
     situationSubmitLoading.value = false;
   }

@@ -1,13 +1,30 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
+import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
+
+// recordPaymentSituation hits axios directly (no repository seam) — mocked
+// at the module boundary so the "close the right dialog" tests below never
+// touch the network. incidenciasRows is read by `cleanDraftIds` on every
+// render regardless of which test runs.
+const recordPaymentSituation = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/stores/api/scholarshipStore", () => ({
+  useScholarshipStore: () => ({
+    incidenciasRows: [],
+    recordPaymentSituation,
+    approveFullPayment: vi.fn(),
+    atencionApprove: vi.fn(),
+    bulkApprove: vi.fn(),
+    pedagogiaResolve: vi.fn(),
+  }),
+}));
 
 // ── Test harness ─────────────────────────────────────────────────────────────
 //
@@ -208,5 +225,58 @@ describe("PedagogiaRefrendTable — due amount passed to RETENIDA/PAGO_MESES dia
     expect(wrapper.findComponent(SituationPagoMesesDialog).props("currentMonthAmount")).toBe(
       800,
     );
+  });
+});
+
+describe("PedagogiaRefrendTable — activeSituationKey closes the dialog that was actually opened", () => {
+  // SituationPagoMesesDialog can emit either BECA_MES or SIN_PAGO depending
+  // on its "pagar mes en curso" checkbox. Inferring which situationDialogs
+  // entry to close from `form.resolution_type` would close
+  // situationDialogs.SIN_PAGO (a separate, standalone dialog) instead of
+  // situationDialogs.PAGO_MESES when the checkbox is unchecked — the bug
+  // activeSituationKey fixes.
+
+  it("closes situationDialogs.PAGO_MESES (not SIN_PAGO's dialog) when PAGO_MESES submits SIN_PAGO", async () => {
+    const row = buildRow(9, "Fede SinPago", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "PAGO_MESES");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(true);
+
+    await wrapper.findComponent(SituationPagoMesesDialog).vm.$emit("submit", {
+      resolution_type: "SIN_PAGO",
+      resolution_cause: "PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL",
+      withholding_payments: [{ withholding_id: 1, amount: 100 }],
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(false);
+  });
+
+  it("closes situationDialogs.PAGO_MESES when it submits BECA_MES (checked path — regression guard)", async () => {
+    const row = buildRow(10, "Gaby BecaMes", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "PAGO_MESES");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(true);
+
+    await wrapper.findComponent(SituationPagoMesesDialog).vm.$emit("submit", {
+      resolution_type: "BECA_MES",
+      withholding_payments: [{ withholding_id: 1, amount: 100 }],
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
   });
 });

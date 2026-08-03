@@ -84,6 +84,7 @@ export const CAUSE_LABELS: Record<string, string> = {
   DEJO_ESCUELA_VOCACIONAL: "Dejó la escuela (vocacional)",
   DESAPARECIO: "Desapareció sin avisar",
   FALTAS_REGLAMENTO: "Faltas al reglamento",
+  PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL: "Solo meses retenidos",
 };
 
 export const resolutionCauseLabel = (
