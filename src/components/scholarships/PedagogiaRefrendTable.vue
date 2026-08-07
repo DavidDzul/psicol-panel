@@ -26,7 +26,7 @@
           :disabled="closingDrafts"
           @click="closeDraftsDialog = true"
         >
-          Cerrar refrendo
+          CERRAR REFRENDO {{ monthLabel }}
         </v-btn>
 
         <!-- Total -->
@@ -36,20 +36,33 @@
         </v-chip>
       </div>
 
-      <v-text-field
-        v-model="searchQuery"
-        placeholder="Buscar por nombre becario..."
-        prepend-inner-icon="mdi-magnify"
-        variant="filled"
-        density="compact"
-        hide-details
-        clearable
-        class="mt-2"
-      />
+      <div class="d-flex align-center ga-2 flex-wrap mt-2">
+        <v-select
+          v-model="rowFilterMode"
+          :items="ROW_FILTER_OPTIONS"
+          label="Mostrar"
+          variant="filled"
+          density="compact"
+          hide-details
+          class="flex-0-0-auto"
+          style="max-width: 200px"
+        />
+        <v-text-field
+          v-model="searchQuery"
+          placeholder="Buscar por nombre becario..."
+          prepend-inner-icon="mdi-magnify"
+          variant="filled"
+          density="compact"
+          hide-details
+          clearable
+          class="flex-1-1-auto"
+          style="min-width: 220px"
+        />
+      </div>
     </div>
 
     <div v-if="displayRows.length === 0 && !loading" class="text-center text-medium-emphasis pa-6">
-      Sin becarios con incidencia o retención pendiente en este periodo.
+      {{ emptyStateText }}
     </div>
 
     <!-- User feedback round 3: "prefiero que este como antes, ya que puedo ir
@@ -303,8 +316,9 @@
             Esto aprobará al 100% <strong>{{ cleanDraftIds.length }}</strong>
             refrendo(s) en Borrador sin nada que analizar (sin incidencia y
             sin descuento de asistencia aplicado), pasándolos a estado
-            <strong>Listo para pago</strong>. No aparecen en esta tabla
-            porque no tienen ninguna observación pendiente.
+            <strong>Listo para pago</strong>. Son becarios sin ninguna
+            observación pendiente, por lo que no requieren revisión de
+            Pedagogía.
           </p>
           <v-alert type="warning" variant="tonal" density="compact" class="mt-3">
             Solo se cierran los becarios <strong>sin incidencia</strong>. Los
@@ -333,7 +347,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
@@ -351,6 +365,7 @@ import {
   buildTableInfo,
   filterRowsByName,
   fmt,
+  MONTHS_ES,
   resolutionCauseLabel,
   rowClass,
   scholarshipTypeColor,
@@ -384,12 +399,35 @@ const props = defineProps<{
 
 const searchQuery = ref("");
 
+// ── Row filter mode ────────────────────────────────────────────────────────
+//
+// "incidencias" (default) reproduces the original always-on filter byte for
+// byte. "todos" shows every fetched row, still subject to the name search.
+
+type RowFilterMode = "incidencias" | "todos";
+
+const ROW_FILTER_OPTIONS = [
+  { value: "incidencias", title: "Con incidencias" },
+  { value: "todos", title: "Todos" },
+] as const;
+
+const rowFilterMode = ref<RowFilterMode>("incidencias");
+
 const displayRows = computed(() => {
-  const rows = props.rows.filter(
-    (r) => r.incidents_count > 0 || r.pending_withholding_count > 0,
-  );
+  const rows =
+    rowFilterMode.value === "todos"
+      ? props.rows
+      : props.rows.filter(
+          (r) => r.incidents_count > 0 || r.pending_withholding_count > 0,
+        );
   return filterRowsByName(rows, searchQuery.value);
 });
+
+const emptyStateText = computed(() =>
+  rowFilterMode.value === "todos"
+    ? "Sin becarios en este periodo."
+    : "Sin becarios con incidencia o retención pendiente en este periodo.",
+);
 
 // ── Grouping (collapsible, Vuetify native group-by) ──────────────────────────
 
@@ -401,6 +439,12 @@ const groupBy = computed(() => [
 // Abrimos cada grupo la primera vez que su header se monta; si el usuario lo
 // colapsa manualmente después, no lo volvemos a forzar a abrir.
 const autoOpenedGroupIds = new Set<string>();
+
+// Cambiar de modo puede desmontar la tabla (v-else de la lista vacía) o
+// alterar drásticamente qué grupos existen; Vuetify resetea su set interno de
+// grupos abiertos en ese caso, pero autoOpenedGroupIds persiste y los grupos
+// vuelven a aparecer colapsados sin este reset.
+watch(rowFilterMode, () => autoOpenedGroupIds.clear());
 
 // ── Table headers ──────────────────────────────────────────────────────────
 
@@ -425,6 +469,10 @@ const headers = [...BASE_HEADERS, ...PEDAGOGIA_HEADERS];
 
 const tableInfo = computed(() =>
   buildTableInfo(props.rows, props.year, props.month),
+);
+
+const monthLabel = computed(
+  () => (MONTHS_ES[props.month - 1] ?? String(props.month)).toUpperCase(),
 );
 
 // ── Store ──────────────────────────────────────────────────────────────────

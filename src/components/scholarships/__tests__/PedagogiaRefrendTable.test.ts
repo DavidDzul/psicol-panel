@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
+import { VSelect } from "vuetify/components";
 import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -197,6 +198,104 @@ describe("PedagogiaRefrendTable — row filter", () => {
     expect(wrapper.text()).toContain("Incluido Incidencia");
     expect(wrapper.text()).toContain("Incluido Retencion");
     expect(wrapper.text()).not.toContain("Excluido Limpio");
+  });
+});
+
+describe('PedagogiaRefrendTable — "todos" mode', () => {
+  // Vuetify's real v-select menu doesn't reliably open/select in jsdom;
+  // switching mode is driven directly through the VSelect's v-model emit,
+  // same approach the design doc calls out.
+  const switchToTodos = async (wrapper: ReturnType<typeof mountTable>) => {
+    await wrapper
+      .findComponent(VSelect)
+      .vm.$emit("update:modelValue", "todos");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  };
+
+  const switchToIncidencias = async (wrapper: ReturnType<typeof mountTable>) => {
+    await wrapper
+      .findComponent(VSelect)
+      .vm.$emit("update:modelValue", "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  };
+
+  it('shows every row regardless of incident/withholding state when "todos" is selected', async () => {
+    const rows = [
+      buildRow(11, "Hugo Incidencia", 1, 0),
+      buildRow(12, "Iris Retencion", 0, 1),
+      buildRow(13, "Julio Limpio", 0, 0),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await switchToTodos(wrapper);
+
+    expect(wrapper.text()).toContain("Hugo Incidencia");
+    expect(wrapper.text()).toContain("Iris Retencion");
+    expect(wrapper.text()).toContain("Julio Limpio");
+  });
+
+  it('still narrows results by name search while in "todos" mode', async () => {
+    const rows = [
+      buildRow(14, "Karla Limpia", 0, 0),
+      buildRow(15, "Luis Limpio", 0, 0),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await switchToTodos(wrapper);
+
+    await wrapper
+      .find('input[placeholder="Buscar por nombre becario..."]')
+      .setValue("Karla");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Karla Limpia");
+    expect(wrapper.text()).not.toContain("Luis Limpio");
+  });
+
+  it('restores the incident-filtered set after switching back to "incidencias"', async () => {
+    const rows = [
+      buildRow(16, "Mario Incidencia", 1, 0),
+      buildRow(17, "Nora Limpia", 0, 0),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await switchToTodos(wrapper);
+    expect(wrapper.text()).toContain("Nora Limpia");
+
+    await switchToIncidencias(wrapper);
+
+    expect(wrapper.text()).toContain("Mario Incidencia");
+    expect(wrapper.text()).not.toContain("Nora Limpia");
+  });
+
+  it('renders the "todos" empty-state copy when no rows match', async () => {
+    const wrapper = mountTable([]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await switchToTodos(wrapper);
+
+    expect(wrapper.text()).toContain("Sin becarios en este periodo.");
+  });
+
+  it('renders the "incidencias" empty-state copy by default', async () => {
+    const rows = [buildRow(18, "Omar Limpio", 0, 0)];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain(
+      "Sin becarios con incidencia o retención pendiente en este periodo.",
+    );
   });
 });
 
