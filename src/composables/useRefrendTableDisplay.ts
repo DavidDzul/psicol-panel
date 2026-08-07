@@ -96,6 +96,17 @@ export const resolutionCauseLabel = (
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
 };
 
+// ── Scholarship type chip ────────────────────────────────────────────────────
+//
+// `snapshot_scholarship_type` comes from the becario's ScholarshipProfile,
+// snapshotted onto the refrend at creation time (same pattern as
+// snapshot_campus / snapshot_generation) — not re-fetched from the profile
+// live, so it stays accurate even if the profile's type changes later.
+
+export const scholarshipTypeColor = (
+  type: BulkRefrendRow["refrend"]["snapshot_scholarship_type"],
+): string => (type === "TELMEX" ? "indigo" : "blue-grey");
+
 // ── Pending withholding chip (shared cell, design ADR D5) ──────────────────
 //
 // Purely informational: label with the formatted amount, tooltip with count
@@ -137,6 +148,13 @@ export const BASE_HEADERS = [
     sortable: true,
   },
   { title: "Estado", key: "workflow_status", width: 70, sortable: false },
+  {
+    title: "T.Beca",
+    key: "snapshot_scholarship_type",
+    width: 90,
+    align: "center" as const,
+    sortable: true,
+  },
   {
     title: "Retención",
     key: "pending_withholding_amount",

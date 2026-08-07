@@ -106,6 +106,17 @@
         </div>
       </template>
 
+      <template #item.snapshot_scholarship_type="{ item }">
+        <v-chip
+          size="x-small"
+          variant="tonal"
+          label
+          :color="scholarshipTypeColor(item.refrend.snapshot_scholarship_type)"
+        >
+          {{ item.refrend.snapshot_scholarship_type }}
+        </v-chip>
+      </template>
+
       <!-- ── REVISIÓN ─────────────────────────────────────────────────────── -->
 
       <template #item.workflow_status="{ item }">
@@ -342,6 +353,7 @@ import {
   fmt,
   resolutionCauseLabel,
   rowClass,
+  scholarshipTypeColor,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
 import { canPedagogia, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
