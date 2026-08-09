@@ -249,12 +249,12 @@
           <RefrendSituationBar
             v-if="canRecordSituation(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
+            :resolution-chip="statusChip(item.refrend)"
             :locked="!canRecordSituation(item.refrend)"
             :workflow-status="item.refrend.workflow_status"
-            :has-discount="Number(item.refrend.discount_percentage) > 0"
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
-            @approve-as-is="onApproveAsIs(item)"
+            @clear-resolution="onClearResolution(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
         </div>
@@ -590,10 +590,10 @@ const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
   }
 };
 
-const onApproveAsIs = async (item: BulkRefrendRow): Promise<void> => {
+const onClearResolution = async (item: BulkRefrendRow): Promise<void> => {
   situationLoadingId.value = item.refrend.id;
   try {
-    await store.atencionApprove(item.refrend.id);
+    await store.clearRefrendResolution(item.refrend.id);
   } finally {
     situationLoadingId.value = null;
   }

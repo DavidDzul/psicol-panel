@@ -16,12 +16,13 @@ import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarshi
 // touch the network. incidenciasRows is read by `cleanDraftIds` on every
 // render regardless of which test runs.
 const recordPaymentSituation = vi.fn().mockResolvedValue(undefined);
+const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
     incidenciasRows: [],
     recordPaymentSituation,
     approveFullPayment: vi.fn(),
-    atencionApprove: vi.fn(),
+    clearRefrendResolution,
     bulkApprove: vi.fn(),
     pedagogiaResolve: vi.fn(),
   }),
@@ -377,5 +378,28 @@ describe("PedagogiaRefrendTable — activeSituationKey closes the dialog that wa
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+  });
+});
+
+describe("PedagogiaRefrendTable — onClearResolution wiring", () => {
+  it("calls store.clearRefrendResolution with the row id and toggles loading around it", async () => {
+    const row = buildRow(19, "Hilda Deshacer", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const bar = wrapper.findComponent(RefrendSituationBar);
+    expect(bar.props("loading")).toBe(false);
+
+    bar.vm.$emit("clear-resolution");
+    await wrapper.vm.$nextTick();
+
+    expect(clearRefrendResolution).toHaveBeenCalledWith(19);
+    // clearRefrendResolution resolves on the next microtask tick — assert
+    // loading flips back to false once the handler's finally block runs.
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(RefrendSituationBar).props("loading")).toBe(false);
   });
 });
