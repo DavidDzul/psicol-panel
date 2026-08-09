@@ -574,18 +574,30 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
-  const atencionApprove = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+  // Undo an applied resolution — wipes resolution fields and forces DRAFT,
+  // then lets the backend's fullRecalculate() re-derive everything from live
+  // data. Mirrors recalculateRefrend (not clearFlag): the derived bulk-row
+  // attendance flags must be refreshed the same way since fullRecalculate can
+  // re-create RETARDOS / FALTA_INJUSTIFICADA discount rows.
+  const clearRefrendResolution = async (id: number): Promise<ScholarshipRefrend | undefined> => {
     try {
       const res = await axios.post<ScholarshipRefrendResponse>(
-        `api/admin/scholarship-refrends/${id}/atencion-approve`,
+        `api/admin/scholarship-refrends/${id}/clear-resolution`,
       );
       const refrend = _mergeRefrend(res.data.data);
-      _mergeBulkRow(refrend);
-      showAlert({ title: "Refrendo aprobado con descuento.", status: "success" });
+      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS') ?? false;
+      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA') ?? false;
+      _mergeBulkRow(refrend, {
+        has_retardos_discount:     hasRetardos,
+        has_falta_discount:        hasFalta,
+        semester_lates_unconsumed: refrend.attendance_summary_snapshot?.late_unconsumed ?? 0,
+        attendance_late:           refrend.attendance_summary_snapshot?.late ?? 0,
+      });
+      showAlert({ title: "Resolución deshecha.", status: "success" });
       return refrend;
     } catch (error: unknown) {
       const msg = isAxiosError(error)
-        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al aprobar el refrendo.")
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al deshacer la resolución.")
         : "Error de red.";
       showAlert({ title: msg, status: "error" });
     }
@@ -727,7 +739,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     submitPaymentVerify,
     recalculateRefrend,
     approveFullPayment,
-    atencionApprove,
+    clearRefrendResolution,
     recordPaymentSituation,
     bulkApprove,
     fetchPendingWithholdings,
