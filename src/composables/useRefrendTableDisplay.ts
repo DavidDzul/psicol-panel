@@ -166,7 +166,7 @@ export const BASE_HEADERS = [
 
 // ── Table title (campus / generation / period) ────────────────────────────────
 
-const MONTHS_ES = [
+export const MONTHS_ES = [
   "Enero",
   "Febrero",
   "Marzo",
