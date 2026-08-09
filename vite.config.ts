@@ -57,5 +57,14 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Vitest externalizes node_modules deps by default (bypassing Vite's
+    // CSS-stubbing transform). Component tests that mount Vuetify SFCs need
+    // `vuetify` processed through Vite instead, or its per-component .css
+    // imports crash under Node's native ESM loader.
+    server: {
+      deps: {
+        inline: ["vuetify"],
+      },
+    },
   },
 })

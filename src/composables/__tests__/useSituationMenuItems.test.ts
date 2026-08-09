@@ -1,0 +1,44 @@
+import { describe, expect, it } from "vitest";
+import {
+  SITUATION_MENU_ITEMS,
+  visibleSituationMenuItems,
+  type SituationMenuItem,
+} from "@/composables/useSituationMenuItems";
+
+describe("visibleSituationMenuItems", () => {
+  it("excludes SUSPENDIDA from the default catalog", () => {
+    const visible = visibleSituationMenuItems();
+
+    expect(visible.some((item) => item.key === "SUSPENDIDA")).toBe(false);
+  });
+
+  it("keeps SUSPENDIDA in the underlying catalog untouched", () => {
+    expect(
+      SITUATION_MENU_ITEMS.some((item) => item.key === "SUSPENDIDA"),
+    ).toBe(true);
+  });
+
+  it("does not drop any other entry", () => {
+    const visible = visibleSituationMenuItems();
+    const nonHiddenKeys = SITUATION_MENU_ITEMS.filter(
+      (item) => !item.hidden,
+    ).map((item) => item.key);
+
+    expect(visible.map((item) => item.key)).toEqual(nonHiddenKeys);
+  });
+
+  it("filters any hidden entry from an arbitrary list, not just the default one", () => {
+    const items: SituationMenuItem[] = [
+      { key: "SIN_PAGO", icon: "mdi-cash-off", label: "A", color: "grey" },
+      {
+        key: "SUSPENDIDA",
+        icon: "mdi-percent-outline",
+        label: "B",
+        color: "deep-orange",
+        hidden: true,
+      },
+    ];
+
+    expect(visibleSituationMenuItems(items)).toEqual([items[0]]);
+  });
+});

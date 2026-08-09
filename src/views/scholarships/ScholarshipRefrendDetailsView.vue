@@ -17,7 +17,7 @@
     <!-- Acciones secundarias -->
     <div class="mb-4 d-flex justify-end flex-wrap ga-2">
       <v-btn
-        v-if="!isLocked && refrend.status !== 'WITHHELD'"
+        v-if="!isLocked && !hideWithholdAction"
         color="error"
         variant="text"
         size="small"
@@ -750,6 +750,7 @@ import ScholarshipHistoryTimeline from "@/components/scholarships/ScholarshipHis
 import StudentAcademicSummaryCard from "@/components/scholarships/StudentAcademicSummaryCard.vue";
 import ScholarshipDocumentsCard from "@/components/scholarships/ScholarshipDocumentsCard.vue";
 import RefrendCarryoverAlert from "@/components/scholarships/RefrendCarryoverAlert.vue";
+import { isFullyWithheld } from "@/utils/refrendActionability";
 import type { RefrendStatus, ReviewForm } from "@/interfaces/scholarship";
 import type { LinkInterface } from "@/interfaces";
 
@@ -844,6 +845,15 @@ const isLocked = computed<boolean>(() =>
     : false,
 );
 
+/**
+ * The "Retener refrendo" action hides only when the retention is TOTAL
+ * (`final_amount === 0`). A PARTIAL retention (`final_amount > 0`) behaves
+ * like a normal refrend and keeps the action visible.
+ */
+const hideWithholdAction = computed<boolean>(() =>
+  refrend.value ? isFullyWithheld(refrend.value) : false,
+);
+
 const atencionDone = computed<boolean>(() =>
   refrend.value
     ? ["ATENCION_REVIEW", "PEDAGOGIA_REVIEW", "AUTHORIZED", "PAID"].includes(
@@ -921,7 +931,7 @@ const semesterTotals = computed<{
     (acc, sr) => {
       const amount = Number(sr.final_amount);
       if (sr.status === "PAID") acc.paid += amount;
-      else if (sr.status === "WITHHELD") acc.withheld += amount;
+      else if (sr.status === "WITHHELD") acc.withheld += Number(sr.discount_amount);
       else if (!["CANCELLED"].includes(sr.status)) acc.pending += amount;
       return acc;
     },

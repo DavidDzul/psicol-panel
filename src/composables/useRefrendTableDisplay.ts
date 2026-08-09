@@ -84,6 +84,7 @@ export const CAUSE_LABELS: Record<string, string> = {
   DEJO_ESCUELA_VOCACIONAL: "Dejó la escuela (vocacional)",
   DESAPARECIO: "Desapareció sin avisar",
   FALTAS_REGLAMENTO: "Faltas al reglamento",
+  PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL: "Solo meses retenidos",
 };
 
 export const resolutionCauseLabel = (
@@ -93,6 +94,38 @@ export const resolutionCauseLabel = (
   if (refrend.resolution_cause === "OTRO")
     return refrend.resolution_notes ?? null;
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
+};
+
+// ── Scholarship type chip ────────────────────────────────────────────────────
+//
+// `snapshot_scholarship_type` comes from the becario's ScholarshipProfile,
+// snapshotted onto the refrend at creation time (same pattern as
+// snapshot_campus / snapshot_generation) — not re-fetched from the profile
+// live, so it stays accurate even if the profile's type changes later.
+
+export const scholarshipTypeColor = (
+  type: BulkRefrendRow["refrend"]["snapshot_scholarship_type"],
+): string => (type === "TELMEX" ? "indigo" : "blue-grey");
+
+// ── Pending withholding chip (shared cell, design ADR D5) ──────────────────
+//
+// Purely informational: label with the formatted amount, tooltip with count
+// + total. Returns null when there is nothing pending (design ADR D4 — the
+// backend emits `null`, never "0.00", so a single truthiness check suffices).
+
+export const pendingWithholdingChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  const count = row.pending_withholding_count ?? 0;
+  if (count < 1 || !row.pending_withholding_amount) return null;
+  const amount = fmt(row.pending_withholding_amount);
+  return {
+    label: amount,
+    tooltip:
+      count === 1
+        ? `1 retención pendiente · ${amount}`
+        : `${count} retenciones pendientes · ${amount} en total`,
+  };
 };
 
 // ── Row CSS class ───────────────────────────────────────────────────────────
@@ -115,11 +148,25 @@ export const BASE_HEADERS = [
     sortable: true,
   },
   { title: "Estado", key: "workflow_status", width: 70, sortable: false },
+  {
+    title: "T.Beca",
+    key: "snapshot_scholarship_type",
+    width: 90,
+    align: "center" as const,
+    sortable: true,
+  },
+  {
+    title: "Retención",
+    key: "pending_withholding_amount",
+    width: 110,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────
 
-const MONTHS_ES = [
+export const MONTHS_ES = [
   "Enero",
   "Febrero",
   "Marzo",

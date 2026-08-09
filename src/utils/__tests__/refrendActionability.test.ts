@@ -9,6 +9,8 @@ import {
   canAtencion,
   canPedagogia,
   canRecordSituation,
+  computeDueAmount,
+  isFullyWithheld,
   isLocked,
 } from "@/utils/refrendActionability";
 
@@ -29,6 +31,8 @@ const buildRefrend = (
   resolution_cause: null,
   resolution_notes: null,
   suspension_percentage: null,
+  withholding_mode: null,
+  withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
   carryover_percentage: null,
@@ -135,6 +139,23 @@ describe("canPedagogia", () => {
   });
 });
 
+describe("isFullyWithheld", () => {
+  it("is true when status is WITHHELD and final_amount is 0", () => {
+    const refrend = { ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"), final_amount: "0.00" };
+    expect(isFullyWithheld(refrend)).toBe(true);
+  });
+
+  it("is false when status is WITHHELD but final_amount is positive (partial retention)", () => {
+    const refrend = { ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"), final_amount: "700.00" };
+    expect(isFullyWithheld(refrend)).toBe(false);
+  });
+
+  it("is false when status is not WITHHELD even if final_amount is 0", () => {
+    const refrend = { ...buildRefrend("PAID", "CLOSED"), final_amount: "0.00" };
+    expect(isFullyWithheld(refrend)).toBe(false);
+  });
+});
+
 describe("canRecordSituation", () => {
   it("is true for any unlocked workflow_status", () => {
     expect(canRecordSituation(buildRefrend("DRAFT", "LISTO_PARA_PAGO"))).toBe(
@@ -150,5 +171,43 @@ describe("canRecordSituation", () => {
     expect(
       canRecordSituation(buildRefrend("AUTHORIZED", "DRAFT")),
     ).toBe(false);
+  });
+});
+
+describe("computeDueAmount", () => {
+  it("applies the active profile discount over the gross snapshot", () => {
+    const refrend = {
+      ...buildRefrend("DRAFT", "DRAFT"),
+      snapshot_gross_amount: "1000",
+      snapshot_discount_percentage: "20",
+      base_amount: "1000",
+      final_amount: "800",
+    };
+    expect(computeDueAmount(refrend)).toBe(800);
+  });
+
+  it("falls back to base_amount when snapshot_gross_amount is missing", () => {
+    const refrend = {
+      ...buildRefrend("DRAFT", "DRAFT"),
+      snapshot_gross_amount: null,
+      snapshot_discount_percentage: null,
+      base_amount: "1000",
+      final_amount: "1000",
+    };
+    expect(computeDueAmount(refrend)).toBe(1000);
+  });
+
+  it("does not use final_amount even when it disagrees with the due amount", () => {
+    // Simulates a refrend already resolved as RETENIDA (final_amount=600),
+    // about to be re-resolved as BECA_MES — the due amount the backend will
+    // actually charge is 800, not the stale 600 sitting on final_amount.
+    const refrend = {
+      ...buildRefrend("WITHHELD", "LISTO_PARA_PAGO"),
+      snapshot_gross_amount: "1000",
+      snapshot_discount_percentage: "20",
+      base_amount: "1000",
+      final_amount: "600",
+    };
+    expect(computeDueAmount(refrend)).toBe(800);
   });
 });

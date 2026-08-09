@@ -25,6 +25,8 @@ const buildRefrend = (
   resolution_cause: null,
   resolution_notes: null,
   suspension_percentage: null,
+  withholding_mode: null,
+  withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
   carryover_percentage: null,
@@ -88,6 +90,8 @@ const buildRow = (
   profile_discount_pct: null,
   profile_discount_valid_until: null,
   profile_discount_reason: null,
+  pending_withholding_count: 0,
+  pending_withholding_amount: null,
   ...rowOverrides,
 });
 

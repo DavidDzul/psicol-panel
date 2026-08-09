@@ -1,18 +1,5 @@
 <template>
   <div class="d-flex align-center ga-1">
-    <!-- Primary action when there are pending retained months -->
-    <v-btn
-      v-if="hasPending && !locked"
-      size="x-small"
-      color="teal"
-      variant="tonal"
-      prepend-icon="mdi-cash-refund"
-      :loading="loading"
-      @click="emit('open', 'PAGO_MESES')"
-    >
-      Pagar retenidos
-    </v-btn>
-
     <v-menu v-if="!locked" :close-on-content-click="true">
       <template #activator="{ props: menuProps }">
         <v-btn
@@ -55,7 +42,7 @@
 
         <!-- Situaciones especiales -->
         <v-list-item
-          v-for="item in menuItems"
+          v-for="item in visibleMenuItems"
           :key="item.key"
           @click="emit('open', item.key)"
         >
@@ -74,14 +61,15 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { ResolutionType, WorkflowStatus } from "@/interfaces/scholarship";
-
-type SituationKey = ResolutionType | "PAGO_MESES";
+import {
+  visibleSituationMenuItems,
+  type SituationKey,
+} from "@/composables/useSituationMenuItems";
 
 const props = defineProps<{
   currentResolution: ResolutionType | null;
   locked: boolean;
   loading?: boolean;
-  amountPending?: string | number;
   workflowStatus?: WorkflowStatus | null;
   // "Aprobar con descuento" (ApproveRefrendAction) approves as-is with
   // whatever discount is already calculated — when there is none, it's
@@ -97,49 +85,18 @@ const emit = defineEmits<{
   recalculate: [];
 }>();
 
-const hasPending = computed(() => Number(props.amountPending ?? 0) > 0);
+// "Pago meses retenidos" (PAGO_MESES) used to be gated behind a quick-action
+// button driven by `amountPending` — but under the retention ledger
+// (sdd/pedagogia-acciones-visibilidad-y-beca-retenida-montos, PR3),
+// amount_pending_from_previous means "liquidated by THIS refrend", not
+// "this becario has pending retentions", so it can no longer decide
+// relevance here. PAGO_MESES stays a regular, always-offered entry in the
+// "Acciones" menu below; the dialog itself shows an empty state when the
+// becario has nothing pending.
 
-const menuItems: {
-  key: SituationKey;
-  icon: string;
-  label: string;
-  color: string;
-}[] = [
-  {
-    key: "SIN_PAGO",
-    icon: "mdi-cash-off",
-    label: "Sin pago (0%)",
-    color: "grey-darken-2",
-  },
-  {
-    key: "RETENIDA",
-    icon: "mdi-lock-outline",
-    label: "Beca retenida",
-    color: "orange-darken-2",
-  },
-  {
-    key: "PAGO_MESES",
-    icon: "mdi-cash-refund",
-    label: "Pago meses retenidos",
-    color: "teal",
-  },
-  {
-    key: "SUSPENDIDA",
-    icon: "mdi-percent-outline",
-    label: "Suspensión temporal",
-    color: "deep-orange",
-  },
-  {
-    key: "BAJA_DEFINITIVA",
-    icon: "mdi-account-off-outline",
-    label: "Baja definitiva",
-    color: "red-darken-2",
-  },
-  {
-    key: "EGRESADO",
-    icon: "mdi-school-outline",
-    label: "Egresado",
-    color: "indigo",
-  },
-];
+// Catalog + `hidden` filtering live in `useSituationMenuItems.ts` (unit
+// tested there) — SUSPENDIDA is flagged `hidden: true` so it stays in the
+// catalog (its dialog and `situationDialogs` key are untouched) but is no
+// longer offered here.
+const visibleMenuItems = computed(() => visibleSituationMenuItems());
 </script>

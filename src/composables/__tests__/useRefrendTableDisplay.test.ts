@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isLocked,
   LOCKED_STATUSES,
+  pendingWithholdingChip,
   rowClass,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
@@ -21,6 +22,8 @@ const baseRefrend: ScholarshipRefrend = {
   resolution_cause: null,
   resolution_notes: null,
   suspension_percentage: null,
+  withholding_mode: null,
+  withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
   carryover_percentage: null,
@@ -82,6 +85,8 @@ const buildRow = (
   profile_discount_pct: null,
   profile_discount_valid_until: null,
   profile_discount_reason: null,
+  pending_withholding_count: 0,
+  pending_withholding_amount: null,
 });
 
 // ── isLocked re-export (design ADR D5 single source of truth) ──────────────
@@ -111,6 +116,41 @@ describe("useRefrendTableDisplay — isLocked re-export", () => {
   it("treats a fully unlocked refrend as not locked", () => {
     const row = buildRow({ status: "WITHHELD", workflow_status: "DRAFT" });
     expect(isLocked(row.refrend)).toBe(false);
+  });
+});
+
+describe("useRefrendTableDisplay — pendingWithholdingChip", () => {
+  it("returns null when count is 0", () => {
+    const row = { ...buildRow(), pending_withholding_count: 0, pending_withholding_amount: null };
+    expect(pendingWithholdingChip(row)).toBeNull();
+  });
+
+  it("returns null when amount is missing even if count leaks through as > 0", () => {
+    const row = { ...buildRow(), pending_withholding_count: 1, pending_withholding_amount: null };
+    expect(pendingWithholdingChip(row)).toBeNull();
+  });
+
+  it("uses singular wording for exactly 1 pending withholding", () => {
+    const row = {
+      ...buildRow(),
+      pending_withholding_count: 1,
+      pending_withholding_amount: "300.00",
+    };
+    const chip = pendingWithholdingChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.tooltip).toBe("1 retención pendiente · $300.00");
+  });
+
+  it("uses plural wording and the formatted total for multiple pending withholdings", () => {
+    const row = {
+      ...buildRow(),
+      pending_withholding_count: 3,
+      pending_withholding_amount: "1500.50",
+    };
+    const chip = pendingWithholdingChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.label).toBe("$1,500.50");
+    expect(chip?.tooltip).toBe("3 retenciones pendientes · $1,500.50 en total");
   });
 });
 

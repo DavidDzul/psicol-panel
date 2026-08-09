@@ -119,6 +119,17 @@
         <span class="text-caption">{{ item.refrend.snapshot_campus }}</span>
       </template>
 
+      <template #item.snapshot_scholarship_type="{ item }">
+        <v-chip
+          size="x-small"
+          variant="tonal"
+          label
+          :color="scholarshipTypeColor(item.refrend.snapshot_scholarship_type)"
+        >
+          {{ item.refrend.snapshot_scholarship_type }}
+        </v-chip>
+      </template>
+
       <template #item.snapshot_generation="{ item }">
         <span class="text-caption">{{
           item.refrend.snapshot_generation ?? "—"
@@ -138,6 +149,21 @@
           <v-icon size="13" start>mdi-calendar-check-outline</v-icon>
           {{ item.attendance_total }}
         </v-btn>
+      </template>
+
+      <template #item.recalcular="{ item }">
+        <div class="d-flex justify-center">
+          <v-btn
+            v-if="canRecalculate(item)"
+            variant="tonal"
+            color="teal"
+            size="x-small"
+            icon="mdi-refresh"
+            title="Recalcular"
+            :loading="recalcLoading === item.refrend.id"
+            @click="onRecalculate(item)"
+          />
+        </div>
       </template>
 
       <!-- Faltas mes + Retardos acumulados combinados -->
@@ -190,6 +216,10 @@
             {{ resolutionCauseLabel(item.refrend) }}
           </span>
         </div>
+      </template>
+
+      <template #item.pending_withholding_amount="{ item }">
+        <PendingWithholdingChip :row="item" />
       </template>
 
       <template #item.atencion="{ item }">
@@ -277,8 +307,6 @@
       :row="detailDrawerRow"
       :year="year"
       :month="month"
-      :recalc-loading="!!detailDrawerRow && recalcLoading === detailDrawerRow.refrend.id"
-      @recalculate="onRecalculate"
     />
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
@@ -301,6 +329,7 @@ import { computed, ref } from "vue";
 import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
 import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
+import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
@@ -309,9 +338,10 @@ import {
   filterRowsByName,
   resolutionCauseLabel,
   rowClass,
+  scholarshipTypeColor,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
-import { canAtencion } from "@/utils/refrendActionability";
+import { canAtencion, canRecordSituation } from "@/utils/refrendActionability";
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -381,6 +411,13 @@ const ATENCION_COMPLETA_HEADERS = [
     key: "semester_lates_unconsumed",
     width: 90,
     sortable: true,
+  },
+  {
+    title: "Recalcular",
+    key: "recalcular",
+    width: 90,
+    align: "center" as const,
+    sortable: false,
   },
 ];
 
@@ -490,8 +527,16 @@ const toggleNotificado = async (
 };
 
 // ── Recalculate ────────────────────────────────────────────────────────────
+// Row action instead of a drawer footer button (moved out of
+// RefrendDetailDrawer, design ADR D1 follow-up). Backend-gated to DRAFT only
+// (RecalculateRefrendService); canRecordSituation is an extra safety net for
+// the dual state machine (design ADR D5), not a replacement for that rule.
 
 const recalcLoading = ref<number | null>(null);
+
+const canRecalculate = (item: BulkRefrendRow): boolean =>
+  item.refrend.workflow_status === "DRAFT" &&
+  canRecordSituation(item.refrend);
 
 const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
   recalcLoading.value = item.refrend.id;

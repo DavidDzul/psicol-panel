@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="model" max-width="420" persistent>
+  <v-dialog v-model="model" max-width="560" persistent>
     <v-card>
       <v-card-title class="text-h6 pa-4 d-flex align-center ga-2">
         <v-icon color="teal" size="small">mdi-cash-refund</v-icon>
@@ -7,105 +7,323 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
+        <div v-if="loadingRows" class="d-flex justify-center pa-6">
+          <v-progress-circular indeterminate color="teal" size="28" />
+        </div>
+
         <v-alert
-          v-if="amountPending && Number(amountPending) > 0"
+          v-else-if="rows.length === 0"
           type="info"
           variant="tonal"
           density="compact"
-          class="mb-3"
-          icon="mdi-cash-clock"
         >
-          Monto retenido acumulado: <strong>{{ fmt(Number(amountPending)) }}</strong>
+          Este becario no tiene retenciones pendientes.
         </v-alert>
 
-        <v-text-field
-          v-model.number="pago.months_count"
-          label="Número de meses *"
-          type="number"
-          variant="outlined"
-          density="compact"
-          min="1"
-          max="12"
-          class="mb-3"
-          hide-details
-        />
-        <v-textarea
-          v-model="pago.months_detail"
-          label="Meses a pagar — especificar *"
-          rows="2"
-          variant="outlined"
-          density="compact"
-          placeholder="Ej: enero, febrero 2026"
-          class="mb-3"
-          hide-details
-        />
-        <v-text-field
-          v-model.number="pago.percentage"
-          label="Porcentaje a pagar *"
-          type="number"
-          variant="outlined"
-          density="compact"
-          min="1"
-          max="100"
-          suffix="%"
-          hide-details
-        />
+        <template v-else>
+          <v-list density="compact" class="mb-3">
+            <template v-for="row in rows" :key="row.id">
+              <v-list-item class="px-2">
+                <template #prepend>
+                  <v-checkbox
+                    v-model="row.selected"
+                    density="compact"
+                    hide-details
+                    color="teal"
+                    @update:model-value="onToggleSelected(row)"
+                  />
+                </template>
+
+                <v-list-item-title class="text-body-2 font-weight-medium">
+                  {{ monthLabel(row) }}
+                </v-list-item-title>
+                <v-list-item-subtitle class="text-caption">
+                  Retenido {{ fmt(row.withheldAmount) }} · Saldo {{ fmt(row.remainingAmount) }}
+                </v-list-item-subtitle>
+
+                <template #append>
+                  <v-text-field
+                    v-model.number="row.amount"
+                    type="number"
+                    variant="outlined"
+                    density="compact"
+                    prefix="$"
+                    style="max-width: 130px"
+                    :disabled="!row.selected"
+                    :max="row.remainingAmount"
+                    hide-details
+                  />
+                  <v-btn
+                    v-if="hasPaymentHistory(row.withheldAmount - row.remainingAmount)"
+                    icon="mdi-history"
+                    variant="text"
+                    size="x-small"
+                    class="ml-1"
+                    @click="row.historyOpen = !row.historyOpen"
+                  />
+                </template>
+              </v-list-item>
+
+              <v-expand-transition>
+                <div
+                  v-if="row.historyOpen && hasPaymentHistory(row.withheldAmount - row.remainingAmount)"
+                  class="pl-8 pr-2 pb-2"
+                >
+                  <v-list density="compact" class="bg-grey-lighten-4 rounded">
+                    <v-list-item
+                      v-for="payment in row.payments"
+                      :key="payment.id"
+                      density="compact"
+                      class="px-2"
+                    >
+                      <v-list-item-title class="text-caption">
+                        {{ formatDate(payment.created_at) }} · {{ fmt(Number(payment.amount)) }}
+                        <span v-if="payment.created_by">
+                          · por {{ payment.created_by.first_name }} {{ payment.created_by.last_name }}
+                        </span>
+                      </v-list-item-title>
+
+                      <template #append>
+                        <v-btn
+                          icon="mdi-undo-variant"
+                          variant="text"
+                          size="x-small"
+                          color="error"
+                          @click="openVoidDialog(row, payment)"
+                        />
+                      </template>
+                    </v-list-item>
+                  </v-list>
+                </div>
+              </v-expand-transition>
+            </template>
+          </v-list>
+
+          <v-checkbox
+            v-model="payCurrentMonth"
+            density="compact"
+            hide-details
+            color="teal"
+            label="¿Pagar mes en curso?"
+            class="mb-1"
+          />
+          <v-alert
+            v-if="!payCurrentMonth"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            El mes en curso quedará como <strong>Sin pago</strong>. Esta es
+            una resolución definitiva — no se puede revertir desde este
+            diálogo, no es lo mismo que posponer el pago.
+          </v-alert>
+
+          <div class="text-caption text-medium-emphasis mb-1">
+            Mes actual {{ fmt(currentMonthDisplayAmount) }} + retenciones seleccionadas
+            {{ fmt(totalToPay) }}
+          </div>
+          <v-text-field
+            :model-value="fmt(grandTotal)"
+            label="Monto final a pagar"
+            variant="outlined"
+            density="compact"
+            readonly
+            class="font-weight-bold"
+            hide-details
+          />
+        </template>
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="model = false">Cancelar</v-btn>
-        <v-btn color="teal" variant="elevated" :loading="loading" :disabled="!isValid" @click="submit">
+        <v-btn
+          color="teal"
+          variant="elevated"
+          :loading="loading"
+          :disabled="!isValid"
+          @click="submit"
+        >
           Confirmar
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <VoidWithholdingPaymentDialog
+    v-model="voidDialogOpen"
+    :loading="voiding"
+    :payment="voidTarget"
+    @confirm="confirmVoid"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue";
-import type { RecordSituationForm } from "@/interfaces/scholarship";
+import { computed, ref, watch } from "vue";
+import type {
+  RecordSituationForm,
+  ScholarshipWithholding,
+  ScholarshipWithholdingPayment,
+} from "@/interfaces/scholarship";
+import { useScholarshipStore } from "@/stores/api/scholarshipStore";
+import {
+  calculateTotalToPay,
+  isSelectionValid,
+  type WithholdingSelectionRow,
+} from "@/utils/withholdingSelection";
+import { hasPaymentHistory } from "@/utils/withholdingVoid";
+import VoidWithholdingPaymentDialog, {
+  type VoidWithholdingPaymentTarget,
+} from "@/components/scholarships/VoidWithholdingPaymentDialog.vue";
 
 const props = defineProps<{
   loading?: boolean;
-  amountPending?: string | number;
-  baseAmount?: string | number;
+  userId?: number | null;
+  currentMonthAmount?: string | number | null;
 }>();
 
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(v);
+const store = useScholarshipStore();
 
-const pago = reactive({
-  months_count: null as number | null,
-  months_detail: null as string | null,
-  percentage: 100 as number,
+interface Row extends WithholdingSelectionRow {
+  withheldAmount: number;
+  periodYear: number;
+  periodMonth: number;
+  payments: ScholarshipWithholdingPayment[];
+  historyOpen: boolean;
+}
+
+const rows = ref<Row[]>([]);
+const loadingRows = ref(false);
+
+const MONTH_NAMES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+const monthLabel = (row: Row): string =>
+  `${MONTH_NAMES[row.periodMonth - 1] ?? row.periodMonth} ${row.periodYear}`;
+
+const fmt = (value: number): string =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(value);
+
+const formatDate = (value: string): string => new Date(value).toLocaleDateString("es-MX");
+
+const totalToPay = computed(() => calculateTotalToPay(rows.value));
+const isValid = computed(() => isSelectionValid(rows.value));
+
+// Whether the admin wants to pay the current refrendo's own due amount in
+// this same action. Default true (preexisting behavior — this dialog always
+// used to pay it). Unchecking it resolves the current month as SIN_PAGO
+// (definitive, see submit()) instead of deferring it.
+const payCurrentMonth = ref(true);
+
+// currentMonthAmount keeps arriving unchanged from the parent (the real due
+// amount via computeDueAmount) — only the display/total gating is internal
+// to this dialog when the checkbox is off.
+const currentMonthAmountNumber = computed(() => Number(props.currentMonthAmount ?? 0));
+const currentMonthDisplayAmount = computed(() =>
+  payCurrentMonth.value ? currentMonthAmountNumber.value : 0,
+);
+const grandTotal = computed(() => currentMonthDisplayAmount.value + totalToPay.value);
+
+const onToggleSelected = (row: Row): void => {
+  if (row.selected && (row.amount === null || row.amount <= 0)) {
+    row.amount = row.remainingAmount;
+  }
+};
+
+const toRow = (w: ScholarshipWithholding): Row => ({
+  id: w.id,
+  selected: false,
+  amount: null,
+  remainingAmount: Number(w.remaining_amount),
+  withheldAmount: Number(w.withheld_amount),
+  periodYear: w.period_year,
+  periodMonth: w.period_month,
+  payments: w.payments ?? [],
+  historyOpen: false,
 });
 
-const isValid = computed(() => {
-  const count = pago.months_count ?? 0;
-  const pct   = pago.percentage ?? 0;
-  return count >= 1 && !!pago.months_detail?.trim() && pct >= 1 && pct <= 100;
-});
+const load = async (): Promise<void> => {
+  if (!props.userId) {
+    rows.value = [];
+    return;
+  }
+  loadingRows.value = true;
+  try {
+    const pending = await store.fetchPendingWithholdings(props.userId);
+    rows.value = pending.map(toRow);
+  } finally {
+    loadingRows.value = false;
+  }
+};
 
 watch(model, (open) => {
-  if (!open) {
-    pago.months_count  = null;
-    pago.months_detail = null;
-    pago.percentage    = 100;
+  if (open) {
+    load();
+  } else {
+    rows.value = [];
+    payCurrentMonth.value = true;
   }
 });
 
 const submit = () => {
   if (!isValid.value) return;
+  const withholdingPayments = rows.value
+    .filter((row) => row.selected)
+    .map((row) => ({ withholding_id: row.id, amount: row.amount as number }));
+
+  if (payCurrentMonth.value) {
+    emit("submit", {
+      resolution_type: "BECA_MES",
+      withholding_payments: withholdingPayments,
+    });
+    return;
+  }
+
   emit("submit", {
-    resolution_type:         "BECA_MES",
-    carryover_months_count:  pago.months_count,
-    carryover_months_detail: pago.months_detail,
-    carryover_percentage:    pago.percentage,
+    resolution_type: "SIN_PAGO",
+    resolution_cause: "PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL",
+    withholding_payments: withholdingPayments,
   });
+};
+
+// ── Void a single payment ───────────────────────────────────────────────────
+
+const voidDialogOpen = ref(false);
+const voiding = ref(false);
+const voidTarget = ref<VoidWithholdingPaymentTarget | null>(null);
+const voidContext = ref<{ withholdingId: number; paymentId: number } | null>(null);
+
+const openVoidDialog = (row: Row, payment: ScholarshipWithholdingPayment): void => {
+  voidContext.value = { withholdingId: row.id, paymentId: payment.id };
+  voidTarget.value = {
+    amount: Number(payment.amount),
+    createdAt: formatDate(payment.created_at),
+    periodLabel: monthLabel(row),
+  };
+  voidDialogOpen.value = true;
+};
+
+const confirmVoid = async (reason: string): Promise<void> => {
+  if (!voidContext.value) return;
+  voiding.value = true;
+  try {
+    const success = await store.voidWithholdingPayment(
+      voidContext.value.withholdingId,
+      voidContext.value.paymentId,
+      reason,
+    );
+    if (success) {
+      voidDialogOpen.value = false;
+      await load();
+    }
+  } finally {
+    voiding.value = false;
+  }
 };
 </script>
