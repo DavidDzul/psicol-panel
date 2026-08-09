@@ -644,6 +644,19 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   background-color: rgba(255, 152, 0, 0.08);
 }
 
+/* Columna fija (Becario): fondo sólido para ocultar las columnas que se
+   deslizan por debajo al hacer scroll horizontal. */
+.pedagogia-refrend-table :deep(.v-data-table-column--fixed) {
+  background: rgb(var(--v-theme-surface));
+  z-index: 3;
+}
+.pedagogia-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
+  background-color: rgb(255, 249, 235) !important;
+}
+.pedagogia-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
+  background-color: rgb(255, 248, 242) !important;
+}
+
 .pedagogia-refrend-table :deep(tbody tr td) {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
