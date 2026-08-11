@@ -507,6 +507,42 @@ describe("PedagogiaRefrendTable — onApproveFullPayment confirmation flow", () 
     wrapper.unmount();
   });
 
+  it('titles the dialog "Pagar sin descuento por faltas" and includes the forgiveness clause when the row has an active attendance discount', async () => {
+    const row = buildRow(24, "Con Retardos", 1, 0);
+    row.has_retardos_discount = true;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = body().text();
+    expect(text).toContain("Pagar sin descuento por faltas");
+    expect(text).toContain("Se perdonan sus faltas/retardos de este mes.");
+
+    wrapper.unmount();
+  });
+
+  it('titles the dialog "Aprobar" and omits the forgiveness clause when the row has no active attendance discount', async () => {
+    const row = buildRow(25, "Sin Descuentos", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = body().text();
+    expect(text).toContain("Aprobar");
+    expect(text).not.toContain("Se perdonan sus faltas/retardos de este mes.");
+    expect(text).not.toContain("Pagar sin descuento por faltas");
+
+    wrapper.unmount();
+  });
+
   it("does NOT call store.approveFullPayment when the user cancels", async () => {
     approveFullPayment.mockClear();
     const row = buildRow(23, "Cancela Pago", 1, 0);

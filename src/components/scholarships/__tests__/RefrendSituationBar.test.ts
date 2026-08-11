@@ -46,6 +46,7 @@ const mountBar = (props: {
   locked?: boolean;
   loading?: boolean;
   workflowStatus?: WorkflowStatus | null;
+  hasAttendanceDiscount?: boolean;
 }): ReturnType<typeof mount> => {
   wrapper = mount(RefrendSituationBar, {
     props: {
@@ -54,6 +55,7 @@ const mountBar = (props: {
       locked: props.locked ?? false,
       loading: props.loading ?? false,
       workflowStatus: props.workflowStatus ?? "DRAFT",
+      hasAttendanceDiscount: props.hasAttendanceDiscount ?? false,
     },
     global: { plugins: [vuetify] },
     attachTo: document.body,
@@ -86,7 +88,7 @@ describe("RefrendSituationBar — unresolved state (DRAFT / CON_INCIDENCIA)", ()
   });
 
   it('opens to reveal "Pagar sin descuento por faltas" and situation items, but never "Aprobar con descuento"', async () => {
-    const w = mountBar({ workflowStatus: "CON_INCIDENCIA" });
+    const w = mountBar({ workflowStatus: "CON_INCIDENCIA", hasAttendanceDiscount: true });
 
     await openAccionesMenu(w);
 
@@ -96,7 +98,7 @@ describe("RefrendSituationBar — unresolved state (DRAFT / CON_INCIDENCIA)", ()
   });
 
   it('emits "approve-full" when "Pagar sin descuento por faltas" is clicked', async () => {
-    const w = mountBar({ workflowStatus: "DRAFT" });
+    const w = mountBar({ workflowStatus: "DRAFT", hasAttendanceDiscount: true });
 
     await openAccionesMenu(w);
 
@@ -108,6 +110,52 @@ describe("RefrendSituationBar — unresolved state (DRAFT / CON_INCIDENCIA)", ()
     await payFullItem!.trigger("click");
 
     expect(w.emitted()).toHaveProperty("approve-full");
+  });
+
+  it('shows the quick action as "Aprobar" (not "Pagar sin descuento por faltas") when there is no active attendance discount', async () => {
+    const w = mountBar({ workflowStatus: "DRAFT", hasAttendanceDiscount: false });
+
+    await openAccionesMenu(w);
+
+    expect(body().text()).toContain("Aprobar");
+    expect(body().text()).not.toContain("Pagar sin descuento por faltas");
+  });
+
+  it('emits "approve-full" when "Aprobar" is clicked (no attendance discount case)', async () => {
+    const w = mountBar({ workflowStatus: "DRAFT", hasAttendanceDiscount: false });
+
+    await openAccionesMenu(w);
+
+    const items = body().findAll(".v-list-item");
+    const approveItem = items.find((el) => el.text().trim() === "Aprobar");
+    expect(approveItem).toBeTruthy();
+    await approveItem!.trigger("click");
+
+    expect(w.emitted()).toHaveProperty("approve-full");
+  });
+
+  it('emits "open" with "SIN_PAGO" when the quick-action "Sin pago (0%)" item is clicked', async () => {
+    const w = mountBar({ workflowStatus: "DRAFT" });
+
+    await openAccionesMenu(w);
+
+    const items = body().findAll(".v-list-item");
+    const sinPagoItem = items.find((el) => el.text().includes("Sin pago (0%)"));
+    expect(sinPagoItem).toBeTruthy();
+    await sinPagoItem!.trigger("click");
+
+    expect(w.emitted("open")?.[0]).toEqual(["SIN_PAGO"]);
+  });
+
+  it('offers "Sin pago (0%)" only once (promoted to a quick action, not duplicated in "Situaciones especiales")', async () => {
+    const w = mountBar({ workflowStatus: "DRAFT" });
+
+    await openAccionesMenu(w);
+
+    const matches = body()
+      .findAll(".v-list-item")
+      .filter((el) => el.text().includes("Sin pago (0%)"));
+    expect(matches).toHaveLength(1);
   });
 });
 

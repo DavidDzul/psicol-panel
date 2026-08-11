@@ -252,6 +252,9 @@
             :resolution-chip="statusChip(item.refrend)"
             :locked="!canRecordSituation(item.refrend)"
             :workflow-status="item.refrend.workflow_status"
+            :has-attendance-discount="
+              item.has_retardos_discount || item.has_falta_discount
+            "
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
             @clear-resolution="onClearResolution(item)"
@@ -590,18 +593,24 @@ const onCloseCleanDrafts = async (): Promise<void> => {
 
 const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
   const r = item.refrend;
+  const hasAttendanceDiscount =
+    item.has_retardos_discount || item.has_falta_discount;
   const academicPct = Number(r.snapshot_discount_percentage ?? 0);
   const academicClause =
     academicPct > 0
       ? ` Se mantiene el descuento académico del ${academicPct}%.`
       : "";
+  // Only claim to forgive faltas/retardos when there's actually an active
+  // discount to forgive — same reasoning as RefrendSituationBar's label.
+  const forgivenessClause = hasAttendanceDiscount
+    ? " Se perdonan sus faltas/retardos de este mes."
+    : "";
   const body =
     `¿Confirmás pagar ${fmt(computeDueAmount(r))} a ${r.snapshot_name} ` +
-    `(${MONTHS_ES[props.month - 1]} ${props.year})? Se perdonan sus ` +
-    `faltas/retardos de este mes.${academicClause}`;
+    `(${MONTHS_ES[props.month - 1]} ${props.year})?${forgivenessClause}${academicClause}`;
 
   const confirmed = await confirmationDialog.value?.open({
-    title: "Pagar sin descuento por faltas",
+    title: hasAttendanceDiscount ? "Pagar sin descuento por faltas" : "Aprobar",
     body,
   });
   if (!confirmed) return;

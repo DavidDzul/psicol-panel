@@ -48,8 +48,17 @@
             <template #prepend>
               <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
             </template>
+            <v-list-item-title class="text-body-2">{{
+              quickActionLabel
+            }}</v-list-item-title>
+          </v-list-item>
+
+          <v-list-item @click="emit('open', 'SIN_PAGO')">
+            <template #prepend>
+              <v-icon color="grey-darken-2" size="18">mdi-cash-off</v-icon>
+            </template>
             <v-list-item-title class="text-body-2"
-              >Pagar sin descuento por faltas</v-list-item-title
+              >Sin pago (0%)</v-list-item-title
             >
           </v-list-item>
 
@@ -92,6 +101,12 @@ const props = defineProps<{
   locked: boolean;
   loading?: boolean;
   workflowStatus?: WorkflowStatus | null;
+  // Whether an active RETARDOS/FALTA_INJUSTIFICADA discount exists this
+  // month. The quick action always approves at the calculated amount and
+  // forgives this discount if present — the label reflects which of those
+  // two things it's actually doing, so it never claims to waive a penalty
+  // that isn't there.
+  hasAttendanceDiscount?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -105,6 +120,14 @@ const emit = defineEmits<{
 // ApproveRefrendAction reached LISTO_PARA_PAGO without ever writing
 // resolution_type, so null does not mean "unresolved".
 const isResolved = computed(() => props.workflowStatus === "LISTO_PARA_PAGO");
+
+// Same action always: approve at the calculated amount, forgiving any
+// active attendance discount along the way. The label just says which of
+// those two things is actually happening this month, so it never claims
+// to waive a faltas/retardos penalty that isn't there.
+const quickActionLabel = computed(() =>
+  props.hasAttendanceDiscount ? "Pagar sin descuento por faltas" : "Aprobar",
+);
 
 // "Pago meses retenidos" (PAGO_MESES) used to be gated behind a quick-action
 // button driven by `amountPending` — but under the retention ledger

@@ -32,6 +32,11 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
     icon: "mdi-cash-off",
     label: "Sin pago (0%)",
     color: "grey-darken-2",
+    // Promoted to a quick action in RefrendSituationBar.vue's top section
+    // (sdd/condonar-descuento-mes-refrendo follow-up) — the catalog entry,
+    // its dialog, and any historical SIN_PAGO refrendo stay intact, it's
+    // just no longer offered a second time in "Situaciones especiales".
+    hidden: true,
   },
   {
     key: "RETENIDA",
