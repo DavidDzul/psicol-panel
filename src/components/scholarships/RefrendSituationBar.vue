@@ -49,7 +49,7 @@
               <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
             </template>
             <v-list-item-title class="text-body-2"
-              >Pago al 100% (sin descuento)</v-list-item-title
+              >Pagar sin descuento por faltas</v-list-item-title
             >
           </v-list-item>
 

@@ -85,23 +85,25 @@ describe("RefrendSituationBar — unresolved state (DRAFT / CON_INCIDENCIA)", ()
     expect(w.text()).not.toContain("Deshacer resolución");
   });
 
-  it('opens to reveal "Pago al 100%" and situation items, but never "Aprobar con descuento"', async () => {
+  it('opens to reveal "Pagar sin descuento por faltas" and situation items, but never "Aprobar con descuento"', async () => {
     const w = mountBar({ workflowStatus: "CON_INCIDENCIA" });
 
     await openAccionesMenu(w);
 
-    expect(body().text()).toContain("Pago al 100% (sin descuento)");
+    expect(body().text()).toContain("Pagar sin descuento por faltas");
     expect(body().text()).toContain("Sin pago (0%)");
     expect(body().text()).not.toContain("Aprobar con descuento");
   });
 
-  it('emits "approve-full" when "Pago al 100%" is clicked', async () => {
+  it('emits "approve-full" when "Pagar sin descuento por faltas" is clicked', async () => {
     const w = mountBar({ workflowStatus: "DRAFT" });
 
     await openAccionesMenu(w);
 
     const items = body().findAll(".v-list-item");
-    const payFullItem = items.find((el) => el.text().includes("Pago al 100%"));
+    const payFullItem = items.find((el) =>
+      el.text().includes("Pagar sin descuento por faltas"),
+    );
     expect(payFullItem).toBeTruthy();
     await payFullItem!.trigger("click");
 

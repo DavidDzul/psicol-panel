@@ -311,8 +311,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/recalculate`
       );
       const refrend = _mergeRefrend(res.data.data);
-      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS') ?? false;
-      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA') ?? false;
+      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS' && Number(d.discount_percentage) > 0) ?? false;
+      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA' && Number(d.discount_percentage) > 0) ?? false;
       _mergeBulkRow(refrend, {
         has_retardos_discount:     hasRetardos,
         has_falta_discount:        hasFalta,
@@ -563,12 +563,12 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/approve-full`,
       );
       const refrend = _mergeRefrend(res.data.data);
-      _mergeBulkRow(refrend);
-      showAlert({ title: "Pago al 100% aplicado.", status: "success" });
+      _mergeBulkRow(refrend, { has_retardos_discount: false, has_falta_discount: false });
+      showAlert({ title: "Pago sin descuento por faltas aplicado.", status: "success" });
       return refrend;
     } catch (error: unknown) {
       const msg = isAxiosError(error)
-        ? ((error.response?.data as { message?: string })?.message ?? "Error al aplicar pago al 100%.")
+        ? ((error.response?.data as { message?: string })?.message ?? "Error al aplicar el pago sin descuento por faltas.")
         : "Error de red.";
       showAlert({ title: msg, status: "error" });
     }
@@ -585,8 +585,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/clear-resolution`,
       );
       const refrend = _mergeRefrend(res.data.data);
-      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS') ?? false;
-      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA') ?? false;
+      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS' && Number(d.discount_percentage) > 0) ?? false;
+      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA' && Number(d.discount_percentage) > 0) ?? false;
       _mergeBulkRow(refrend, {
         has_retardos_discount:     hasRetardos,
         has_falta_discount:        hasFalta,

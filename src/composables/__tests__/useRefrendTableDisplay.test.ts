@@ -166,4 +166,14 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
     expect(statusChip(row.refrend).label).toBe("Con incidencia");
     expect(rowClass(row)).toBe("row-incident");
   });
+
+  it("labels a resolved BECA_MES row with a distinct label (not the generic 'Listo para pago')", () => {
+    const row = buildRow({
+      workflow_status: "LISTO_PARA_PAGO",
+      resolution_type: "BECA_MES",
+    });
+    const chip = statusChip(row.refrend);
+    expect(chip.label).toBe("Beca del mes");
+    expect(chip.label).not.toBe("Listo para pago");
+  });
 });

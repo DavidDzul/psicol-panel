@@ -16,7 +16,15 @@
             </span>
           </template>
           <template #append>
-            <v-chip size="small" color="error" label>
+            <v-chip
+              v-if="Number(discount.discount_percentage) === 0"
+              size="small"
+              color="grey"
+              label
+            >
+              Condonado
+            </v-chip>
+            <v-chip v-else size="small" color="error" label>
               -{{ discount.discount_percentage }}%
             </v-chip>
           </template>

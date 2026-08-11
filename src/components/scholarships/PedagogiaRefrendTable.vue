@@ -307,6 +307,8 @@
       @submit="onSituationSubmit"
     />
 
+    <ConfirmationDialog ref="confirmationDialog" />
+
     <!-- Cerrar refrendo confirmation -->
     <v-dialog v-model="closeDraftsDialog" max-width="440">
       <v-card>
@@ -359,6 +361,7 @@ import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMes
 import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
+import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
   BASE_HEADERS,
@@ -483,6 +486,10 @@ const store = useScholarshipStore();
 
 const activeRow = ref<BulkRefrendRow | null>(null);
 
+// ── Confirmation dialog (shared component, ref + await open() pattern) ─────
+
+const confirmationDialog = ref();
+
 // Passed to SituationRetenidaDialog/SituationPagoMesesDialog instead of raw
 // refrend.final_amount, which can carry a previous resolution's effect on
 // this same refrend (see computeDueAmount's docblock).
@@ -582,6 +589,23 @@ const onCloseCleanDrafts = async (): Promise<void> => {
 };
 
 const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
+  const r = item.refrend;
+  const academicPct = Number(r.snapshot_discount_percentage ?? 0);
+  const academicClause =
+    academicPct > 0
+      ? ` Se mantiene el descuento académico del ${academicPct}%.`
+      : "";
+  const body =
+    `¿Confirmás pagar ${fmt(computeDueAmount(r))} a ${r.snapshot_name} ` +
+    `(${MONTHS_ES[props.month - 1]} ${props.year})? Se perdonan sus ` +
+    `faltas/retardos de este mes.${academicClause}`;
+
+  const confirmed = await confirmationDialog.value?.open({
+    title: "Pagar sin descuento por faltas",
+    body,
+  });
+  if (!confirmed) return;
+
   situationLoadingId.value = item.refrend.id;
   try {
     await store.approveFullPayment(item.refrend.id);
