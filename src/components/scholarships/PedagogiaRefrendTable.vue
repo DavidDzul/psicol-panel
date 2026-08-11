@@ -249,12 +249,15 @@
           <RefrendSituationBar
             v-if="canRecordSituation(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
+            :resolution-chip="statusChip(item.refrend)"
             :locked="!canRecordSituation(item.refrend)"
             :workflow-status="item.refrend.workflow_status"
-            :has-discount="Number(item.refrend.discount_percentage) > 0"
+            :has-attendance-discount="
+              item.has_retardos_discount || item.has_falta_discount
+            "
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
-            @approve-as-is="onApproveAsIs(item)"
+            @clear-resolution="onClearResolution(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
         </div>
@@ -306,6 +309,8 @@
       :loading="situationSubmitLoading"
       @submit="onSituationSubmit"
     />
+
+    <ConfirmationDialog ref="confirmationDialog" />
 
     <!-- Cerrar refrendo confirmation -->
     <v-dialog v-model="closeDraftsDialog" max-width="440">
@@ -359,6 +364,7 @@ import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMes
 import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
+import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
   BASE_HEADERS,
@@ -483,6 +489,10 @@ const store = useScholarshipStore();
 
 const activeRow = ref<BulkRefrendRow | null>(null);
 
+// ── Confirmation dialog (shared component, ref + await open() pattern) ─────
+
+const confirmationDialog = ref();
+
 // Passed to SituationRetenidaDialog/SituationPagoMesesDialog instead of raw
 // refrend.final_amount, which can carry a previous resolution's effect on
 // this same refrend (see computeDueAmount's docblock).
@@ -582,6 +592,29 @@ const onCloseCleanDrafts = async (): Promise<void> => {
 };
 
 const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
+  const r = item.refrend;
+  const hasAttendanceDiscount =
+    item.has_retardos_discount || item.has_falta_discount;
+  const academicPct = Number(r.snapshot_discount_percentage ?? 0);
+  const academicClause =
+    academicPct > 0
+      ? ` Se mantiene el descuento académico del ${academicPct}%.`
+      : "";
+  // Only claim to forgive faltas/retardos when there's actually an active
+  // discount to forgive — same reasoning as RefrendSituationBar's label.
+  const forgivenessClause = hasAttendanceDiscount
+    ? " Se perdonan sus faltas/retardos de este mes."
+    : "";
+  const body =
+    `¿Confirmás pagar ${fmt(computeDueAmount(r))} a ${r.snapshot_name} ` +
+    `(${MONTHS_ES[props.month - 1]} ${props.year})?${forgivenessClause}${academicClause}`;
+
+  const confirmed = await confirmationDialog.value?.open({
+    title: hasAttendanceDiscount ? "Pagar sin descuento por faltas" : "Aprobar",
+    body,
+  });
+  if (!confirmed) return;
+
   situationLoadingId.value = item.refrend.id;
   try {
     await store.approveFullPayment(item.refrend.id);
@@ -590,10 +623,10 @@ const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
   }
 };
 
-const onApproveAsIs = async (item: BulkRefrendRow): Promise<void> => {
+const onClearResolution = async (item: BulkRefrendRow): Promise<void> => {
   situationLoadingId.value = item.refrend.id;
   try {
-    await store.atencionApprove(item.refrend.id);
+    await store.clearRefrendResolution(item.refrend.id);
   } finally {
     situationLoadingId.value = null;
   }

@@ -44,6 +44,8 @@ export const statusChip = (
     return { label: "Baja", color: "red-darken-3", icon: "mdi-account-cancel-outline" };
 
   if (s === "LISTO_PARA_PAGO") {
+    if (r === "BECA_MES")
+      return { label: "Beca del mes", color: "green", icon: "mdi-cash-check" };
     if (r === "SIN_PAGO")
       return { label: "Sin pago", color: "red", icon: "mdi-cash-remove" };
     if (r === "RETENIDA")

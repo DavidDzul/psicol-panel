@@ -7,6 +7,7 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
+        <div class="text-body-1 font-weight-bold mb-3">Monto a pagar: $0.00</div>
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
         <v-radio-group v-model="form.resolution_cause" class="mt-0 mb-3" hide-details>
           <v-radio label="Faltas a F.I." value="FALTAS_FI" color="grey-darken-2" />

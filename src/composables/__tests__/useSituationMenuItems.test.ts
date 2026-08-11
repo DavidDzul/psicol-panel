@@ -18,6 +18,18 @@ describe("visibleSituationMenuItems", () => {
     ).toBe(true);
   });
 
+  it("excludes SIN_PAGO from the default catalog (promoted to a RefrendSituationBar quick action instead)", () => {
+    const visible = visibleSituationMenuItems();
+
+    expect(visible.some((item) => item.key === "SIN_PAGO")).toBe(false);
+  });
+
+  it("keeps SIN_PAGO in the underlying catalog untouched", () => {
+    expect(SITUATION_MENU_ITEMS.some((item) => item.key === "SIN_PAGO")).toBe(
+      true,
+    );
+  });
+
   it("does not drop any other entry", () => {
     const visible = visibleSituationMenuItems();
     const nonHiddenKeys = SITUATION_MENU_ITEMS.filter(

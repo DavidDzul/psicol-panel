@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import { VSelect } from "vuetify/components";
@@ -16,16 +16,43 @@ import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarshi
 // touch the network. incidenciasRows is read by `cleanDraftIds` on every
 // render regardless of which test runs.
 const recordPaymentSituation = vi.fn().mockResolvedValue(undefined);
+const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
+const approveFullPayment = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
     incidenciasRows: [],
     recordPaymentSituation,
-    approveFullPayment: vi.fn(),
-    atencionApprove: vi.fn(),
+    approveFullPayment,
+    clearRefrendResolution,
     bulkApprove: vi.fn(),
     pedagogiaResolve: vi.fn(),
   }),
 }));
+
+// ConfirmationDialog (real component, not stubbed below) renders a real
+// v-dialog when opened — same jsdom shims RefrendSituationBar.test.ts and
+// SituationPagoMesesDialog.test.ts need for Vuetify's overlay strategy.
+if (!("visualViewport" in window)) {
+  Object.defineProperty(window, "visualViewport", { value: null, writable: true });
+}
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
+const body = () => new DOMWrapper(document.body);
+
+// v-dialog/v-tooltip content teleports straight to `document.body`,
+// bypassing the mounted wrapper's own subtree. Without clearing it between
+// tests, teleported nodes from a previous test (e.g. a still-open
+// ConfirmationDialog nobody clicked through) leak into the next test's
+// `body()` queries.
+afterEach(() => {
+  document.body.innerHTML = "";
+});
 
 // ── Test harness ─────────────────────────────────────────────────────────────
 //
@@ -377,5 +404,162 @@ describe("PedagogiaRefrendTable — activeSituationKey closes the dialog that wa
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+  });
+});
+
+describe("PedagogiaRefrendTable — onClearResolution wiring", () => {
+  it("calls store.clearRefrendResolution with the row id and toggles loading around it", async () => {
+    const row = buildRow(19, "Hilda Deshacer", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const bar = wrapper.findComponent(RefrendSituationBar);
+    expect(bar.props("loading")).toBe(false);
+
+    bar.vm.$emit("clear-resolution");
+    await wrapper.vm.$nextTick();
+
+    expect(clearRefrendResolution).toHaveBeenCalledWith(19);
+    // clearRefrendResolution resolves on the next microtask tick — assert
+    // loading flips back to false once the handler's finally block runs.
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(RefrendSituationBar).props("loading")).toBe(false);
+  });
+});
+
+describe("PedagogiaRefrendTable — onApproveFullPayment confirmation flow", () => {
+  const clickButton = async (label: string): Promise<void> => {
+    const btn = body()
+      .findAll("button")
+      .find((b) => b.text().trim() === label);
+    if (!btn) throw new Error(`Button "${label}" not found`);
+    await btn.trigger("click");
+  };
+
+  it("shows the confirmation copy with amount, name, month/year, and the academic-discount clause when applicable", async () => {
+    const row = buildRow(20, "Confirm Copy", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      base_amount: "1000",
+      snapshot_gross_amount: null,
+      snapshot_discount_percentage: "20",
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = body().text();
+    // computeDueAmount applies the 20% academic discount: 1000 * 0.8 = 800.
+    expect(text).toContain("$800.00");
+    expect(text).toContain("Confirm Copy");
+    expect(text).toContain("Mayo 2026");
+    expect(text).toContain("Se mantiene el descuento académico del 20%.");
+
+    wrapper.unmount();
+  });
+
+  it("omits the academic-discount clause when snapshot_discount_percentage is null", async () => {
+    const row = buildRow(21, "No Academic Discount", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      base_amount: "1000",
+      snapshot_gross_amount: null,
+      snapshot_discount_percentage: null,
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(body().text()).not.toContain("Se mantiene el descuento académico");
+
+    wrapper.unmount();
+  });
+
+  it("calls store.approveFullPayment exactly once when the user confirms", async () => {
+    approveFullPayment.mockClear();
+    const row = buildRow(22, "Confirma Pago", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await clickButton("Confirmar");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(approveFullPayment).toHaveBeenCalledTimes(1);
+    expect(approveFullPayment).toHaveBeenCalledWith(22);
+
+    wrapper.unmount();
+  });
+
+  it('titles the dialog "Pagar sin descuento por faltas" and includes the forgiveness clause when the row has an active attendance discount', async () => {
+    const row = buildRow(24, "Con Retardos", 1, 0);
+    row.has_retardos_discount = true;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = body().text();
+    expect(text).toContain("Pagar sin descuento por faltas");
+    expect(text).toContain("Se perdonan sus faltas/retardos de este mes.");
+
+    wrapper.unmount();
+  });
+
+  it('titles the dialog "Aprobar" and omits the forgiveness clause when the row has no active attendance discount', async () => {
+    const row = buildRow(25, "Sin Descuentos", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = body().text();
+    expect(text).toContain("Aprobar");
+    expect(text).not.toContain("Se perdonan sus faltas/retardos de este mes.");
+    expect(text).not.toContain("Pagar sin descuento por faltas");
+
+    wrapper.unmount();
+  });
+
+  it("does NOT call store.approveFullPayment when the user cancels", async () => {
+    approveFullPayment.mockClear();
+    const row = buildRow(23, "Cancela Pago", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await clickButton("Cancelar");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(approveFullPayment).not.toHaveBeenCalled();
+
+    wrapper.unmount();
   });
 });

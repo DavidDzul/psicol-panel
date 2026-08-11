@@ -1,60 +1,85 @@
 <template>
   <div class="d-flex align-center ga-1">
-    <v-menu v-if="!locked" :close-on-content-click="true">
-      <template #activator="{ props: menuProps }">
-        <v-btn
-          v-bind="menuProps"
+    <template v-if="!locked">
+      <!-- Resolved (workflow_status = LISTO_PARA_PAGO) → chip with the
+           current resolution + a single reversible exit. -->
+      <template v-if="isResolved">
+        <v-chip
           size="x-small"
           variant="tonal"
-          color="primary"
-          :loading="loading"
-          :disabled="locked"
-          append-icon="mdi-chevron-down"
+          :color="resolutionChip.color"
+          :prepend-icon="resolutionChip.icon"
+          :title="`Resolución actual: ${resolutionChip.label}`"
+          :data-resolution="currentResolution ?? 'NONE'"
         >
-          Acciones
+          {{ resolutionChip.label }}
+        </v-chip>
+        <v-btn
+          size="x-small"
+          variant="text"
+          color="warning"
+          prepend-icon="mdi-undo-variant"
+          :loading="loading"
+          @click="emit('clear-resolution')"
+        >
+          Deshacer resolución
         </v-btn>
       </template>
 
-      <v-list density="compact" nav min-width="210">
-        <!-- Acciones rápidas -->
-        <v-list-item
-          v-if="workflowStatus === 'CON_INCIDENCIA' && hasDiscount"
-          @click="emit('approve-as-is')"
-        >
-          <template #prepend>
-            <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
-          </template>
-          <v-list-item-title class="text-body-2"
-            >Aprobar con descuento</v-list-item-title
+      <!-- Unresolved (DRAFT / CON_INCIDENCIA) → today's full menu. -->
+      <v-menu v-else :close-on-content-click="true">
+        <template #activator="{ props: menuProps }">
+          <v-btn
+            v-bind="menuProps"
+            size="x-small"
+            variant="tonal"
+            color="primary"
+            :loading="loading"
+            :disabled="locked"
+            append-icon="mdi-chevron-down"
           >
-        </v-list-item>
+            Acciones
+          </v-btn>
+        </template>
 
-        <v-list-item @click="emit('approve-full')">
-          <template #prepend>
-            <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
-          </template>
-          <v-list-item-title class="text-body-2"
-            >Pago al 100% (sin descuento)</v-list-item-title
+        <v-list density="compact" nav min-width="210">
+          <!-- Acciones rápidas -->
+          <v-list-item @click="emit('approve-full')">
+            <template #prepend>
+              <v-icon color="green-darken-1" size="18">mdi-cash-check</v-icon>
+            </template>
+            <v-list-item-title class="text-body-2">{{
+              quickActionLabel
+            }}</v-list-item-title>
+          </v-list-item>
+
+          <v-list-item @click="emit('open', 'SIN_PAGO')">
+            <template #prepend>
+              <v-icon color="grey-darken-2" size="18">mdi-cash-off</v-icon>
+            </template>
+            <v-list-item-title class="text-body-2"
+              >Sin pago (0%)</v-list-item-title
+            >
+          </v-list-item>
+
+          <v-divider class="my-1" />
+
+          <!-- Situaciones especiales -->
+          <v-list-item
+            v-for="item in visibleMenuItems"
+            :key="item.key"
+            @click="emit('open', item.key)"
           >
-        </v-list-item>
-
-        <v-divider class="my-1" />
-
-        <!-- Situaciones especiales -->
-        <v-list-item
-          v-for="item in visibleMenuItems"
-          :key="item.key"
-          @click="emit('open', item.key)"
-        >
-          <template #prepend>
-            <v-icon :color="item.color" size="18">{{ item.icon }}</v-icon>
-          </template>
-          <v-list-item-title class="text-body-2">{{
-            item.label
-          }}</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu>
+            <template #prepend>
+              <v-icon :color="item.color" size="18">{{ item.icon }}</v-icon>
+            </template>
+            <v-list-item-title class="text-body-2">{{
+              item.label
+            }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </template>
   </div>
 </template>
 
@@ -68,22 +93,41 @@ import {
 
 const props = defineProps<{
   currentResolution: ResolutionType | null;
+  // Precomputed by the parent via statusChip(refrend) — the label needs
+  // suspension_percentage, which currentResolution alone cannot supply, and
+  // the mapping already lives in useRefrendTableDisplay.ts. Do not duplicate
+  // it here.
+  resolutionChip: { label: string; color: string; icon: string };
   locked: boolean;
   loading?: boolean;
   workflowStatus?: WorkflowStatus | null;
-  // "Aprobar con descuento" (ApproveRefrendAction) approves as-is with
-  // whatever discount is already calculated — when there is none, it's
-  // functionally identical to "Pago al 100%", so it's hidden entirely
-  // instead of showing a misleading label (user-reported confusion).
-  hasDiscount?: boolean;
+  // Whether an active RETARDOS/FALTA_INJUSTIFICADA discount exists this
+  // month. The quick action always approves at the calculated amount and
+  // forgives this discount if present — the label reflects which of those
+  // two things it's actually doing, so it never claims to waive a penalty
+  // that isn't there.
+  hasAttendanceDiscount?: boolean;
 }>();
 
 const emit = defineEmits<{
   open: [type: SituationKey];
   "approve-full": [];
-  "approve-as-is": [];
-  recalculate: [];
+  "clear-resolution": [];
 }>();
+
+// Two-state discriminator: keyed on workflow_status, NOT on
+// `currentResolution === null` — rows resolved by the legacy
+// ApproveRefrendAction reached LISTO_PARA_PAGO without ever writing
+// resolution_type, so null does not mean "unresolved".
+const isResolved = computed(() => props.workflowStatus === "LISTO_PARA_PAGO");
+
+// Same action always: approve at the calculated amount, forgiving any
+// active attendance discount along the way. The label just says which of
+// those two things is actually happening this month, so it never claims
+// to waive a faltas/retardos penalty that isn't there.
+const quickActionLabel = computed(() =>
+  props.hasAttendanceDiscount ? "Pagar sin descuento por faltas" : "Aprobar",
+);
 
 // "Pago meses retenidos" (PAGO_MESES) used to be gated behind a quick-action
 // button driven by `amountPending` — but under the retention ledger
