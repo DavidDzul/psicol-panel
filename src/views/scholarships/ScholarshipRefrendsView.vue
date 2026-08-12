@@ -12,11 +12,11 @@
         >
           <v-tab value="completa">
             <v-icon size="small" class="mr-1">mdi-table</v-icon>
-            Consultar por generación
+            <b>CONSULTA POR GENERACIONES</b>
           </v-tab>
           <v-tab value="incidencias">
             <v-icon size="small" class="mr-1">mdi-flag-outline</v-icon>
-            Consultar por incidencias del mes
+            <b>CONSULTA POR INCIDENCIAS</b>
           </v-tab>
         </v-tabs>
 
@@ -151,7 +151,9 @@ const viewVariant = ref<"completa" | "incidencias">(
 // the ref above keeps its previous value. Reset it whenever mode changes.
 watch(
   () => props.mode,
-  (mode) => { viewVariant.value = mode === "pedagogia" ? "incidencias" : "completa"; },
+  (mode) => {
+    viewVariant.value = mode === "pedagogia" ? "incidencias" : "completa";
+  },
 );
 
 const requireGeneration = computed(() => viewVariant.value === "completa");
