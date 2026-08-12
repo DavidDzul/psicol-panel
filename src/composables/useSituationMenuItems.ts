@@ -45,6 +45,12 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
     color: "orange-darken-2",
   },
   {
+    key: "DESCUENTO_DEFINITIVO",
+    icon: "mdi-cash-minus",
+    label: "Descuento definitivo",
+    color: "purple-darken-2",
+  },
+  {
     key: "PAGO_MESES",
     icon: "mdi-cash-refund",
     label: "Pago meses retenidos",

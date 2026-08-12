@@ -50,6 +50,8 @@ export const statusChip = (
       return { label: "Sin pago", color: "red", icon: "mdi-cash-remove" };
     if (r === "RETENIDA")
       return { label: "Retenida", color: "amber-darken-2", icon: "mdi-lock-outline" };
+    if (r === "DESCUENTO_DEFINITIVO")
+      return { label: "Descuento definitivo", color: "purple-darken-2", icon: "mdi-cash-minus" };
     if (r === "EGRESADO")
       return { label: "Egresado", color: "blue-grey", icon: "mdi-account-check-outline" };
     if (r === "BAJA_DEFINITIVA")

@@ -2,8 +2,8 @@
   <v-dialog v-model="model" max-width="440" persistent>
     <v-card>
       <v-card-title class="text-h6 pa-4 d-flex align-center ga-2">
-        <v-icon color="orange-darken-2" size="small">mdi-lock-outline</v-icon>
-        Beca retenida
+        <v-icon color="purple-darken-2" size="small">mdi-cash-minus</v-icon>
+        Descuento definitivo
       </v-card-title>
 
       <v-card-text class="pt-0">
@@ -11,15 +11,15 @@
           v-model:mode="form.withholding_mode"
           v-model:value="form.withholding_value"
           :final-amount="finalAmount"
-          color="orange-darken-2"
+          color="purple-darken-2"
         />
 
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
         <v-radio-group v-model="form.resolution_cause" class="mt-0 mb-3" hide-details>
-          <v-radio label="Bajo promedio" value="BAJO_PROMEDIO" color="orange-darken-2" />
-          <v-radio label="Faltas a Formación Integral" value="FALTAS_FORMACION_INTEGRAL" color="orange-darken-2" />
-          <v-radio label="Por llevarse a extraordinario" value="LLEVARSE_EXTRAORDINARIO" color="orange-darken-2" />
-          <v-radio label="Otro" value="OTRO" color="orange-darken-2" />
+          <v-radio label="Bajo promedio" value="BAJO_PROMEDIO" color="purple-darken-2" />
+          <v-radio label="Faltas a Formación Integral" value="FALTAS_FORMACION_INTEGRAL" color="purple-darken-2" />
+          <v-radio label="Por llevarse a extraordinario" value="LLEVARSE_EXTRAORDINARIO" color="purple-darken-2" />
+          <v-radio label="Otro" value="OTRO" color="purple-darken-2" />
         </v-radio-group>
         <v-text-field
           v-if="form.resolution_cause === 'OTRO'"
@@ -35,7 +35,7 @@
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="model = false">Cancelar</v-btn>
-        <v-btn color="orange-darken-2" variant="elevated" :loading="loading" :disabled="!isValid" @click="submit">
+        <v-btn color="purple-darken-2" variant="elevated" :loading="loading" :disabled="!isValid" @click="submit">
           Confirmar
         </v-btn>
       </v-card-actions>
@@ -44,6 +44,11 @@
 </template>
 
 <script setup lang="ts">
+// Sibling of SituationRetenidaDialog.vue for resolution_type
+// DESCUENTO_DEFINITIVO (sdd/retencion-no-recuperable): same reason list and
+// discount math (via WithholdingAmountFields + withholdingAmount.ts), but no
+// withholding ledger row / status=WITHHELD side effect on the backend — this
+// dialog only differs in title/icon/color and the emitted resolution_type.
 import { computed, reactive, watch } from "vue";
 import WithholdingAmountFields from "@/components/scholarships/WithholdingAmountFields.vue";
 import type { RecordSituationForm } from "@/interfaces/scholarship";
@@ -84,7 +89,7 @@ const isValid = computed(() => {
 const submit = () => {
   if (!isValid.value) return;
   emit("submit", {
-    resolution_type: "RETENIDA",
+    resolution_type: "DESCUENTO_DEFINITIVO",
     withholding_mode: form.withholding_mode,
     withholding_value: form.withholding_value,
     resolution_cause: form.resolution_cause,

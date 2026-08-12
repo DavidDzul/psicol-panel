@@ -24,6 +24,7 @@ export type ResolutionType =
   | 'BECA_MES'
   | 'SIN_PAGO'
   | 'RETENIDA'
+  | 'DESCUENTO_DEFINITIVO'
   | 'SUSPENDIDA'
   | 'BAJA_DEFINITIVA'
   | 'EGRESADO'

@@ -287,6 +287,12 @@
       :final-amount="activeRowDueAmount"
       @submit="onSituationSubmit"
     />
+    <SituationDescuentoDefinitivoDialog
+      v-model="situationDialogs.DESCUENTO_DEFINITIVO"
+      :loading="situationSubmitLoading"
+      :final-amount="activeRowDueAmount"
+      @submit="onSituationSubmit"
+    />
     <SituationPagoMesesDialog
       v-model="situationDialogs.PAGO_MESES"
       :loading="situationSubmitLoading"
@@ -360,6 +366,7 @@ import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
+import SituationDescuentoDefinitivoDialog from "@/components/scholarships/SituationDescuentoDefinitivoDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
@@ -541,6 +548,7 @@ const situationDialogs = ref<Record<SituationKey, boolean>>({
   BECA_MES: false,
   SIN_PAGO: false,
   RETENIDA: false,
+  DESCUENTO_DEFINITIVO: false,
   PAGO_MESES: false,
   SUSPENDIDA: false,
   BAJA_DEFINITIVA: false,

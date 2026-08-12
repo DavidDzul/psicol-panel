@@ -176,4 +176,27 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
     expect(chip.label).toBe("Beca del mes");
     expect(chip.label).not.toBe("Listo para pago");
   });
+
+  it("labels a resolved RETENIDA row as 'Retenida' with the amber chip", () => {
+    const row = buildRow({
+      workflow_status: "LISTO_PARA_PAGO",
+      resolution_type: "RETENIDA",
+    });
+    const chip = statusChip(row.refrend);
+    expect(chip.label).toBe("Retenida");
+    expect(chip.color).toBe("amber-darken-2");
+  });
+
+  it("labels a resolved DESCUENTO_DEFINITIVO row with a distinct label/color from RETENIDA", () => {
+    const row = buildRow({
+      workflow_status: "LISTO_PARA_PAGO",
+      resolution_type: "DESCUENTO_DEFINITIVO",
+    });
+    const chip = statusChip(row.refrend);
+    expect(chip.label).toBe("Descuento definitivo");
+    expect(chip.color).toBe("purple-darken-2");
+    expect(chip.icon).toBe("mdi-cash-minus");
+    expect(chip.label).not.toBe("Retenida");
+    expect(chip.color).not.toBe("amber-darken-2");
+  });
 });

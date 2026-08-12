@@ -30,6 +30,16 @@ describe("visibleSituationMenuItems", () => {
     );
   });
 
+  it("includes DESCUENTO_DEFINITIVO as a visible entry (not hidden)", () => {
+    const visible = visibleSituationMenuItems();
+    const item = visible.find((entry) => entry.key === "DESCUENTO_DEFINITIVO");
+
+    expect(item).toBeTruthy();
+    expect(item?.label).toBe("Descuento definitivo");
+    expect(item?.icon).toBe("mdi-cash-minus");
+    expect(item?.color).toBe("purple-darken-2");
+  });
+
   it("does not drop any other entry", () => {
     const visible = visibleSituationMenuItems();
     const nonHiddenKeys = SITUATION_MENU_ITEMS.filter(
