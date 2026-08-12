@@ -190,9 +190,10 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         }
     }
 
-    const searchBusiness = async () => {
+    const searchBusiness = async (value) => {
         try {
             const res = await axios.get(`api/admin/search`, {
+                params: { search: value },
                 headers: { 'accept': 'application/json' }
             });
             console.log(res)
