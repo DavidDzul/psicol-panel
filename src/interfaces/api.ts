@@ -96,7 +96,17 @@ import type {
 export interface ScholarshipProfileResponse { data: ScholarshipProfile }
 export interface ScholarshipRefrendsResponse { data: ScholarshipRefrend[] }
 export interface ScholarshipRefrendResponse { data: ScholarshipRefrend }
-export interface ScholarshipWithholdingsResponse { data: ScholarshipWithholding[] }
+export interface PendingWithholdingsMeta {
+  relative_year: number
+  relative_month: number
+  eligible_count: number
+  total_pending_count: number
+  total_pending_amount: string
+}
+export interface ScholarshipWithholdingsResponse {
+  data: ScholarshipWithholding[]
+  meta?: PendingWithholdingsMeta
+}
 export interface ScholarshipDocumentsResponse { data: StudentDocument[] }
 export interface ScholarshipDocumentResponse { data: StudentDocument }
 export interface GenerateRefrendsResponse { data: { created: number; skipped: number; errors: number } }

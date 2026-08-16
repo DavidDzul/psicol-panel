@@ -32,6 +32,7 @@ import type {
   AttendanceSummaryResponse,
   GraduatePersonResponse,
   ScholarshipWithholdingsResponse,
+  PendingWithholdingsMeta,
 } from "@/interfaces/api";
 
 export const useScholarshipStore = defineStore("scholarshipStore", () => {
@@ -628,16 +629,27 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Withholding ledger (retenciones individuales) ──────────────────────────
 
-  const fetchPendingWithholdings = async (userId: number): Promise<ScholarshipWithholding[]> => {
+  const fetchPendingWithholdings = async (
+    userId: number,
+    relativeYear?: number | null,
+    relativeMonth?: number | null,
+  ): Promise<{ rows: ScholarshipWithholding[]; meta?: PendingWithholdingsMeta }> => {
     try {
+      const params: Record<string, string | number> = { status: "pending" };
+      // Both-or-neither, matching the backend's `required_with` validation —
+      // sending only one would trigger a 422.
+      if (relativeYear != null && relativeMonth != null) {
+        params.relative_year = relativeYear;
+        params.relative_month = relativeMonth;
+      }
       const res = await axios.get<ScholarshipWithholdingsResponse>(
         `api/admin/users/${userId}/scholarship-withholdings`,
-        { params: { status: "pending" } }
+        { params }
       );
-      return res.data.data;
+      return { rows: res.data.data, meta: res.data.meta };
     } catch {
       showAlert({ title: "Error al cargar retenciones pendientes.", status: "error" });
-      return [];
+      return { rows: [] };
     }
   };
 
