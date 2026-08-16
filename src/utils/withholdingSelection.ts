@@ -21,6 +21,11 @@ export interface WithholdingSelectionRow {
 // belt-and-braces UI check.
 export const MAX_PAYABLE_WITHHOLDINGS = 2
 
+// Mirrors the backend's ScholarshipWithholding::SETTLEMENT_EPSILON — a
+// selected row's amount must match its remaining balance exactly (within
+// float/rounding drift), not just be less-than-or-equal to it.
+export const AMOUNT_MATCH_EPSILON = 0.005
+
 /** Sums `amount` across selected rows — recalculates on any selection or edit. */
 export function calculateTotalToPay(rows: WithholdingSelectionRow[]): number {
   return rows
@@ -30,8 +35,8 @@ export function calculateTotalToPay(rows: WithholdingSelectionRow[]): number {
 
 /**
  * At least one row selected, no more than `MAX_PAYABLE_WITHHOLDINGS` rows
- * selected, and every selected row's amount is a positive number that does
- * not exceed its remaining balance.
+ * selected, and every selected row's amount is a positive number that
+ * exactly matches its remaining balance (within `AMOUNT_MATCH_EPSILON`).
  */
 export function isSelectionValid(rows: WithholdingSelectionRow[]): boolean {
   const selected = rows.filter((row) => row.selected)
@@ -39,6 +44,9 @@ export function isSelectionValid(rows: WithholdingSelectionRow[]): boolean {
   if (selected.length > MAX_PAYABLE_WITHHOLDINGS) return false
 
   return selected.every(
-    (row) => row.amount != null && row.amount > 0 && row.amount <= row.remainingAmount
+    (row) =>
+      row.amount != null &&
+      row.amount > 0 &&
+      Math.abs(row.amount - row.remainingAmount) <= AMOUNT_MATCH_EPSILON
   )
 }

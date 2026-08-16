@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AMOUNT_MATCH_EPSILON,
   calculateTotalToPay,
   isSelectionValid,
   MAX_PAYABLE_WITHHOLDINGS,
@@ -85,18 +86,18 @@ describe("isSelectionValid", () => {
     expect(isSelectionValid([row({ selected: true, amount: null })])).toBe(false);
   });
 
-  it("accepts a valid partial selection among multiple rows", () => {
+  it("rejects a partial (non-exact) selection among multiple rows", () => {
     const rows = [
       row({ id: 1, selected: true, amount: 150, remainingAmount: 300 }),
       row({ id: 2, selected: false, amount: null, remainingAmount: 150 }),
     ];
 
-    expect(isSelectionValid(rows)).toBe(true);
+    expect(isSelectionValid(rows)).toBe(false);
   });
 
   it("rejects if any selected row (not just the first) is invalid", () => {
     const rows = [
-      row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
+      row({ id: 1, selected: true, amount: 300, remainingAmount: 300 }),
       row({ id: 2, selected: true, amount: 999, remainingAmount: 150 }),
     ];
 
@@ -105,7 +106,7 @@ describe("isSelectionValid", () => {
 
   it(`accepts exactly ${MAX_PAYABLE_WITHHOLDINGS} valid selected rows`, () => {
     const rows = [
-      row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
+      row({ id: 1, selected: true, amount: 300, remainingAmount: 300 }),
       row({ id: 2, selected: true, amount: 150, remainingAmount: 150 }),
     ];
 
@@ -114,11 +115,26 @@ describe("isSelectionValid", () => {
 
   it(`rejects a selection with more than ${MAX_PAYABLE_WITHHOLDINGS} valid rows`, () => {
     const rows = [
-      row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
+      row({ id: 1, selected: true, amount: 300, remainingAmount: 300 }),
       row({ id: 2, selected: true, amount: 150, remainingAmount: 150 }),
-      row({ id: 3, selected: true, amount: 50, remainingAmount: 200 }),
+      row({ id: 3, selected: true, amount: 200, remainingAmount: 200 }),
     ];
 
+    expect(isSelectionValid(rows)).toBe(false);
+  });
+
+  it("accepts an amount within AMOUNT_MATCH_EPSILON of the remaining balance", () => {
+    const rows = [
+      row({ id: 1, selected: true, amount: 300 - 0.003, remainingAmount: 300 }),
+    ];
+
+    expect(isSelectionValid(rows)).toBe(true);
+  });
+
+  it("rejects an amount outside AMOUNT_MATCH_EPSILON of the remaining balance", () => {
+    const rows = [row({ id: 1, selected: true, amount: 299.98, remainingAmount: 300 })];
+
+    expect(Math.abs(299.98 - 300)).toBeGreaterThan(AMOUNT_MATCH_EPSILON);
     expect(isSelectionValid(rows)).toBe(false);
   });
 });
