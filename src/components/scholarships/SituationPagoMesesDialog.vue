@@ -12,6 +12,15 @@
         </div>
 
         <v-alert
+          v-else-if="rows.length === 0 && hasOnlyStaleDebt"
+          type="info"
+          variant="tonal"
+          density="compact"
+        >
+          No hay meses pagables actualmente.
+        </v-alert>
+
+        <v-alert
           v-else-if="rows.length === 0"
           type="info"
           variant="tonal"
@@ -166,6 +175,7 @@ import type {
   ScholarshipWithholding,
   ScholarshipWithholdingPayment,
 } from "@/interfaces/scholarship";
+import type { PendingWithholdingsMeta } from "@/interfaces/api";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
   calculateTotalToPay,
@@ -181,6 +191,11 @@ const props = defineProps<{
   loading?: boolean;
   userId?: number | null;
   currentMonthAmount?: string | number | null;
+  // Current refrendo's own period — forwarded to the backend as
+  // relative_year/relative_month so it can narrow `data` down to the
+  // payable (3-month window, top-2 most recent) subset server-side.
+  periodYear?: number | null;
+  periodMonth?: number | null;
 }>();
 
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
@@ -198,6 +213,14 @@ interface Row extends WithholdingSelectionRow {
 
 const rows = ref<Row[]>([]);
 const loadingRows = ref(false);
+const meta = ref<PendingWithholdingsMeta | undefined>(undefined);
+
+// Distinguishes "no debt at all" (generic empty message) from "debt exists
+// but nothing is payable right now" (explicit messaging per spec — old debt
+// outside the 3-month window must not look like a silent empty list).
+const hasOnlyStaleDebt = computed(
+  () => (meta.value?.eligible_count ?? 0) === 0 && (meta.value?.total_pending_count ?? 0) > 0,
+);
 
 const MONTH_NAMES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -251,12 +274,18 @@ const toRow = (w: ScholarshipWithholding): Row => ({
 const load = async (): Promise<void> => {
   if (!props.userId) {
     rows.value = [];
+    meta.value = undefined;
     return;
   }
   loadingRows.value = true;
   try {
-    const pending = await store.fetchPendingWithholdings(props.userId);
+    const { rows: pending, meta: pendingMeta } = await store.fetchPendingWithholdings(
+      props.userId,
+      props.periodYear,
+      props.periodMonth,
+    );
     rows.value = pending.map(toRow);
+    meta.value = pendingMeta;
   } finally {
     loadingRows.value = false;
   }
@@ -267,6 +296,7 @@ watch(model, (open) => {
     load();
   } else {
     rows.value = [];
+    meta.value = undefined;
     payCurrentMonth.value = true;
   }
 });

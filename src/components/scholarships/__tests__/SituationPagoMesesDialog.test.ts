@@ -4,6 +4,7 @@ import { DOMWrapper, mount } from "@vue/test-utils";
 import { createVuetify } from "vuetify";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import type { ScholarshipWithholding } from "@/interfaces/scholarship";
+import type { PendingWithholdingsMeta } from "@/interfaces/api";
 
 // ── Test harness ─────────────────────────────────────────────────────────────
 //
@@ -19,7 +20,13 @@ import type { ScholarshipWithholding } from "@/interfaces/scholarship";
 // emits (`wrapper.emitted`) are unaffected by teleport since they happen at
 // the Vue instance level, not the DOM.
 
-const fetchPendingWithholdings = vi.fn<() => Promise<ScholarshipWithholding[]>>();
+const fetchPendingWithholdings = vi.fn<
+  (
+    userId: number,
+    relativeYear?: number | null,
+    relativeMonth?: number | null,
+  ) => Promise<{ rows: ScholarshipWithholding[]; meta?: PendingWithholdingsMeta }>
+>();
 
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
@@ -77,12 +84,14 @@ const body = () => new DOMWrapper(document.body);
 // `true` prop at mount time.
 const mountDialog = async (
   currentMonthAmount: number | string | null = 800,
+  extraProps: Record<string, unknown> = {},
 ): Promise<ReturnType<typeof mount>> => {
   wrapper = mount(SituationPagoMesesDialog, {
     props: {
       modelValue: false,
       userId: 1,
       currentMonthAmount,
+      ...extraProps,
     },
     global: {
       plugins: [vuetify],
@@ -113,7 +122,7 @@ const clickConfirmar = async (): Promise<void> => {
 
 describe("SituationPagoMesesDialog — pagar mes en curso checkbox", () => {
   it("submits BECA_MES with no resolution_cause when the checkbox stays checked (default)", async () => {
-    fetchPendingWithholdings.mockResolvedValue([pendingWithholding]);
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
     const w = await mountDialog();
     await new Promise((resolve) => setTimeout(resolve));
     await w.vm.$nextTick();
@@ -131,7 +140,7 @@ describe("SituationPagoMesesDialog — pagar mes en curso checkbox", () => {
   });
 
   it("submits SIN_PAGO with resolution_cause PAGO_MESES_RETENIDOS_SIN_MES_ACTUAL when unchecked", async () => {
-    fetchPendingWithholdings.mockResolvedValue([pendingWithholding]);
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
     const w = await mountDialog();
     await new Promise((resolve) => setTimeout(resolve));
     await w.vm.$nextTick();
@@ -151,7 +160,7 @@ describe("SituationPagoMesesDialog — pagar mes en curso checkbox", () => {
   });
 
   it("shows $0.00 for 'mes actual' in the breakdown when unchecked", async () => {
-    fetchPendingWithholdings.mockResolvedValue([pendingWithholding]);
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
     const w = await mountDialog(800);
     await new Promise((resolve) => setTimeout(resolve));
     await w.vm.$nextTick();
@@ -164,5 +173,76 @@ describe("SituationPagoMesesDialog — pagar mes en curso checkbox", () => {
 
     expect(document.body.textContent).toContain("Mes actual $0.00");
     expect(document.body.textContent).not.toContain("Mes actual $800.00");
+  });
+});
+
+describe("SituationPagoMesesDialog — period props forwarded to the fetch", () => {
+  it("forwards periodYear/periodMonth as relative_year/relative_month args", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    await mountDialog(800, { periodYear: 2026, periodMonth: 8 });
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(fetchPendingWithholdings).toHaveBeenCalledWith(1, 2026, 8);
+  });
+});
+
+describe("SituationPagoMesesDialog — eligibility empty-state messaging", () => {
+  it('shows "No hay meses pagables actualmente" when eligible_count is 0 but old debt exists', async () => {
+    fetchPendingWithholdings.mockResolvedValue({
+      rows: [],
+      meta: {
+        relative_year: 2026,
+        relative_month: 8,
+        eligible_count: 0,
+        total_pending_count: 3,
+        total_pending_amount: "900.00",
+      },
+    });
+    const w = await mountDialog(800, { periodYear: 2026, periodMonth: 8 });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(document.body.textContent).toContain("No hay meses pagables actualmente.");
+    expect(document.body.textContent).not.toContain(
+      "Este becario no tiene retenciones pendientes.",
+    );
+  });
+
+  it("shows the generic empty message when there is no debt at all", async () => {
+    fetchPendingWithholdings.mockResolvedValue({
+      rows: [],
+      meta: {
+        relative_year: 2026,
+        relative_month: 8,
+        eligible_count: 0,
+        total_pending_count: 0,
+        total_pending_amount: "0.00",
+      },
+    });
+    const w = await mountDialog(800, { periodYear: 2026, periodMonth: 8 });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(document.body.textContent).toContain("Este becario no tiene retenciones pendientes.");
+    expect(document.body.textContent).not.toContain("No hay meses pagables actualmente.");
+  });
+
+  it("shows eligible rows normally with no extra messaging when eligible_count > 0", async () => {
+    fetchPendingWithholdings.mockResolvedValue({
+      rows: [pendingWithholding],
+      meta: {
+        relative_year: 2026,
+        relative_month: 8,
+        eligible_count: 1,
+        total_pending_count: 1,
+        total_pending_amount: "500.00",
+      },
+    });
+    const w = await mountDialog(800, { periodYear: 2026, periodMonth: 8 });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(document.body.textContent).not.toContain("No hay meses pagables actualmente.");
+    expect(document.body.textContent).not.toContain("Este becario no tiene retenciones pendientes.");
   });
 });

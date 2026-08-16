@@ -298,6 +298,8 @@
       :loading="situationSubmitLoading"
       :user-id="activeRow?.refrend.user_id"
       :current-month-amount="activeRowDueAmount"
+      :period-year="activeRow?.refrend.period_year"
+      :period-month="activeRow?.refrend.period_month"
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog
