@@ -46,8 +46,11 @@
                 <v-list-item-title class="text-body-2 font-weight-medium">
                   {{ monthLabel(row) }}
                 </v-list-item-title>
+                <!-- Only remainingAmount is shown: since a payment must exactly
+                     settle the balance, withheldAmount and remainingAmount are
+                     always equal for any row reachable through this dialog. -->
                 <v-list-item-subtitle class="text-caption">
-                  Retenido {{ fmt(row.withheldAmount) }} · Saldo {{ fmt(row.remainingAmount) }}
+                  Monto retenido {{ fmt(row.remainingAmount) }}
                 </v-list-item-subtitle>
 
                 <template #append>
