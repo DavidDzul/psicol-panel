@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateTotalToPay,
   isSelectionValid,
+  MAX_PAYABLE_WITHHOLDINGS,
   type WithholdingSelectionRow,
 } from "@/utils/withholdingSelection";
 
@@ -97,6 +98,25 @@ describe("isSelectionValid", () => {
     const rows = [
       row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
       row({ id: 2, selected: true, amount: 999, remainingAmount: 150 }),
+    ];
+
+    expect(isSelectionValid(rows)).toBe(false);
+  });
+
+  it(`accepts exactly ${MAX_PAYABLE_WITHHOLDINGS} valid selected rows`, () => {
+    const rows = [
+      row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
+      row({ id: 2, selected: true, amount: 150, remainingAmount: 150 }),
+    ];
+
+    expect(isSelectionValid(rows)).toBe(true);
+  });
+
+  it(`rejects a selection with more than ${MAX_PAYABLE_WITHHOLDINGS} valid rows`, () => {
+    const rows = [
+      row({ id: 1, selected: true, amount: 100, remainingAmount: 300 }),
+      row({ id: 2, selected: true, amount: 150, remainingAmount: 150 }),
+      row({ id: 3, selected: true, amount: 50, remainingAmount: 200 }),
     ];
 
     expect(isSelectionValid(rows)).toBe(false);
