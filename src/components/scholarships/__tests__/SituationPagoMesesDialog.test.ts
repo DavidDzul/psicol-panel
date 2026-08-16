@@ -176,6 +176,55 @@ describe("SituationPagoMesesDialog — pagar mes en curso checkbox", () => {
   });
 });
 
+describe("SituationPagoMesesDialog — readonly amount on selection", () => {
+  it("becomes readonly and prefilled with the full remaining balance when selected", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog();
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    const amountInput = body().find('input[type="number"]');
+    expect(amountInput.element.hasAttribute("readonly")).toBe(false);
+    expect((amountInput.element as HTMLInputElement).value).toBe("");
+
+    await selectFirstRow();
+    await w.vm.$nextTick();
+
+    expect(amountInput.element.hasAttribute("readonly")).toBe(true);
+    expect((amountInput.element as HTMLInputElement).value).toBe("500");
+  });
+
+  it("clears the amount and drops readonly when the row is deselected", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog();
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    await selectFirstRow();
+    await w.vm.$nextTick();
+
+    const checkboxes = body().findAll('input[type="checkbox"]');
+    await checkboxes[0].setValue(false);
+    await w.vm.$nextTick();
+
+    const amountInput = body().find('input[type="number"]');
+    expect(amountInput.element.hasAttribute("readonly")).toBe(false);
+    expect((amountInput.element as HTMLInputElement).value).toBe("");
+  });
+
+  it("keeps the running total in sync with the readonly (non-editable) amount", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog(800);
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    await selectFirstRow();
+    await w.vm.$nextTick();
+
+    expect(document.body.textContent).toContain("retenciones seleccionadas $500.00");
+  });
+});
+
 describe("SituationPagoMesesDialog — period props forwarded to the fetch", () => {
   it("forwards periodYear/periodMonth as relative_year/relative_month args", async () => {
     fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });

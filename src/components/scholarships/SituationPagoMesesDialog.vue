@@ -59,6 +59,7 @@
                     prefix="$"
                     style="max-width: 130px"
                     :disabled="!row.selected"
+                    :readonly="row.selected"
                     :max="row.remainingAmount"
                     hide-details
                   />
@@ -253,10 +254,12 @@ const currentMonthDisplayAmount = computed(() =>
 );
 const grandTotal = computed(() => currentMonthDisplayAmount.value + totalToPay.value);
 
+// The amount input is readonly once its row is selected (see template) — the
+// admin can no longer type a custom partial amount, so selecting a row always
+// pins `amount` to the full remaining balance. Deselecting clears it back to
+// `null`, matching `toRow`'s initial state.
 const onToggleSelected = (row: Row): void => {
-  if (row.selected && (row.amount === null || row.amount <= 0)) {
-    row.amount = row.remainingAmount;
-  }
+  row.amount = row.selected ? row.remainingAmount : null;
 };
 
 const toRow = (w: ScholarshipWithholding): Row => ({
