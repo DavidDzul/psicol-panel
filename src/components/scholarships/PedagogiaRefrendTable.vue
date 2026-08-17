@@ -49,16 +49,17 @@
         />
         <!-- Orthogonal to rowFilterMode: a becario can have both, either, or
              neither "con incidencia/retención" and "pago adelantado", so this
-             is a separate switch that ANDs into displayRows instead of a
+             is a separate selector that ANDs into displayRows instead of a
              third rowFilterMode value. -->
-        <v-switch
+        <v-select
           v-model="advancePaymentOnly"
-          label="Solo pago adelantado"
-          color="primary"
+          :items="ADVANCE_PAYMENT_OPTIONS"
+          label="Pago adelantado"
+          variant="filled"
           density="compact"
           hide-details
-          inset
           class="flex-0-0-auto"
+          style="max-width: 200px"
         />
         <v-text-field
           v-model="searchQuery"
@@ -443,6 +444,11 @@ const rowFilterMode = ref<RowFilterMode>("incidencias");
 
 // Orthogonal filter (see toolbar comment): defaults off, combines with
 // rowFilterMode via AND, independent of the name search.
+const ADVANCE_PAYMENT_OPTIONS = [
+  { value: false, title: "Todos" },
+  { value: true, title: "Solo pago adelantado" },
+] as const;
+
 const advancePaymentOnly = ref(false);
 
 const displayRows = computed(() => {

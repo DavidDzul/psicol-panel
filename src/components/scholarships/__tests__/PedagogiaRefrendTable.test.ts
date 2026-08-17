@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VSelect, VSwitch } from "vuetify/components";
+import { VSelect } from "vuetify/components";
 import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -328,20 +328,23 @@ describe('PedagogiaRefrendTable — "todos" mode', () => {
   });
 });
 
-describe('PedagogiaRefrendTable — "Solo pago adelantado" switch', () => {
+describe('PedagogiaRefrendTable — "Pago adelantado" selector', () => {
   // Orthogonal to rowFilterMode (ANDs into displayRows), not a third
   // mutually-exclusive rowFilterMode value — a becario can have both,
-  // either, or neither criterion.
+  // either, or neither criterion. Second VSelect in template order (the
+  // first is rowFilterMode's "Mostrar" selector).
   const toggleAdvancePaymentOnly = async (
     wrapper: ReturnType<typeof mountTable>,
     value: boolean,
   ) => {
-    await wrapper.findComponent(VSwitch).vm.$emit("update:modelValue", value);
+    await wrapper
+      .findAllComponents(VSelect)[1]
+      .vm.$emit("update:modelValue", value);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
   };
 
-  it("shows only advance-payment-eligible rows when the switch is on", async () => {
+  it("shows only advance-payment-eligible rows when selected", async () => {
     const rows = [
       buildRow(30, "Pago Adelantado Con Incidencia", 1, 0, true),
       buildRow(31, "Sin Pago Adelantado Con Incidencia", 1, 0, false),
@@ -387,7 +390,7 @@ describe('PedagogiaRefrendTable — "Solo pago adelantado" switch', () => {
     expect(wrapper.text()).not.toContain("Luis Elegible");
   });
 
-  it("leaves existing behavior unaffected when the switch stays off", async () => {
+  it("leaves existing behavior unaffected when left on Todos", async () => {
     const rows = [
       buildRow(35, "No Elegible Con Incidencia", 1, 0, false),
       buildRow(36, "Elegible Con Incidencia", 1, 0, true),

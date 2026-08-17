@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VSwitch } from "vuetify/components";
+import { VSelect } from "vuetify/components";
 import AtencionRefrendTable from "@/components/scholarships/AtencionRefrendTable.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -136,18 +136,18 @@ const toggleAdvancePaymentOnly = async (
   wrapper: ReturnType<typeof mountTable>,
   value: boolean,
 ) => {
-  await wrapper.findComponent(VSwitch).vm.$emit("update:modelValue", value);
+  await wrapper.findComponent(VSelect).vm.$emit("update:modelValue", value);
   await wrapper.vm.$nextTick();
   await wrapper.vm.$nextTick();
 };
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
-// "Solo pago adelantado" mirrors PedagogiaRefrendTable's switch: orthogonal
+// "Solo pago adelantado" mirrors PedagogiaRefrendTable's selector: orthogonal
 // to viewVariant, ANDs into displayRows instead of replacing it.
 
-describe('AtencionRefrendTable — "Solo pago adelantado" switch', () => {
-  it("leaves all rows visible when the switch is off (default, unaffected)", async () => {
+describe('AtencionRefrendTable — "Pago adelantado" selector', () => {
+  it("leaves all rows visible when left on Todos (default, unaffected)", async () => {
     const rows = [
       buildRow(1, "No Elegible", 0, false),
       buildRow(2, "Elegible", 0, true),
@@ -160,7 +160,7 @@ describe('AtencionRefrendTable — "Solo pago adelantado" switch', () => {
     expect(wrapper.text()).toContain("Elegible");
   });
 
-  it("shows only advance-payment-eligible rows when the switch is on", async () => {
+  it("shows only advance-payment-eligible rows when selected", async () => {
     const rows = [
       buildRow(3, "No Elegible", 0, false),
       buildRow(4, "Elegible", 0, true),

@@ -55,14 +55,15 @@
                the parent tabs): a becario can have both, either, or neither
                "con incidencia" and "pago adelantado", so this ANDs into
                displayRows instead of replacing viewVariant. -->
-          <v-switch
+          <v-select
             v-model="advancePaymentOnly"
-            label="Solo pago adelantado"
-            color="primary"
+            :items="ADVANCE_PAYMENT_OPTIONS"
+            label="Pago adelantado"
+            variant="filled"
             density="compact"
             hide-details
-            inset
             class="flex-0-0-auto"
+            style="max-width: 200px"
           />
         </div>
       </template>
@@ -374,6 +375,11 @@ const viewVariant = computed(() => props.viewVariant ?? "completa");
 const searchQuery = ref("");
 
 // Orthogonal filter, independent of viewVariant/search (see #top comment).
+const ADVANCE_PAYMENT_OPTIONS = [
+  { value: false, title: "Todos" },
+  { value: true, title: "Solo pago adelantado" },
+] as const;
+
 const advancePaymentOnly = ref(false);
 
 const displayRows = computed(() => {
