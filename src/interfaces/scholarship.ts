@@ -220,6 +220,7 @@ export interface BulkRefrendRow {
   profile_discount_reason: string | null
   pending_withholding_count: number
   pending_withholding_amount: string | null
+  advance_payment_eligible: boolean
 }
 
 export interface BulkTableParams {
@@ -227,7 +228,6 @@ export interface BulkTableParams {
   month: number
   campus: string
   generation_id: number | null
-  advance_payment_eligible?: number
   page?: number
   per_page?: number
 }

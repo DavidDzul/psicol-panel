@@ -14,7 +14,6 @@ export function useScholarshipPage() {
   const selectedMonth        = ref<number>(new Date().getMonth() + 1);
   const selectedCampus       = ref<string | null>(null);
   const selectedGenerationId = ref<number | null>(null);
-  const advancePaymentOnly   = ref<boolean>(false);
   const generating     = ref<boolean>(false);
   const generateDialog = ref<boolean>(false);
 
@@ -62,7 +61,6 @@ export function useScholarshipPage() {
     selectedMonth,
     selectedCampus,
     selectedGenerationId,
-    advancePaymentOnly,
     filteredCampus,
     generating,
     generateDialog,

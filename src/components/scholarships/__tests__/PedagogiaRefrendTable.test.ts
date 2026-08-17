@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VSelect } from "vuetify/components";
+import { VSelect, VSwitch } from "vuetify/components";
 import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -130,6 +130,7 @@ const buildRow = (
   name: string,
   incidentsCount: number,
   pendingCount: number,
+  advancePaymentEligible = false,
 ): BulkRefrendRow => ({
   refrend: { ...baseRefrend, id, snapshot_name: name },
   attendance_present: 0,
@@ -157,6 +158,7 @@ const buildRow = (
   profile_discount_reason: null,
   pending_withholding_count: pendingCount,
   pending_withholding_amount: pendingCount > 0 ? "500.00" : null,
+  advance_payment_eligible: advancePaymentEligible,
 });
 
 const mountTable = (rows: BulkRefrendRow[]) =>
@@ -323,6 +325,79 @@ describe('PedagogiaRefrendTable — "todos" mode', () => {
     expect(wrapper.text()).toContain(
       "Sin becarios con incidencia o retención pendiente en este periodo.",
     );
+  });
+});
+
+describe('PedagogiaRefrendTable — "Solo pago adelantado" switch', () => {
+  // Orthogonal to rowFilterMode (ANDs into displayRows), not a third
+  // mutually-exclusive rowFilterMode value — a becario can have both,
+  // either, or neither criterion.
+  const toggleAdvancePaymentOnly = async (
+    wrapper: ReturnType<typeof mountTable>,
+    value: boolean,
+  ) => {
+    await wrapper.findComponent(VSwitch).vm.$emit("update:modelValue", value);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  };
+
+  it("shows only advance-payment-eligible rows when the switch is on", async () => {
+    const rows = [
+      buildRow(30, "Pago Adelantado Con Incidencia", 1, 0, true),
+      buildRow(31, "Sin Pago Adelantado Con Incidencia", 1, 0, false),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await toggleAdvancePaymentOnly(wrapper, true);
+
+    expect(wrapper.text()).toContain("Pago Adelantado Con Incidencia");
+    expect(wrapper.text()).not.toContain("Sin Pago Adelantado Con Incidencia");
+  });
+
+  it("combines (AND) with the incidencias row filter — excludes an eligible row with no incidencia/retención", async () => {
+    const rows = [buildRow(32, "Elegible Limpio", 0, 0, true)];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await toggleAdvancePaymentOnly(wrapper, true);
+
+    expect(wrapper.text()).not.toContain("Elegible Limpio");
+  });
+
+  it("combines (AND) with name search", async () => {
+    const rows = [
+      buildRow(33, "Karla Elegible", 1, 0, true),
+      buildRow(34, "Luis Elegible", 1, 0, true),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await toggleAdvancePaymentOnly(wrapper, true);
+    await wrapper
+      .find('input[placeholder="Buscar por nombre becario..."]')
+      .setValue("Karla");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Karla Elegible");
+    expect(wrapper.text()).not.toContain("Luis Elegible");
+  });
+
+  it("leaves existing behavior unaffected when the switch stays off", async () => {
+    const rows = [
+      buildRow(35, "No Elegible Con Incidencia", 1, 0, false),
+      buildRow(36, "Elegible Con Incidencia", 1, 0, true),
+    ];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("No Elegible Con Incidencia");
+    expect(wrapper.text()).toContain("Elegible Con Incidencia");
   });
 });
 

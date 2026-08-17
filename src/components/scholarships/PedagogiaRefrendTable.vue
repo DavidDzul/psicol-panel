@@ -47,6 +47,19 @@
           class="flex-0-0-auto"
           style="max-width: 200px"
         />
+        <!-- Orthogonal to rowFilterMode: a becario can have both, either, or
+             neither "con incidencia/retención" and "pago adelantado", so this
+             is a separate switch that ANDs into displayRows instead of a
+             third rowFilterMode value. -->
+        <v-switch
+          v-model="advancePaymentOnly"
+          label="Solo pago adelantado"
+          color="primary"
+          density="compact"
+          hide-details
+          inset
+          class="flex-0-0-auto"
+        />
         <v-text-field
           v-model="searchQuery"
           placeholder="Buscar por nombre becario..."
@@ -428,21 +441,33 @@ const ROW_FILTER_OPTIONS = [
 
 const rowFilterMode = ref<RowFilterMode>("incidencias");
 
+// Orthogonal filter (see toolbar comment): defaults off, combines with
+// rowFilterMode via AND, independent of the name search.
+const advancePaymentOnly = ref(false);
+
 const displayRows = computed(() => {
-  const rows =
+  let rows =
     rowFilterMode.value === "todos"
       ? props.rows
       : props.rows.filter(
           (r) => r.incidents_count > 0 || r.pending_withholding_count > 0,
         );
+  if (advancePaymentOnly.value) {
+    rows = rows.filter((r) => r.advance_payment_eligible);
+  }
   return filterRowsByName(rows, searchQuery.value);
 });
 
-const emptyStateText = computed(() =>
-  rowFilterMode.value === "todos"
+const emptyStateText = computed(() => {
+  if (advancePaymentOnly.value) {
+    return rowFilterMode.value === "todos"
+      ? "Sin becarios de pago adelantado en este periodo."
+      : "Sin becarios de pago adelantado con incidencia o retención pendiente en este periodo.";
+  }
+  return rowFilterMode.value === "todos"
     ? "Sin becarios en este periodo."
-    : "Sin becarios con incidencia o retención pendiente en este periodo.",
-);
+    : "Sin becarios con incidencia o retención pendiente en este periodo.";
+});
 
 // ── Grouping (collapsible, Vuetify native group-by) ──────────────────────────
 
@@ -459,7 +484,7 @@ const autoOpenedGroupIds = new Set<string>();
 // alterar drásticamente qué grupos existen; Vuetify resetea su set interno de
 // grupos abiertos en ese caso, pero autoOpenedGroupIds persiste y los grupos
 // vuelven a aparecer colapsados sin este reset.
-watch(rowFilterMode, () => autoOpenedGroupIds.clear());
+watch([rowFilterMode, advancePaymentOnly], () => autoOpenedGroupIds.clear());
 
 // ── Table headers ──────────────────────────────────────────────────────────
 

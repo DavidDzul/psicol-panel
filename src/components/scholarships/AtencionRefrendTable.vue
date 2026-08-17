@@ -39,7 +39,7 @@
       :row-props="({ item }) => ({ class: rowClass(item) })"
     >
       <template #top>
-        <div class="px-3 pt-3 pb-2">
+        <div class="px-3 pt-3 pb-2 d-flex align-center ga-2 flex-wrap">
           <v-text-field
             v-model="searchQuery"
             placeholder="Buscar por nombre becario..."
@@ -48,6 +48,21 @@
             density="compact"
             hide-details
             clearable
+            class="flex-1-1-auto"
+            style="min-width: 220px"
+          />
+          <!-- Orthogonal to viewVariant (Completa/Incidencias, controlled by
+               the parent tabs): a becario can have both, either, or neither
+               "con incidencia" and "pago adelantado", so this ANDs into
+               displayRows instead of replacing viewVariant. -->
+          <v-switch
+            v-model="advancePaymentOnly"
+            label="Solo pago adelantado"
+            color="primary"
+            density="compact"
+            hide-details
+            inset
+            class="flex-0-0-auto"
           />
         </div>
       </template>
@@ -358,10 +373,16 @@ const viewVariant = computed(() => props.viewVariant ?? "completa");
 
 const searchQuery = ref("");
 
+// Orthogonal filter, independent of viewVariant/search (see #top comment).
+const advancePaymentOnly = ref(false);
+
 const displayRows = computed(() => {
   let rows = props.rows;
   if (viewVariant.value === "incidencias") {
     rows = rows.filter((r) => r.incidents_count > 0);
+  }
+  if (advancePaymentOnly.value) {
+    rows = rows.filter((r) => r.advance_payment_eligible);
   }
   return filterRowsByName(rows, searchQuery.value);
 });
