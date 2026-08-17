@@ -83,6 +83,7 @@ export interface ScholarshipProfile {
   scholarship_type: ScholarshipType
   monthly_amount: string
   monto_apoyo: string | null
+  advance_payment_eligible: boolean
   active_discount_percentage: string | null
   discount_reason: string | null
   discount_valid_until: string | null
@@ -226,6 +227,7 @@ export interface BulkTableParams {
   month: number
   campus: string
   generation_id: number | null
+  advance_payment_eligible?: number
   page?: number
   per_page?: number
 }
@@ -377,6 +379,7 @@ export interface ScholarshipProfileForm {
   scholarship_type: ScholarshipType
   monthly_amount: number
   monto_apoyo?: number | null
+  advance_payment_eligible?: boolean
   active_discount_percentage?: number | null
   discount_reason?: string | null
   discount_valid_until?: string | null

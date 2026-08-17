@@ -46,6 +46,17 @@
         @update:model-value="emit('update:generationId', internalGenerationId)"
       />
     </v-col>
+    <v-col v-if="showAdvancePaymentFilter" md="2" class="d-flex align-center">
+      <v-switch
+        v-model="internalAdvancePaymentOnly"
+        label="¿Estudia en la universidad CERT?"
+        color="primary"
+        density="compact"
+        hide-details
+        inset
+        @update:model-value="emit('update:advancePaymentOnly', internalAdvancePaymentOnly)"
+      />
+    </v-col>
 
     <v-col class="d-flex text-center justify-between" md="4">
       <v-btn
@@ -72,20 +83,32 @@ import { storeToRefs } from "pinia";
 import type { SelectOption } from "@/constants";
 import { useGenerationsStore } from "@/stores/api/generationStore";
 
-const props = defineProps<{
-  year: number;
-  month: number;
-  campuses?: SelectOption[] | null;
-  campus?: string | null;
-  generationId?: number | null;
-  requireGeneration?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    year: number;
+    month: number;
+    campuses?: SelectOption[] | null;
+    campus?: string | null;
+    generationId?: number | null;
+    requireGeneration?: boolean;
+    advancePaymentOnly?: boolean;
+    showAdvancePaymentFilter?: boolean;
+  }>(),
+  {
+    // Vue defaults absent `boolean`-typed props to `false`, not `undefined`
+    // (Boolean prop casting). Both listings rely on this prop being visible
+    // WITHOUT passing it explicitly, so the default must be declared here —
+    // `showAdvancePaymentFilter !== false` alone is not enough.
+    showAdvancePaymentFilter: true,
+  },
+);
 
 const emit = defineEmits<{
   "update:year": [value: number];
   "update:month": [value: number];
   "update:campus": [value: string | null];
   "update:generationId": [value: number | null];
+  "update:advancePaymentOnly": [value: boolean];
   search: [];
 }>();
 
@@ -96,6 +119,7 @@ const internalYear = ref<number>(props.year);
 const internalMonth = ref<number>(props.month);
 const internalCampus = ref<string | null>(props.campus ?? null);
 const internalGenerationId = ref<number | null>(props.generationId ?? null);
+const internalAdvancePaymentOnly = ref<boolean>(props.advancePaymentOnly ?? false);
 const yearOptions = Array.from(
   { length: 6 },
   (_, i) => new Date().getFullYear() - i,

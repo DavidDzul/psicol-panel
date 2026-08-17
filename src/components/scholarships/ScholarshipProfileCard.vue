@@ -38,6 +38,16 @@
                 {{ fmt(profile.monto_apoyo) }}
               </div>
             </div>
+            <v-chip
+              v-if="profile.advance_payment_eligible"
+              label
+              color="secondary"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-check-circle-outline</v-icon>
+              {{ advancePaymentLabel }}
+            </v-chip>
           </div>
           <v-btn size="small" variant="tonal" @click="startEdit">
             Editar perfil
@@ -203,6 +213,16 @@
             clearable
           />
         </v-col>
+        <v-col cols="12" md="6">
+          <v-switch
+            v-model="form.advance_payment_eligible"
+            :label="advancePaymentLabel"
+            color="primary"
+            density="compact"
+            hide-details
+            inset
+          />
+        </v-col>
         <v-col cols="12">
           <v-divider class="mb-1" />
           <div class="text-caption text-medium-emphasis mt-3 mb-1">
@@ -340,11 +360,17 @@ const reticulaUrl = computed(() =>
     : "#",
 );
 
+// Single source of truth for the visible copy of `advance_payment_eligible` —
+// today's eligibility criterion is CERT university affiliation, but the
+// field itself is generic. Relabeling later means editing this one string.
+const advancePaymentLabel = computed(() => "¿Estudia en la universidad CERT?");
+
 const emptyForm = () => ({
   user_id: props.userId,
   scholarship_type: "IU" as ScholarshipType,
   monthly_amount: 0,
   monto_apoyo: null as number | null,
+  advance_payment_eligible: false,
   active_discount_percentage: null as number | null,
   discount_reason: null as string | null,
   discount_valid_until: null as string | null,
@@ -368,6 +394,8 @@ const startEdit = (): void => {
     form.monto_apoyo = profile.value.monto_apoyo
       ? Number(profile.value.monto_apoyo)
       : null;
+    form.advance_payment_eligible =
+      profile.value.advance_payment_eligible ?? false;
     form.active_discount_percentage = profile.value.active_discount_percentage
       ? Number(profile.value.active_discount_percentage)
       : null;
@@ -403,6 +431,7 @@ const onSave = async (): Promise<void> => {
     scholarship_type: form.scholarship_type,
     monthly_amount: form.monthly_amount,
     monto_apoyo: form.monto_apoyo,
+    advance_payment_eligible: form.advance_payment_eligible,
     active_discount_percentage: form.active_discount_percentage,
     discount_reason: form.discount_reason,
     discount_valid_until: form.discount_valid_until,

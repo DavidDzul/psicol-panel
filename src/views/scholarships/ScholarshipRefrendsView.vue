@@ -28,10 +28,12 @@
             :campus="selectedCampus"
             :generation-id="selectedGenerationId"
             :require-generation="requireGeneration"
+            :advance-payment-only="advancePaymentOnly"
             @update:year="selectedYear = $event"
             @update:month="selectedMonth = $event"
             @update:campus="selectedCampus = $event"
             @update:generation-id="selectedGenerationId = $event"
+            @update:advance-payment-only="advancePaymentOnly = $event"
             @search="onPeriodChange"
           >
             <v-btn
@@ -57,10 +59,12 @@
             :campus="selectedCampus"
             :generation-id="selectedGenerationId"
             :require-generation="requireGeneration"
+            :advance-payment-only="advancePaymentOnly"
             @update:year="selectedYear = $event"
             @update:month="selectedMonth = $event"
             @update:campus="selectedCampus = $event"
             @update:generation-id="selectedGenerationId = $event"
+            @update:advance-payment-only="advancePaymentOnly = $event"
             @search="onPeriodChange"
           />
         </v-card-text>
@@ -134,6 +138,7 @@ import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue";
+import { buildBulkTableParams } from "@/utils/scholarshipBulkTableParams";
 import type { LinkInterface } from "@/interfaces";
 
 const props = defineProps<{
@@ -183,6 +188,7 @@ const {
   selectedMonth,
   selectedCampus,
   selectedGenerationId,
+  advancePaymentOnly,
   filteredCampus,
   generating,
   generateDialog,
@@ -233,13 +239,15 @@ const onPeriodChange = async (): Promise<void> => {
     (requireGeneration.value && !selectedGenerationId.value)
   )
     return;
-  const params = {
+  const params = buildBulkTableParams({
     year: selectedYear.value,
     month: selectedMonth.value,
     campus: selectedCampus.value!,
-    generation_id: requireGeneration.value ? selectedGenerationId.value! : null,
-    per_page: 500,
-  };
+    generationId: selectedGenerationId.value,
+    requireGeneration: requireGeneration.value,
+    advancePaymentOnly: advancePaymentOnly.value,
+    perPage: 500,
+  });
   if (viewVariant.value === "incidencias") {
     await scholarshipStore.fetchIncidenciasTable(params);
   } else {
