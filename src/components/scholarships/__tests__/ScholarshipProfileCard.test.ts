@@ -281,6 +281,33 @@ describe("ScholarshipProfileCard — Aumento temporal de beca (edición)", () =>
     expect(wrapper.text()).not.toContain("Limpiar aumento");
   });
 
+  // HIGH review finding: the backend's `required_with` rule on
+  // temporary_increase_amount fires when ANY of the other 3 fields is
+  // present (UpdateScholarshipProfileRequest::rules()), not just the other
+  // way around. Before this fix, submitting only a valid-from date reached
+  // the client-side `formRef.validate()` as "valid" and hit the backend,
+  // which always rejected it — the request should never be sent.
+  it("blocks the client-side submit when only temporary_increase_valid_from is filled in (no amount)", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await wrapper.find("button").trigger("click"); // "Editar perfil"
+    await wrapper.vm.$nextTick();
+
+    await fieldByLabel(wrapper, "Vigente desde")!.find("input").setValue("2026-09-01");
+    await fieldByLabel(wrapper, "Inicio de carrera")!.find("input").setValue("2026-01-01");
+    await fieldByLabel(wrapper, "Fin de carrera")!.find("input").setValue("2026-06-01");
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain(
+      "Requerido cuando se especifica vigencia o motivo del aumento.",
+    );
+    expect(saveProfile).not.toHaveBeenCalled();
+  });
+
   it("sends the temporary increase fields in the saveProfile payload", async () => {
     fetchProfile.mockResolvedValueOnce({ ...baseProfile });
     saveProfile.mockResolvedValueOnce({ ...baseProfile });
@@ -361,6 +388,37 @@ describe("ScholarshipProfileCard — replace-confirmation dialog (422 aumento vi
     saveProfile.mockRejectedValueOnce({
       isAxiosError: true,
       response: { status: 500, data: {} },
+    });
+
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await fillIncreaseAndSubmit(wrapper);
+
+    expect(body().text()).not.toContain("Ya existe un aumento vigente");
+  });
+
+  // HIGH review finding: extractIncreaseConflictMessage() used to detect the
+  // "aumento vigente" conflict just by checking whether
+  // errors.temporary_increase_amount existed, regardless of the message
+  // text — so ANY 422 on that field (e.g. the "falta el monto" bug above)
+  // opened the replace-confirmation dialog and, on confirm, resent the same
+  // broken payload in a loop. The dialog must only open for the backend's
+  // exact "ya existe un aumento vigente" message.
+  it("does not show the replace-confirmation dialog for a 422 on the amount field with a different message", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    saveProfile.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 422,
+        data: {
+          errors: {
+            temporary_increase_amount: [
+              "El campo monto del aumento es obligatorio.",
+            ],
+          },
+        },
+      },
     });
 
     const wrapper = mountCard();
