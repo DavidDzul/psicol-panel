@@ -73,8 +73,9 @@
           style="min-width: 220px"
         />
 
-        <!-- Toggle de columnas opcionales (Apoyo / Aumento temporal): ambas
-             ocultas por default, preferencia persistida en localStorage. -->
+        <!-- Toggle de columnas opcionales (Monto mensual / Apoyo / Aumento
+             temporal): las 3 ocultas por default, preferencia persistida en
+             localStorage. -->
         <v-menu :close-on-content-click="false">
           <template #activator="{ props: menuProps }">
             <v-btn
@@ -234,7 +235,14 @@
 
       <!-- Columnas opcionales (ocultas por default): desglose informativo
            que ya está incluido en "Base" — ver amountOrDash() por la
-           nulabilidad asimétrica entre estos dos campos. -->
+           nulabilidad asimétrica entre estos campos, y monthlyAmount() por
+           cómo se deriva "Monto mensual" sin un campo de backend propio. -->
+      <template #item.monthly_amount="{ item }">
+        <span class="text-caption text-medium-emphasis">{{
+          amountOrDash(monthlyAmount(item.refrend))
+        }}</span>
+      </template>
+
       <template #item.snapshot_monto_apoyo="{ item }">
         <span class="text-caption text-medium-emphasis">{{
           amountOrDash(item.refrend.snapshot_monto_apoyo)
@@ -560,9 +568,10 @@ watch([rowFilterMode, advancePaymentOnly], () => autoOpenedGroupIds.clear());
 // ── Table headers ──────────────────────────────────────────────────────────
 //
 // Split in three groups (design D5, D6) to open a slot for the optional
-// columns (Apoyo / Aumento temporal) right before "Base", without moving
-// PEDAGOGIA_* headers into the shared useRefrendTableDisplay module — they
-// stay local to this component, same as AtencionRefrendTable's own headers.
+// columns (Monto mensual / Apoyo / Aumento temporal) right before "Base",
+// without moving PEDAGOGIA_* headers into the shared useRefrendTableDisplay
+// module — they stay local to this component, same as AtencionRefrendTable's
+// own headers.
 
 const PEDAGOGIA_REVIEW_HEADERS = [
   {
@@ -575,11 +584,13 @@ const PEDAGOGIA_REVIEW_HEADERS = [
   { title: "Respuesta", key: "pedagogia", width: 180, sortable: false },
 ];
 
-// sortable: false on both — the header key does not resolve against
+// sortable: false on all three — "monthly_amount" is a derived value with no
+// backing field at all, and the other two keys do not resolve against
 // BulkRefrendRow (the field lives under `.refrend`); the explicit #item.*
-// slot renders it fine, but Vuetify's internal sort would use the raw path
+// slot renders each fine, but Vuetify's internal sort would use the raw path
 // and sort by `undefined`.
 const OPTIONAL_HEADERS = [
+  { title: "Monto mensual", key: "monthly_amount", width: 120, sortable: false },
   { title: "Apoyo", key: "snapshot_monto_apoyo", width: 90, sortable: false },
   {
     title: "Aum. temporal",
@@ -636,6 +647,26 @@ const headers = computed(() => [
 // optional column and "—" in the other.
 const amountOrDash = (value: string | null): string =>
   value !== null && Number(value) > 0 ? fmt(value) : "—";
+
+// Derived "Monto mensual": snapshot_gross_amount, snapshot_monto_apoyo, and
+// snapshot_temporary_increase_amount are all frozen at the same instant for a
+// given period, so subtracting the other two components out of the gross
+// always reconstructs the exact monthly base — the sum of the 3 optional
+// columns is mathematically guaranteed to equal "Base" without a dedicated
+// backend field, and without risk of drift if the calculation formula
+// changes later.
+//
+// Edge case: older/incomplete refrends without a frozen snapshot_gross_amount
+// fall back to base_amount in the "Base" cell (see #item.base_amount below),
+// but there is nothing to derive Monto mensual from in that case — it renders
+// "—" rather than a value that could silently disagree with "Base".
+const monthlyAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
+  if (refrend.snapshot_gross_amount === null) return null;
+  const gross = Number(refrend.snapshot_gross_amount);
+  const apoyo = Number(refrend.snapshot_monto_apoyo ?? 0);
+  const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
+  return String(gross - apoyo - increase);
+};
 
 // ── Table title ────────────────────────────────────────────────────────────
 
