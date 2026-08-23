@@ -60,25 +60,53 @@
             <div class="text-body-1 font-weight-medium">
               {{ fmt(refrend.base_amount) }}
             </div>
-            <v-tooltip
-              v-if="refrend.snapshot_discount_percentage"
-              :text="refrend.snapshot_discount_reason ?? 'Sin motivo registrado'"
-              location="bottom"
-            >
-              <template #activator="{ props }">
-                <v-chip
-                  v-bind="props"
-                  size="x-small"
-                  color="orange-darken-1"
-                  variant="tonal"
-                  label
-                  prepend-icon="mdi-percent"
-                  class="mt-1"
-                >
-                  Desc. perfil {{ refrend.snapshot_discount_percentage }}%
-                </v-chip>
-              </template>
-            </v-tooltip>
+            <!-- "Monto base" NO incluye el aumento temporal (ni monto_apoyo):
+                 ver ScholarshipCalculationService::buildSnapshot(). Este chip
+                 es la ÚNICA forma de ver de dónde sale el saldo extra acá. -->
+            <div class="d-flex flex-wrap ga-1 justify-end mt-1">
+              <v-tooltip
+                v-if="refrend.snapshot_discount_percentage"
+                :text="
+                  refrend.snapshot_discount_reason ?? 'Sin motivo registrado'
+                "
+                location="bottom"
+              >
+                <template #activator="{ props }">
+                  <v-chip
+                    v-bind="props"
+                    size="x-small"
+                    color="orange-darken-1"
+                    variant="tonal"
+                    label
+                    prepend-icon="mdi-percent"
+                  >
+                    Desc. perfil {{ refrend.snapshot_discount_percentage }}%
+                  </v-chip>
+                </template>
+              </v-tooltip>
+              <v-tooltip
+                v-if="Number(refrend.snapshot_temporary_increase_amount) > 0"
+                :text="
+                  refrend.snapshot_temporary_increase_reason ??
+                  'Sin motivo registrado'
+                "
+                location="bottom"
+              >
+                <template #activator="{ props }">
+                  <v-chip
+                    v-bind="props"
+                    size="x-small"
+                    color="success"
+                    variant="tonal"
+                    label
+                    prepend-icon="mdi-plus-circle-outline"
+                  >
+                    +{{ fmt(refrend.snapshot_temporary_increase_amount ?? 0) }}
+                    aumento
+                  </v-chip>
+                </template>
+              </v-tooltip>
+            </div>
           </v-col>
           <v-col
             v-if="Number(refrend.discount_amount) > 0"

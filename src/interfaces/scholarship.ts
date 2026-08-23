@@ -83,9 +83,15 @@ export interface ScholarshipProfile {
   scholarship_type: ScholarshipType
   monthly_amount: string
   monto_apoyo: string | null
+  temporary_increase_amount: string | null
+  temporary_increase_valid_from: string | null
+  temporary_increase_valid_until: string | null
+  temporary_increase_reason: string | null
+  temporary_increase_granted_by_id: number | null
   advance_payment_eligible: boolean
   active_discount_percentage: string | null
   discount_reason: string | null
+  discount_valid_from: string | null
   discount_valid_until: string | null
   reticula_start_date: string | null
   reticula_end_date: string | null
@@ -94,6 +100,8 @@ export interface ScholarshipProfile {
   egreso_administrativo: string | null
   created_at: string
   updated_at: string
+  // relation (loaded via `grantedBy:id,first_name,last_name` in show()/update())
+  granted_by?: { id: number; first_name: string; last_name: string } | null
 }
 
 export interface ScholarshipSemesterGrade {
@@ -147,6 +155,8 @@ export interface ScholarshipRefrend {
   carryover_percentage: string | null
   snapshot_gross_amount: string | null
   snapshot_monto_apoyo: string | null
+  snapshot_temporary_increase_amount: string | null
+  snapshot_temporary_increase_reason: string | null
   base_amount: string
   snapshot_discount_percentage: string | null
   snapshot_discount_reason: string | null
@@ -382,7 +392,15 @@ export interface ScholarshipProfileForm {
   advance_payment_eligible?: boolean
   active_discount_percentage?: number | null
   discount_reason?: string | null
+  discount_valid_from?: string | null
   discount_valid_until?: string | null
+  temporary_increase_amount?: number | null
+  temporary_increase_valid_from?: string | null
+  temporary_increase_valid_until?: string | null
+  temporary_increase_reason?: string | null
+  // Not persisted — signals the backend to overwrite an already-vigente
+  // increase (see UpdateScholarshipProfileRequest::withValidator()).
+  replace_temporary_increase?: boolean
 }
 
 export interface GeneratePeriodForm {

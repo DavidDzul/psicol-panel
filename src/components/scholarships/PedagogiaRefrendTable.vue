@@ -72,6 +72,42 @@
           class="flex-1-1-auto"
           style="min-width: 220px"
         />
+
+        <!-- Toggle de columnas opcionales (Monto mensual / Apoyo / Aumento
+             temporal): las 3 ocultas por default, preferencia persistida en
+             localStorage. -->
+        <v-menu :close-on-content-click="false">
+          <template #activator="{ props: menuProps }">
+            <v-btn
+              v-bind="menuProps"
+              icon="mdi-table-column"
+              variant="text"
+              density="comfortable"
+              size="small"
+              title="Columnas"
+            />
+          </template>
+          <v-list density="compact" min-width="260">
+            <v-list-subheader class="text-caption">
+              Desglose informativo — ya incluido en Base
+            </v-list-subheader>
+            <v-list-item
+              v-for="h in OPTIONAL_HEADERS"
+              :key="h.key"
+              @click="toggleColumn(h.key)"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :model-value="visibleOptionalColumns.includes(h.key)"
+                  density="compact"
+                />
+              </template>
+              <v-list-item-title class="text-body-2">{{
+                h.title
+              }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </div>
     </div>
 
@@ -196,6 +232,39 @@
       </template>
 
       <!-- ── ECONÓMICO ────────────────────────────────────────────────────── -->
+
+      <!-- Columnas opcionales (ocultas por default): desglose informativo
+           que ya está incluido en "Base" — ver amountOrDash() por la
+           nulabilidad asimétrica entre estos campos, y monthlyAmount() por
+           cómo se deriva "Monto mensual" sin un campo de backend propio. -->
+      <template #item.monthly_amount="{ item }">
+        <span class="text-caption text-medium-emphasis">{{
+          amountOrDash(monthlyAmount(item.refrend))
+        }}</span>
+      </template>
+
+      <template #item.snapshot_monto_apoyo="{ item }">
+        <span class="text-caption text-medium-emphasis">{{
+          amountOrDash(item.refrend.snapshot_monto_apoyo)
+        }}</span>
+      </template>
+
+      <template #item.snapshot_temporary_increase_amount="{ item }">
+        <v-tooltip
+          v-if="item.refrend.snapshot_temporary_increase_reason"
+          :text="item.refrend.snapshot_temporary_increase_reason"
+          location="top"
+        >
+          <template #activator="{ props: tipProps }">
+            <span v-bind="tipProps" class="text-caption text-medium-emphasis">
+              {{ amountOrDash(item.refrend.snapshot_temporary_increase_amount) }}
+            </span>
+          </template>
+        </v-tooltip>
+        <span v-else class="text-caption text-medium-emphasis">
+          {{ amountOrDash(item.refrend.snapshot_temporary_increase_amount) }}
+        </span>
+      </template>
 
       <template #item.base_amount="{ item }">
         <div class="d-flex flex-column">
@@ -402,6 +471,10 @@ import {
 } from "@/composables/useRefrendTableDisplay";
 import { canPedagogia, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
+import {
+  uiPreferenceKey,
+  useStoredPreference,
+} from "@/composables/useStoredPreference";
 import type {
   BulkRefrendRow,
   ResolutionType,
@@ -493,8 +566,14 @@ const autoOpenedGroupIds = new Set<string>();
 watch([rowFilterMode, advancePaymentOnly], () => autoOpenedGroupIds.clear());
 
 // ── Table headers ──────────────────────────────────────────────────────────
+//
+// Split in three groups (design D5, D6) to open a slot for the optional
+// columns (Monto mensual / Apoyo / Aumento temporal) right before "Base",
+// without moving PEDAGOGIA_* headers into the shared useRefrendTableDisplay
+// module — they stay local to this component, same as AtencionRefrendTable's
+// own headers.
 
-const PEDAGOGIA_HEADERS = [
+const PEDAGOGIA_REVIEW_HEADERS = [
   {
     title: "Incidencia",
     key: "incident_description",
@@ -503,13 +582,91 @@ const PEDAGOGIA_HEADERS = [
     sortable: false,
   },
   { title: "Respuesta", key: "pedagogia", width: 180, sortable: false },
+];
+
+// sortable: false on all three — "monthly_amount" is a derived value with no
+// backing field at all, and the other two keys do not resolve against
+// BulkRefrendRow (the field lives under `.refrend`); the explicit #item.*
+// slot renders each fine, but Vuetify's internal sort would use the raw path
+// and sort by `undefined`.
+const OPTIONAL_HEADERS = [
+  { title: "Monto mensual", key: "monthly_amount", width: 120, sortable: false },
+  { title: "Apoyo", key: "snapshot_monto_apoyo", width: 90, sortable: false },
+  {
+    title: "Aum. temporal",
+    key: "snapshot_temporary_increase_amount",
+    width: 115,
+    sortable: false,
+  },
+] as const;
+
+const PEDAGOGIA_AMOUNT_HEADERS = [
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
   { title: "Final", key: "projected_amount", width: 110, sortable: false },
   { title: "", key: "payment_verify", width: 160, sortable: false },
 ];
 
-const headers = [...BASE_HEADERS, ...PEDAGOGIA_HEADERS];
+type OptionalColumnKey = (typeof OPTIONAL_HEADERS)[number]["key"];
+
+// JSON.parse succeeding is not the same as the parsed value matching the
+// expected shape (e.g. a legacy pair of booleans from a previous version) —
+// this guard is the composable's isValid parameter.
+const isOptionalColumnKeyList = (raw: unknown): raw is OptionalColumnKey[] =>
+  Array.isArray(raw) &&
+  raw.every((k) => OPTIONAL_HEADERS.some((h) => h.key === k));
+
+const visibleOptionalColumns = useStoredPreference<OptionalColumnKey[]>(
+  uiPreferenceKey("pedagogia-refrend-table", "optional-columns"),
+  [],
+  isOptionalColumnKeyList,
+);
+
+const toggleColumn = (key: OptionalColumnKey): void => {
+  visibleOptionalColumns.value = visibleOptionalColumns.value.includes(key)
+    ? visibleOptionalColumns.value.filter((k) => k !== key)
+    : [...visibleOptionalColumns.value, key];
+};
+
+// Filtering OPTIONAL_HEADERS (rather than mapping from the stored array)
+// keeps declaration order stable regardless of the order the user toggled
+// them in, and silently discards unknown keys even if isValid were bypassed.
+const headers = computed(() => [
+  ...BASE_HEADERS,
+  ...PEDAGOGIA_REVIEW_HEADERS,
+  ...OPTIONAL_HEADERS.filter((h) =>
+    visibleOptionalColumns.value.includes(h.key),
+  ),
+  ...PEDAGOGIA_AMOUNT_HEADERS,
+]);
+
+// Both snapshot fields are informational and can be legitimately empty, but
+// with asymmetric nullability: snapshot_monto_apoyo persists as "0" when not
+// applicable, snapshot_temporary_increase_amount persists as null. A single
+// helper normalizes both to "—" so the same row never shows "$0.00" in one
+// optional column and "—" in the other.
+const amountOrDash = (value: string | null): string =>
+  value !== null && Number(value) > 0 ? fmt(value) : "—";
+
+// Derived "Monto mensual": snapshot_gross_amount, snapshot_monto_apoyo, and
+// snapshot_temporary_increase_amount are all frozen at the same instant for a
+// given period, so subtracting the other two components out of the gross
+// always reconstructs the exact monthly base — the sum of the 3 optional
+// columns is mathematically guaranteed to equal "Base" without a dedicated
+// backend field, and without risk of drift if the calculation formula
+// changes later.
+//
+// Edge case: older/incomplete refrends without a frozen snapshot_gross_amount
+// fall back to base_amount in the "Base" cell (see #item.base_amount below),
+// but there is nothing to derive Monto mensual from in that case — it renders
+// "—" rather than a value that could silently disagree with "Base".
+const monthlyAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
+  if (refrend.snapshot_gross_amount === null) return null;
+  const gross = Number(refrend.snapshot_gross_amount);
+  const apoyo = Number(refrend.snapshot_monto_apoyo ?? 0);
+  const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
+  return String(gross - apoyo - increase);
+};
 
 // ── Table title ────────────────────────────────────────────────────────────
 

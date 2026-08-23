@@ -71,6 +71,14 @@
                 -{{ profile.active_discount_percentage }}%
               </v-chip>
             </v-col>
+            <v-col v-if="profile.discount_valid_from" cols="6" sm="2">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Vigente desde
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ dayjs(profile.discount_valid_from).format("DD/MM/YYYY") }}
+              </div>
+            </v-col>
             <v-col v-if="profile.discount_valid_until" cols="6" sm="3">
               <div class="text-caption text-medium-emphasis mb-1">
                 Vigente hasta
@@ -87,6 +95,22 @@
             </v-col>
           </v-row>
         </template>
+
+        <!-- ── Sección: Aumento temporal de beca (aumento fijo con vigencia
+             propia que SUMA al bruto, distinto de la retención temporal que
+             descuenta; ver ScholarshipCalculationService::buildSnapshot) ── -->
+        <ScholarshipTemporaryIncreaseSection
+          :profile="profile"
+          :editing="false"
+          v-model:amount="form.temporary_increase_amount"
+          v-model:valid-from="form.temporary_increase_valid_from"
+          v-model:valid-until="form.temporary_increase_valid_until"
+          v-model:reason="form.temporary_increase_reason"
+          v-model:replace-dialog="replaceDialog"
+          :replace-error-message="replaceErrorMessage"
+          :saving="saving"
+          @confirm-replace="confirmReplace"
+        />
 
         <!-- ── Sección 3: Retícula ── -->
         <v-divider class="my-3" />
@@ -229,7 +253,7 @@
             Retención temporal de beca
           </div>
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
           <v-text-field
             v-model.number="form.active_discount_percentage"
             label="Descuento académico %"
@@ -243,7 +267,22 @@
             clearable
           />
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
+          <v-text-field
+            v-model="form.discount_valid_from"
+            :label="
+              form.active_discount_percentage
+                ? 'Descuento vigente desde *'
+                : 'Descuento vigente desde'
+            "
+            type="date"
+            variant="outlined"
+            density="compact"
+            clearable
+            :rules="[requiredIfDiscount, discountStartBeforeEnd]"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
           <v-text-field
             v-model="form.discount_valid_until"
             :label="
@@ -258,7 +297,7 @@
             :rules="[requiredIfDiscount]"
           />
         </v-col>
-        <v-col cols="6">
+        <v-col cols="12">
           <v-text-field
             v-model="form.discount_reason"
             :label="
@@ -273,6 +312,22 @@
             :rules="[requiredIfDiscount]"
           />
         </v-col>
+
+        <!-- Aumento temporal de beca (bloque atómico de 4 campos — ver
+             ScholarshipProfileController::update(): limpiar el monto limpia
+             todo el bloque, incluido quién lo autorizó) -->
+        <ScholarshipTemporaryIncreaseSection
+          :profile="profile"
+          :editing="true"
+          v-model:amount="form.temporary_increase_amount"
+          v-model:valid-from="form.temporary_increase_valid_from"
+          v-model:valid-until="form.temporary_increase_valid_until"
+          v-model:reason="form.temporary_increase_reason"
+          v-model:replace-dialog="replaceDialog"
+          :replace-error-message="replaceErrorMessage"
+          :saving="saving"
+          @confirm-replace="confirmReplace"
+        />
 
         <!-- Datos de retícula -->
         <v-col cols="12">
@@ -334,10 +389,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
+import { isAxiosError } from "axios";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import { API_URL } from "@/constants";
+import ScholarshipTemporaryIncreaseSection from "@/components/scholarships/ScholarshipTemporaryIncreaseSection.vue";
 import type {
   ScholarshipProfile,
+  ScholarshipProfileForm,
   ScholarshipType,
 } from "@/interfaces/scholarship";
 import dayjs from "dayjs";
@@ -373,13 +431,43 @@ const emptyForm = () => ({
   advance_payment_eligible: false,
   active_discount_percentage: null as number | null,
   discount_reason: null as string | null,
+  discount_valid_from: null as string | null,
   discount_valid_until: null as string | null,
+  temporary_increase_amount: null as number | null,
+  temporary_increase_valid_from: null as string | null,
+  temporary_increase_valid_until: null as string | null,
+  temporary_increase_reason: null as string | null,
   reticula_start_date: "",
   reticula_end_date: "",
   file: null as File | null,
 });
 
 const form = reactive(emptyForm());
+
+// ── Reemplazo de aumento vigente (422 de UpdateScholarshipProfileRequest) ──
+
+const replaceDialog = ref(false);
+const replaceErrorMessage = ref("");
+
+// El backend solo devuelve este mensaje exacto (ver
+// UpdateScholarshipProfileRequest::withValidator()) cuando el conflicto es
+// específicamente "ya existe un aumento vigente". Antes se interpretaba
+// CUALQUIER 422 en `temporary_increase_amount` como ese conflicto (incluido
+// el bug de "falta el monto"), lo que abría el diálogo de reemplazo en un
+// loop al reenviar el mismo payload roto.
+const INCREASE_CONFLICT_MESSAGE_PREFIX = "Ya existe un aumento vigente";
+
+const extractIncreaseConflictMessage = (error: unknown): string | null => {
+  if (!isAxiosError(error) || error.response?.status !== 422) return null;
+  const errors = (
+    error.response.data as { errors?: Record<string, string[]> }
+  )?.errors;
+  const message = errors?.temporary_increase_amount?.[0];
+  if (!message || !message.startsWith(INCREASE_CONFLICT_MESSAGE_PREFIX)) {
+    return null;
+  }
+  return message;
+};
 
 onMounted(async () => {
   loading.value = true;
@@ -400,9 +488,29 @@ const startEdit = (): void => {
       ? Number(profile.value.active_discount_percentage)
       : null;
     form.discount_reason = profile.value.discount_reason ?? null;
+    form.discount_valid_from = profile.value.discount_valid_from
+      ? dayjs(profile.value.discount_valid_from).format("YYYY-MM-DD")
+      : null;
     form.discount_valid_until = profile.value.discount_valid_until
       ? dayjs(profile.value.discount_valid_until).format("YYYY-MM-DD")
       : null;
+    form.temporary_increase_amount = profile.value.temporary_increase_amount
+      ? Number(profile.value.temporary_increase_amount)
+      : null;
+    form.temporary_increase_valid_from = profile.value
+      .temporary_increase_valid_from
+      ? dayjs(profile.value.temporary_increase_valid_from).format(
+          "YYYY-MM-DD",
+        )
+      : null;
+    form.temporary_increase_valid_until = profile.value
+      .temporary_increase_valid_until
+      ? dayjs(profile.value.temporary_increase_valid_until).format(
+          "YYYY-MM-DD",
+        )
+      : null;
+    form.temporary_increase_reason =
+      profile.value.temporary_increase_reason ?? null;
     form.reticula_start_date = profile.value.reticula_start_date
       ? dayjs(profile.value.reticula_start_date).format("YYYY-MM-DD")
       : "";
@@ -420,37 +528,69 @@ const cancelEdit = (): void => {
   editing.value = false;
 };
 
+const buildProfilePayload = (
+  withReplace: boolean,
+): ScholarshipProfileForm => ({
+  user_id: form.user_id,
+  scholarship_type: form.scholarship_type,
+  monthly_amount: form.monthly_amount,
+  monto_apoyo: form.monto_apoyo,
+  advance_payment_eligible: form.advance_payment_eligible,
+  active_discount_percentage: form.active_discount_percentage,
+  discount_reason: form.discount_reason,
+  discount_valid_from: form.discount_valid_from,
+  discount_valid_until: form.discount_valid_until,
+  temporary_increase_amount: form.temporary_increase_amount,
+  temporary_increase_valid_from: form.temporary_increase_valid_from,
+  temporary_increase_valid_until: form.temporary_increase_valid_until,
+  temporary_increase_reason: form.temporary_increase_reason,
+  ...(withReplace ? { replace_temporary_increase: true } : {}),
+});
+
+const persistProfile = async (withReplace: boolean): Promise<void> => {
+  saving.value = true;
+
+  try {
+    const profileResult = await store.saveProfile(
+      buildProfilePayload(withReplace),
+    );
+
+    if (profileResult) {
+      const fd = new FormData();
+      fd.append("reticula_start_date", form.reticula_start_date);
+      fd.append("reticula_end_date", form.reticula_end_date);
+      if (form.file) fd.append("file", form.file);
+
+      const reticulaResult = await store.uploadReticula(props.userId, fd);
+      if (reticulaResult) {
+        profile.value = reticulaResult;
+        editing.value = false;
+      }
+    }
+  } catch (error: unknown) {
+    // El store ya muestra un toast genérico; si el 422 es específicamente
+    // por "aumento vigente duplicado", además ofrecemos confirmar el
+    // reemplazo sin perder los datos ya cargados en el formulario.
+    const conflictMessage = extractIncreaseConflictMessage(error);
+    if (conflictMessage) {
+      replaceErrorMessage.value = conflictMessage;
+      replaceDialog.value = true;
+    }
+  } finally {
+    saving.value = false;
+  }
+};
+
 const onSave = async (): Promise<void> => {
   const { valid } = await formRef.value?.validate();
   if (!valid) return;
 
-  saving.value = true;
+  await persistProfile(false);
+};
 
-  const profileResult = await store.saveProfile({
-    user_id: form.user_id,
-    scholarship_type: form.scholarship_type,
-    monthly_amount: form.monthly_amount,
-    monto_apoyo: form.monto_apoyo,
-    advance_payment_eligible: form.advance_payment_eligible,
-    active_discount_percentage: form.active_discount_percentage,
-    discount_reason: form.discount_reason,
-    discount_valid_until: form.discount_valid_until,
-  });
-
-  if (profileResult) {
-    const fd = new FormData();
-    fd.append("reticula_start_date", form.reticula_start_date);
-    fd.append("reticula_end_date", form.reticula_end_date);
-    if (form.file) fd.append("file", form.file);
-
-    const reticulaResult = await store.uploadReticula(props.userId, fd);
-    if (reticulaResult) {
-      profile.value = reticulaResult;
-      editing.value = false;
-    }
-  }
-
-  saving.value = false;
+const confirmReplace = async (): Promise<void> => {
+  replaceDialog.value = false;
+  await persistProfile(true);
 };
 
 const required = (v: unknown): boolean | string =>
@@ -461,6 +601,14 @@ const requiredIfDiscount = (v: unknown): boolean | string => {
   return (
     (v !== null && v !== undefined && v !== "") ||
     "Requerido cuando hay descuento."
+  );
+};
+
+const discountStartBeforeEnd = (v: string): boolean | string => {
+  if (!v || !form.discount_valid_until) return true;
+  return (
+    v <= form.discount_valid_until ||
+    "Debe ser anterior o igual a la fecha de fin."
   );
 };
 
