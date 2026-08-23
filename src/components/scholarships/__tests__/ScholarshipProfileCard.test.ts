@@ -18,9 +18,15 @@ const baseProfile: ScholarshipProfile = {
   scholarship_type: "IU",
   monthly_amount: "2500",
   monto_apoyo: null,
+  temporary_increase_amount: null,
+  temporary_increase_valid_from: null,
+  temporary_increase_valid_until: null,
+  temporary_increase_reason: null,
+  temporary_increase_granted_by_id: null,
   advance_payment_eligible: false,
   active_discount_percentage: null,
   discount_reason: null,
+  discount_valid_from: null,
   discount_valid_until: null,
   reticula_start_date: null,
   reticula_end_date: null,
@@ -98,12 +104,14 @@ describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
     const checkbox = wrapper.find('input[type="checkbox"]');
     await checkbox.setValue(true);
 
-    // DOM order of type="date" inputs: [0] "Descuento vigente hasta" (only
-    // required when a discount % is set), [1] "Inicio de carrera" (required),
-    // [2] "Fin de carrera" (required) — see ScholarshipProfileCard.vue L246-303.
+    // DOM order of type="date" inputs: [0] "Descuento vigente desde", [1]
+    // "Descuento vigente hasta", [2] "Vigente desde" (aumento temporal), [3]
+    // "Vigente hasta" (aumento temporal) — none of these 4 are required
+    // without their respective amount/percentage set — [4] "Inicio de
+    // carrera" (required), [5] "Fin de carrera" (required).
     const dateInputs = wrapper.findAll('input[type="date"]');
-    await dateInputs[1].setValue("2026-01-01");
-    await dateInputs[2].setValue("2026-06-01");
+    await dateInputs[4].setValue("2026-01-01");
+    await dateInputs[5].setValue("2026-06-01");
 
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();

@@ -71,6 +71,14 @@
                 -{{ profile.active_discount_percentage }}%
               </v-chip>
             </v-col>
+            <v-col v-if="profile.discount_valid_from" cols="6" sm="2">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Vigente desde
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ dayjs(profile.discount_valid_from).format("DD/MM/YYYY") }}
+              </div>
+            </v-col>
             <v-col v-if="profile.discount_valid_until" cols="6" sm="3">
               <div class="text-caption text-medium-emphasis mb-1">
                 Vigente hasta
@@ -83,6 +91,73 @@
               <div class="text-caption text-medium-emphasis mb-1">Motivo</div>
               <div class="text-body-2 font-weight-medium">
                 {{ profile.discount_reason }}
+              </div>
+            </v-col>
+          </v-row>
+        </template>
+
+        <!-- ── Sección: Aumento temporal de beca (aumento fijo con vigencia
+             propia que SUMA al bruto, distinto de la retención temporal que
+             descuenta; ver ScholarshipCalculationService::buildSnapshot) ── -->
+        <template v-if="profile.temporary_increase_amount">
+          <v-divider class="mb-3" />
+          <div class="d-flex align-center ga-2 mb-2">
+            <div class="text-caption text-medium-emphasis">
+              Aumento temporal de beca
+            </div>
+            <v-chip
+              v-if="increaseStatus"
+              :color="increaseStatus.color"
+              size="x-small"
+              label
+            >
+              {{ increaseStatus.label }}
+            </v-chip>
+          </div>
+          <v-row dense>
+            <v-col cols="6" sm="2">
+              <div class="text-caption text-medium-emphasis mb-1">Monto</div>
+              <v-chip label color="success" variant="tonal" size="small">
+                +{{ fmt(profile.temporary_increase_amount) }}
+              </v-chip>
+            </v-col>
+            <v-col v-if="profile.temporary_increase_valid_from" cols="6" sm="2">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Vigente desde
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{
+                  dayjs(profile.temporary_increase_valid_from).format(
+                    "DD/MM/YYYY",
+                  )
+                }}
+              </div>
+            </v-col>
+            <v-col v-if="profile.temporary_increase_valid_until" cols="6" sm="2">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Vigente hasta
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{
+                  dayjs(profile.temporary_increase_valid_until).format(
+                    "DD/MM/YYYY",
+                  )
+                }}
+              </div>
+            </v-col>
+            <v-col v-if="profile.temporary_increase_reason" cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis mb-1">Motivo</div>
+              <div class="text-body-2 font-weight-medium">
+                {{ profile.temporary_increase_reason }}
+              </div>
+            </v-col>
+            <v-col v-if="profile.granted_by" cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Autorizó
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ profile.granted_by.first_name }}
+                {{ profile.granted_by.last_name }}
               </div>
             </v-col>
           </v-row>
@@ -229,7 +304,7 @@
             Retención temporal de beca
           </div>
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
           <v-text-field
             v-model.number="form.active_discount_percentage"
             label="Descuento académico %"
@@ -243,7 +318,22 @@
             clearable
           />
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
+          <v-text-field
+            v-model="form.discount_valid_from"
+            :label="
+              form.active_discount_percentage
+                ? 'Descuento vigente desde *'
+                : 'Descuento vigente desde'
+            "
+            type="date"
+            variant="outlined"
+            density="compact"
+            clearable
+            :rules="[requiredIfDiscount, discountStartBeforeEnd]"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
           <v-text-field
             v-model="form.discount_valid_until"
             :label="
@@ -258,7 +348,7 @@
             :rules="[requiredIfDiscount]"
           />
         </v-col>
-        <v-col cols="6">
+        <v-col cols="12">
           <v-text-field
             v-model="form.discount_reason"
             :label="
@@ -271,6 +361,86 @@
             density="compact"
             variant="outlined"
             :rules="[requiredIfDiscount]"
+          />
+        </v-col>
+
+        <!-- Aumento temporal de beca (bloque atómico de 4 campos — ver
+             ScholarshipProfileController::update(): limpiar el monto limpia
+             todo el bloque, incluido quién lo autorizó) -->
+        <v-col cols="12">
+          <v-divider class="mb-1" />
+          <div class="d-flex align-center justify-space-between mt-3 mb-1">
+            <div class="text-caption text-medium-emphasis">
+              Aumento temporal de beca
+            </div>
+            <v-btn
+              v-if="form.temporary_increase_amount"
+              size="x-small"
+              variant="text"
+              color="error"
+              @click="clearIncrease"
+            >
+              Limpiar aumento
+            </v-btn>
+          </div>
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            v-model.number="form.temporary_increase_amount"
+            label="Monto del aumento"
+            type="number"
+            min="0"
+            step="0.01"
+            variant="outlined"
+            density="compact"
+            prefix="$"
+            clearable
+            :rules="[positiveIfPresent]"
+          />
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            v-model="form.temporary_increase_valid_from"
+            :label="
+              form.temporary_increase_amount
+                ? 'Vigente desde *'
+                : 'Vigente desde'
+            "
+            type="date"
+            variant="outlined"
+            density="compact"
+            clearable
+            :rules="[requiredIfIncrease]"
+          />
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            v-model="form.temporary_increase_valid_until"
+            :label="
+              form.temporary_increase_amount
+                ? 'Vigente hasta *'
+                : 'Vigente hasta'
+            "
+            type="date"
+            variant="outlined"
+            density="compact"
+            clearable
+            :rules="[requiredIfIncrease, increaseEndAfterStart]"
+          />
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            v-model="form.temporary_increase_reason"
+            :label="
+              form.temporary_increase_amount
+                ? 'Motivo del aumento *'
+                : 'Motivo del aumento'
+            "
+            maxlength="200"
+            clearable
+            density="compact"
+            variant="outlined"
+            :rules="[requiredIfIncrease]"
           />
         </v-col>
 
@@ -329,15 +499,52 @@
         <v-btn size="small" variant="text" @click="cancelEdit">Cancelar</v-btn>
       </div>
     </v-form>
+
+    <!-- Confirmación de reemplazo de aumento vigente (422 del backend) -->
+    <v-dialog v-model="replaceDialog" max-width="480">
+      <v-card>
+        <v-card-title class="text-subtitle-1 pa-4 d-flex align-center ga-2">
+          <v-icon color="warning" size="small">mdi-alert-circle-outline</v-icon>
+          Ya existe un aumento vigente
+        </v-card-title>
+        <v-card-text class="pt-0">
+          <p class="text-body-2 mb-3">{{ replaceErrorMessage }}</p>
+          <p class="text-body-2">
+            ¿Querés reemplazarlo por el nuevo aumento de
+            <strong>{{ fmt(form.temporary_increase_amount ?? 0) }}</strong>
+            ({{ form.temporary_increase_valid_from }} —
+            {{ form.temporary_increase_valid_until }})? El aumento anterior
+            no queda con historial en el perfil; los refrendos ya generados
+            no se recalculan retroactivamente.
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="replaceDialog = false">
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="warning"
+            variant="tonal"
+            :loading="saving"
+            @click="confirmReplace"
+          >
+            Confirmar reemplazo
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
+import { isAxiosError } from "axios";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import { API_URL } from "@/constants";
 import type {
   ScholarshipProfile,
+  ScholarshipProfileForm,
   ScholarshipType,
 } from "@/interfaces/scholarship";
 import dayjs from "dayjs";
@@ -373,13 +580,48 @@ const emptyForm = () => ({
   advance_payment_eligible: false,
   active_discount_percentage: null as number | null,
   discount_reason: null as string | null,
+  discount_valid_from: null as string | null,
   discount_valid_until: null as string | null,
+  temporary_increase_amount: null as number | null,
+  temporary_increase_valid_from: null as string | null,
+  temporary_increase_valid_until: null as string | null,
+  temporary_increase_reason: null as string | null,
   reticula_start_date: "",
   reticula_end_date: "",
   file: null as File | null,
 });
 
 const form = reactive(emptyForm());
+
+// Estado calculado de vigencia para el chip de la vista (Programado /
+// Vigente / Vencido). No prorratea ni afecta el cálculo real del backend,
+// es puramente informativo — la fuente de verdad es
+// ScholarshipProfile::isTemporaryIncreaseActiveOn().
+const increaseStatus = computed<{
+  label: string;
+  color: string;
+} | null>(() => {
+  if (!profile.value?.temporary_increase_amount) return null;
+  const today = dayjs().format("YYYY-MM-DD");
+  const from = profile.value.temporary_increase_valid_from;
+  const until = profile.value.temporary_increase_valid_until;
+  if (from && today < from) return { label: "Programado", color: "info" };
+  if (until && today > until) return { label: "Vencido", color: "grey" };
+  return { label: "Vigente", color: "success" };
+});
+
+// ── Reemplazo de aumento vigente (422 de UpdateScholarshipProfileRequest) ──
+
+const replaceDialog = ref(false);
+const replaceErrorMessage = ref("");
+
+const extractIncreaseConflictMessage = (error: unknown): string | null => {
+  if (!isAxiosError(error) || error.response?.status !== 422) return null;
+  const errors = (
+    error.response.data as { errors?: Record<string, string[]> }
+  )?.errors;
+  return errors?.temporary_increase_amount?.[0] ?? null;
+};
 
 onMounted(async () => {
   loading.value = true;
@@ -400,9 +642,29 @@ const startEdit = (): void => {
       ? Number(profile.value.active_discount_percentage)
       : null;
     form.discount_reason = profile.value.discount_reason ?? null;
+    form.discount_valid_from = profile.value.discount_valid_from
+      ? dayjs(profile.value.discount_valid_from).format("YYYY-MM-DD")
+      : null;
     form.discount_valid_until = profile.value.discount_valid_until
       ? dayjs(profile.value.discount_valid_until).format("YYYY-MM-DD")
       : null;
+    form.temporary_increase_amount = profile.value.temporary_increase_amount
+      ? Number(profile.value.temporary_increase_amount)
+      : null;
+    form.temporary_increase_valid_from = profile.value
+      .temporary_increase_valid_from
+      ? dayjs(profile.value.temporary_increase_valid_from).format(
+          "YYYY-MM-DD",
+        )
+      : null;
+    form.temporary_increase_valid_until = profile.value
+      .temporary_increase_valid_until
+      ? dayjs(profile.value.temporary_increase_valid_until).format(
+          "YYYY-MM-DD",
+        )
+      : null;
+    form.temporary_increase_reason =
+      profile.value.temporary_increase_reason ?? null;
     form.reticula_start_date = profile.value.reticula_start_date
       ? dayjs(profile.value.reticula_start_date).format("YYYY-MM-DD")
       : "";
@@ -420,37 +682,76 @@ const cancelEdit = (): void => {
   editing.value = false;
 };
 
+const clearIncrease = (): void => {
+  form.temporary_increase_amount = null;
+  form.temporary_increase_valid_from = null;
+  form.temporary_increase_valid_until = null;
+  form.temporary_increase_reason = null;
+};
+
+const buildProfilePayload = (
+  withReplace: boolean,
+): ScholarshipProfileForm => ({
+  user_id: form.user_id,
+  scholarship_type: form.scholarship_type,
+  monthly_amount: form.monthly_amount,
+  monto_apoyo: form.monto_apoyo,
+  advance_payment_eligible: form.advance_payment_eligible,
+  active_discount_percentage: form.active_discount_percentage,
+  discount_reason: form.discount_reason,
+  discount_valid_from: form.discount_valid_from,
+  discount_valid_until: form.discount_valid_until,
+  temporary_increase_amount: form.temporary_increase_amount,
+  temporary_increase_valid_from: form.temporary_increase_valid_from,
+  temporary_increase_valid_until: form.temporary_increase_valid_until,
+  temporary_increase_reason: form.temporary_increase_reason,
+  ...(withReplace ? { replace_temporary_increase: true } : {}),
+});
+
+const persistProfile = async (withReplace: boolean): Promise<void> => {
+  saving.value = true;
+
+  try {
+    const profileResult = await store.saveProfile(
+      buildProfilePayload(withReplace),
+    );
+
+    if (profileResult) {
+      const fd = new FormData();
+      fd.append("reticula_start_date", form.reticula_start_date);
+      fd.append("reticula_end_date", form.reticula_end_date);
+      if (form.file) fd.append("file", form.file);
+
+      const reticulaResult = await store.uploadReticula(props.userId, fd);
+      if (reticulaResult) {
+        profile.value = reticulaResult;
+        editing.value = false;
+      }
+    }
+  } catch (error: unknown) {
+    // El store ya muestra un toast genérico; si el 422 es específicamente
+    // por "aumento vigente duplicado", además ofrecemos confirmar el
+    // reemplazo sin perder los datos ya cargados en el formulario.
+    const conflictMessage = extractIncreaseConflictMessage(error);
+    if (conflictMessage) {
+      replaceErrorMessage.value = conflictMessage;
+      replaceDialog.value = true;
+    }
+  } finally {
+    saving.value = false;
+  }
+};
+
 const onSave = async (): Promise<void> => {
   const { valid } = await formRef.value?.validate();
   if (!valid) return;
 
-  saving.value = true;
+  await persistProfile(false);
+};
 
-  const profileResult = await store.saveProfile({
-    user_id: form.user_id,
-    scholarship_type: form.scholarship_type,
-    monthly_amount: form.monthly_amount,
-    monto_apoyo: form.monto_apoyo,
-    advance_payment_eligible: form.advance_payment_eligible,
-    active_discount_percentage: form.active_discount_percentage,
-    discount_reason: form.discount_reason,
-    discount_valid_until: form.discount_valid_until,
-  });
-
-  if (profileResult) {
-    const fd = new FormData();
-    fd.append("reticula_start_date", form.reticula_start_date);
-    fd.append("reticula_end_date", form.reticula_end_date);
-    if (form.file) fd.append("file", form.file);
-
-    const reticulaResult = await store.uploadReticula(props.userId, fd);
-    if (reticulaResult) {
-      profile.value = reticulaResult;
-      editing.value = false;
-    }
-  }
-
-  saving.value = false;
+const confirmReplace = async (): Promise<void> => {
+  replaceDialog.value = false;
+  await persistProfile(true);
 };
 
 const required = (v: unknown): boolean | string =>
@@ -462,6 +763,35 @@ const requiredIfDiscount = (v: unknown): boolean | string => {
     (v !== null && v !== undefined && v !== "") ||
     "Requerido cuando hay descuento."
   );
+};
+
+const discountStartBeforeEnd = (v: string): boolean | string => {
+  if (!v || !form.discount_valid_until) return true;
+  return (
+    v <= form.discount_valid_until ||
+    "Debe ser anterior o igual a la fecha de fin."
+  );
+};
+
+const requiredIfIncrease = (v: unknown): boolean | string => {
+  if (!form.temporary_increase_amount) return true;
+  return (
+    (v !== null && v !== undefined && v !== "") ||
+    "Requerido cuando hay aumento."
+  );
+};
+
+const increaseEndAfterStart = (v: string): boolean | string => {
+  if (!v || !form.temporary_increase_valid_from) return true;
+  return (
+    v > form.temporary_increase_valid_from ||
+    "Debe ser posterior a la fecha de inicio."
+  );
+};
+
+const positiveIfPresent = (v: number | null): boolean | string => {
+  if (v === null || v === undefined || (v as unknown) === "") return true;
+  return v > 0 || "Debe ser mayor a 0.";
 };
 
 const positiveNumber = (v: number): boolean | string =>

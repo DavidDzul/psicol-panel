@@ -96,6 +96,8 @@ const baseRefrend: ScholarshipRefrend = {
   carryover_percentage: null,
   snapshot_gross_amount: null,
   snapshot_monto_apoyo: null,
+  snapshot_temporary_increase_amount: null,
+  snapshot_temporary_increase_reason: null,
   base_amount: "1000",
   snapshot_discount_percentage: null,
   snapshot_discount_reason: null,
