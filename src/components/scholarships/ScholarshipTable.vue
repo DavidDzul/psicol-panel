@@ -52,10 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  ScholarshipRefrend,
-  RefrendStatus,
-} from "@/interfaces/scholarship";
+import type { ScholarshipRefrend } from "@/interfaces/scholarship";
+import {
+  refrendStatusColor as statusColor,
+  refrendStatusLabel as statusLabel,
+} from "@/utils/refrendStatusDisplay";
 
 defineProps<{
   refrends: ScholarshipRefrend[];
@@ -82,29 +83,4 @@ const formatCurrency = (value: string | number): string =>
     Number(value),
   );
 
-const statusColor = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "grey",
-    ATENCION_REVIEW: "blue",
-    PEDAGOGIA_REVIEW: "purple",
-    AUTHORIZED: "green",
-    PAID: "teal",
-    WITHHELD: "orange",
-    CANCELLED: "red",
-  };
-  return map[status] ?? "grey";
-};
-
-const statusLabel = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "Borrador",
-    ATENCION_REVIEW: "Rev. Atención",
-    PEDAGOGIA_REVIEW: "Rev. Pedagogía",
-    AUTHORIZED: "Autorizado",
-    PAID: "Pagado",
-    WITHHELD: "Retenido",
-    CANCELLED: "Cancelado",
-  };
-  return map[status] ?? status;
-};
 </script>

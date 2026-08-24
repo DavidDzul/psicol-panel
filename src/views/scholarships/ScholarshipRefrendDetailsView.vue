@@ -779,7 +779,11 @@ import StudentAcademicSummaryCard from "@/components/scholarships/StudentAcademi
 import ScholarshipDocumentsCard from "@/components/scholarships/ScholarshipDocumentsCard.vue";
 import RefrendCarryoverAlert from "@/components/scholarships/RefrendCarryoverAlert.vue";
 import { isFullyWithheld } from "@/utils/refrendActionability";
-import type { RefrendStatus, ReviewForm } from "@/interfaces/scholarship";
+import type { ReviewForm } from "@/interfaces/scholarship";
+import {
+  refrendStatusColor as statusColor,
+  refrendStatusLabel as statusLabel,
+} from "@/utils/refrendStatusDisplay";
 import type { LinkInterface } from "@/interfaces";
 
 const links: LinkInterface[] = [
@@ -966,32 +970,6 @@ const semesterTotals = computed<{
     { paid: 0, withheld: 0, pending: 0 },
   );
 });
-
-const statusColor = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "grey",
-    ATENCION_REVIEW: "blue",
-    PEDAGOGIA_REVIEW: "purple",
-    AUTHORIZED: "green",
-    PAID: "teal",
-    WITHHELD: "orange",
-    CANCELLED: "red",
-  };
-  return map[status] ?? "grey";
-};
-
-const statusLabel = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "Borrador",
-    ATENCION_REVIEW: "Rev. Atención",
-    PEDAGOGIA_REVIEW: "Rev. Pedagogía",
-    AUTHORIZED: "Autorizado",
-    PAID: "Pagado",
-    WITHHELD: "Retenido",
-    CANCELLED: "Cancelado",
-  };
-  return map[status] ?? status;
-};
 
 const fmt = (value: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
