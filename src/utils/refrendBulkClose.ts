@@ -1,8 +1,8 @@
 import type { BulkRefrendRow } from "@/interfaces/scholarship";
 
-// ── Pedagogía bulk-close ("Cerrar refrendo") ──────────────────────────────────
+// ── Aprobación bulk-close ("Cerrar refrendo") ─────────────────────────────────
 //
-// Ported VERBATIM from `PedagogiaRefrendTable.vue`'s original `cleanDraftIds`
+// Ported VERBATIM from `AprobacionRefrendTable.vue`'s original `cleanDraftIds`
 // computed (design ADR — flagged as the single highest-risk correctness
 // point in this change). Extracted to a pure function so behavior can be
 // unit-tested directly, independent of the Vue component that calls it.

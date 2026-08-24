@@ -15,14 +15,14 @@
           icon="mdi-school-outline"
           class="mb-4"
         >
-          Pedagogía ya respondió esta incidencia.
+          Aprobación ya respondió esta incidencia.
         </v-alert>
 
         <p v-else class="text-body-2 text-medium-emphasis mb-4">
           {{
             isEditMode
               ? "Editá la descripción de la incidencia registrada."
-              : "Registrá una incidencia para este refrendo. El becario pasará a revisión de Pedagogía."
+              : "Registrá una incidencia para este refrendo. El becario pasará a revisión de Aprobación."
           }}
         </p>
 

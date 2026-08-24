@@ -1,5 +1,5 @@
 <template>
-  <div class="pedagogia-refrend-table-wrapper">
+  <div class="aprobacion-refrend-table-wrapper">
     <div class="table-header mb-3">
       <div class="d-flex align-center ga-2 flex-wrap">
         <!-- Identidad del periodo -->
@@ -118,7 +118,7 @@
     <!-- User feedback round 3: "prefiero que este como antes, ya que puedo ir
          desplegando u ocultando un grupo (generación) y no estar
          visualizando todos a la vez" — single v-data-table with Vuetify's
-         native collapsible group-by (same pattern as AtencionRefrendTable's
+         native collapsible group-by (same pattern as VerificacionRefrendTable's
          Incidencias variant), replacing the always-expanded
          one-table-per-generación layout from round 2. -->
     <v-data-table
@@ -127,7 +127,7 @@
       :items="displayRows"
       :loading="loading"
       :group-by="groupBy"
-      class="elevation-1 pedagogia-refrend-table"
+      class="elevation-1 aprobacion-refrend-table"
       :items-per-page="-1"
       hover
       item-value="refrend.id"
@@ -209,12 +209,12 @@
         <div class="d-flex justify-center">
           <IncidentDetailIcon
             :text="item.incident_description"
-            title="Incidencia (Atención a Becarios)"
+            title="Incidencia (Verificación)"
           />
         </div>
       </template>
 
-      <template #item.pedagogia="{ item }">
+      <template #item.aprobacion="{ item }">
         <v-btn
           :prepend-icon="
             item.refrend.pedagogia_observations
@@ -225,7 +225,7 @@
           variant="tonal"
           :color="item.refrend.pedagogia_observations ? 'gray' : 'purple'"
           :disabled="!canAprobacion(item.refrend)"
-          @click="openPedagogiaDialog(item)"
+          @click="openAprobacionDialog(item)"
         >
           {{ item.refrend.pedagogia_observations ? "Visualizar" : "Registrar" }}
         </v-btn>
@@ -349,14 +349,14 @@
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
 
-    <RefrendPedagogiaDialog
-      v-model="pedagogiaOpen"
-      :loading="pedagogiaLoading"
-      :clear-loading="clearPedagogiaLoading === activeRow?.refrend.id"
-      :atencion-observations="activeRow?.refrend.atencion_observations ?? null"
+    <RefrendAprobacionDialog
+      v-model="aprobacionOpen"
+      :loading="aprobacionLoading"
+      :clear-loading="clearAprobacionLoading === activeRow?.refrend.id"
+      :verificacion-observations="activeRow?.refrend.atencion_observations ?? null"
       :initial-comment="activeRow?.refrend.pedagogia_observations ?? null"
-      @submit="onPedagogiaSubmit"
-      @remove="onClearPedagogiaFromDialog"
+      @submit="onAprobacionSubmit"
+      @remove="onClearAprobacionFromDialog"
     />
 
     <SituationSinPagoDialog
@@ -414,7 +414,7 @@
             sin descuento de asistencia aplicado), pasándolos a estado
             <strong>Listo para pago</strong>. Son becarios sin ninguna
             observación pendiente, por lo que no requieren revisión de
-            Pedagogía.
+            Aprobación.
           </p>
           <v-alert type="warning" variant="tonal" density="compact" class="mt-3">
             Solo se cierran los becarios <strong>sin incidencia</strong>. Los
@@ -448,7 +448,7 @@ import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.v
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
-import RefrendPedagogiaDialog from "@/components/scholarships/RefrendPedagogiaDialog.vue";
+import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationDescuentoDefinitivoDialog from "@/components/scholarships/SituationDescuentoDefinitivoDialog.vue";
@@ -486,11 +486,11 @@ import type {
 //
 // User feedback round 3: single v-data-table with Vuetify's native
 // collapsible group-by on `refrend.snapshot_generation` (same mechanism as
-// AtencionRefrendTable's Incidencias variant) — user can expand/collapse
+// VerificacionRefrendTable's Incidencias variant) — user can expand/collapse
 // each generación group instead of seeing every group at once. Same prop
 // surface as every prior round; the row-filter criterion below was widened
 // to also include becarios with a pending withholding and no incidencia
-// (spec "Criterio de inclusión de filas en Pedagogía").
+// (spec "Criterio de inclusión de filas en Aprobación").
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
@@ -569,11 +569,11 @@ watch([rowFilterMode, advancePaymentOnly], () => autoOpenedGroupIds.clear());
 //
 // Split in three groups (design D5, D6) to open a slot for the optional
 // columns (Monto mensual / Apoyo / Aumento temporal) right before "Base",
-// without moving PEDAGOGIA_* headers into the shared useRefrendTableDisplay
-// module — they stay local to this component, same as AtencionRefrendTable's
+// without moving APROBACION_* headers into the shared useRefrendTableDisplay
+// module — they stay local to this component, same as VerificacionRefrendTable's
 // own headers.
 
-const PEDAGOGIA_REVIEW_HEADERS = [
+const APROBACION_REVIEW_HEADERS = [
   {
     title: "Incidencia",
     key: "incident_description",
@@ -581,7 +581,7 @@ const PEDAGOGIA_REVIEW_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
-  { title: "Respuesta", key: "pedagogia", width: 180, sortable: false },
+  { title: "Respuesta", key: "aprobacion", width: 180, sortable: false },
 ];
 
 // sortable: false on all three — "monthly_amount" is a derived value with no
@@ -600,7 +600,7 @@ const OPTIONAL_HEADERS = [
   },
 ] as const;
 
-const PEDAGOGIA_AMOUNT_HEADERS = [
+const APROBACION_AMOUNT_HEADERS = [
   { title: "Base", key: "base_amount", width: 100, sortable: false },
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
   { title: "Final", key: "projected_amount", width: 110, sortable: false },
@@ -633,11 +633,11 @@ const toggleColumn = (key: OptionalColumnKey): void => {
 // them in, and silently discards unknown keys even if isValid were bypassed.
 const headers = computed(() => [
   ...BASE_HEADERS,
-  ...PEDAGOGIA_REVIEW_HEADERS,
+  ...APROBACION_REVIEW_HEADERS,
   ...OPTIONAL_HEADERS.filter((h) =>
     visibleOptionalColumns.value.includes(h.key),
   ),
-  ...PEDAGOGIA_AMOUNT_HEADERS,
+  ...APROBACION_AMOUNT_HEADERS,
 ]);
 
 // Both snapshot fields are informational and can be legitimately empty, but
@@ -697,36 +697,36 @@ const activeRowDueAmount = computed(() =>
   activeRow.value ? computeDueAmount(activeRow.value.refrend) : null,
 );
 
-// ── Pedagogia dialog ───────────────────────────────────────────────────────
+// ── Aprobacion dialog ──────────────────────────────────────────────────────
 
-const pedagogiaOpen = ref(false);
-const pedagogiaLoading = ref(false);
-const clearPedagogiaLoading = ref<number | null>(null);
+const aprobacionOpen = ref(false);
+const aprobacionLoading = ref(false);
+const clearAprobacionLoading = ref<number | null>(null);
 
-const openPedagogiaDialog = (item: BulkRefrendRow): void => {
+const openAprobacionDialog = (item: BulkRefrendRow): void => {
   activeRow.value = item;
-  pedagogiaOpen.value = true;
+  aprobacionOpen.value = true;
 };
 
-const onPedagogiaSubmit = async (form: PedagogiaResolveForm): Promise<void> => {
+const onAprobacionSubmit = async (form: PedagogiaResolveForm): Promise<void> => {
   if (!activeRow.value) return;
-  pedagogiaLoading.value = true;
+  aprobacionLoading.value = true;
   try {
     await store.pedagogiaResolve(activeRow.value.refrend.id, form);
-    pedagogiaOpen.value = false;
+    aprobacionOpen.value = false;
   } finally {
-    pedagogiaLoading.value = false;
+    aprobacionLoading.value = false;
   }
 };
 
-const onClearPedagogiaFromDialog = async (): Promise<void> => {
+const onClearAprobacionFromDialog = async (): Promise<void> => {
   if (!activeRow.value) return;
-  clearPedagogiaLoading.value = activeRow.value.refrend.id;
+  clearAprobacionLoading.value = activeRow.value.refrend.id;
   try {
     await store.pedagogiaResolve(activeRow.value.refrend.id, { comment: null });
-    pedagogiaOpen.value = false;
+    aprobacionOpen.value = false;
   } finally {
-    clearPedagogiaLoading.value = null;
+    clearAprobacionLoading.value = null;
   }
 };
 
@@ -851,7 +851,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
 </script>
 
 <style scoped>
-.pedagogia-refrend-table-wrapper {
+.aprobacion-refrend-table-wrapper {
   width: 100%;
 }
 
@@ -859,7 +859,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   padding: 6px 2px;
 }
 
-.pedagogia-refrend-table :deep(thead tr th) {
+.aprobacion-refrend-table :deep(thead tr th) {
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.03em;
@@ -868,27 +868,27 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.08) !important;
 }
 
-.pedagogia-refrend-table :deep(tr.row-pending td) {
+.aprobacion-refrend-table :deep(tr.row-pending td) {
   background-color: rgba(255, 193, 7, 0.06);
 }
-.pedagogia-refrend-table :deep(tr.row-incident td) {
+.aprobacion-refrend-table :deep(tr.row-incident td) {
   background-color: rgba(255, 152, 0, 0.08);
 }
 
 /* Columna fija (Becario): fondo sólido para ocultar las columnas que se
    deslizan por debajo al hacer scroll horizontal. */
-.pedagogia-refrend-table :deep(.v-data-table-column--fixed) {
+.aprobacion-refrend-table :deep(.v-data-table-column--fixed) {
   background: rgb(var(--v-theme-surface));
   z-index: 3;
 }
-.pedagogia-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
+.aprobacion-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
   background-color: rgb(255, 249, 235) !important;
 }
-.pedagogia-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
+.aprobacion-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
   background-color: rgb(255, 248, 242) !important;
 }
 
-.pedagogia-refrend-table :deep(tbody tr td) {
+.aprobacion-refrend-table :deep(tbody tr td) {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
 </style>

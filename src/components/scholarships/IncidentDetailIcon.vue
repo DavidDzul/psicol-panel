@@ -28,11 +28,11 @@
 // ── Shared "view detail" icon+modal trigger ─────────────────────────────────
 //
 // Compact reveal for a chunk of raw text that would otherwise crowd a table
-// cell (incident description, pedagogía observations, etc). Was a hover
+// cell (incident description, aprobación observations, etc). Was a hover
 // tooltip; user asked for a button that opens a modal instead (works on
 // touch, doesn't hide content behind hover-only interaction). Used by
-// PedagogiaRefrendTable.vue (Incidencia column) and AtencionRefrendTable.vue
-// (R. Pedagogía column).
+// AprobacionRefrendTable.vue (Incidencia column) and VerificacionRefrendTable.vue
+// (R. Aprobación column).
 
 import { ref } from "vue";
 

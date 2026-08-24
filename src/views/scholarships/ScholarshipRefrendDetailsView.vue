@@ -150,14 +150,14 @@
 
     <!-- ── Two-actor sections ─────────────────────────────────────────────── -->
     <v-row class="mb-4">
-      <!-- Actor 1: Atención de Becarios -->
+      <!-- Actor 1: Verificación -->
       <v-col cols="12" md="6">
         <v-card variant="outlined" color="blue" class="actor-card h-100">
           <v-card-title class="actor-header bg-blue-lighten-5">
             <v-icon color="blue" size="small" class="mr-1"
               >mdi-account-check</v-icon
             >
-            Encargado/a de Atención de Becarios
+            Encargado/a de Verificación
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
@@ -222,12 +222,12 @@
         </v-card>
       </v-col>
 
-      <!-- Actor 2: Pedagogía -->
+      <!-- Actor 2: Aprobación -->
       <v-col cols="12" md="6">
         <v-card variant="outlined" color="purple" class="actor-card h-100">
           <v-card-title class="actor-header bg-purple-lighten-5">
             <v-icon color="purple" size="small" class="mr-1">mdi-school</v-icon>
-            Encargado/a de Pedagogía
+            Encargado/a de Aprobación
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
@@ -505,18 +505,18 @@
     Refrendo no encontrado.
   </div>
 
-  <!-- Atencion review dialog (with labels + rules) -->
-  <ScholarshipAtencionReviewDialog
+  <!-- Verificacion review dialog (with labels + rules) -->
+  <ScholarshipVerificacionReviewDialog
     v-model="reviewDialog"
     :attendance-summary="reviewMode === 'verificacion' ? attendanceSummary : null"
     :refrend="reviewMode === 'verificacion' ? refrend : null"
     @submit="onSubmitReview"
   />
 
-  <!-- Pedagogia review dialog (plain observations) -->
+  <!-- Aprobacion review dialog (plain observations) -->
   <ScholarshipReviewDialog
     v-model="aprobacionReviewDialog"
-    title="Revisión — Pedagogía"
+    title="Revisión — Aprobación"
     @submit="onSubmitAprobacionReview"
   />
 
@@ -772,7 +772,7 @@ import { useScholarshipDetails } from "@/composables/useScholarshipDetails";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipDiscountsCard from "@/components/scholarships/ScholarshipDiscountsCard.vue";
 import ScholarshipReviewDialog from "@/components/scholarships/ScholarshipReviewDialog.vue";
-import ScholarshipAtencionReviewDialog from "@/components/scholarships/ScholarshipAtencionReviewDialog.vue";
+import ScholarshipVerificacionReviewDialog from "@/components/scholarships/ScholarshipVerificacionReviewDialog.vue";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import ScholarshipHistoryTimeline from "@/components/scholarships/ScholarshipHistoryTimeline.vue";
 import StudentAcademicSummaryCard from "@/components/scholarships/StudentAcademicSummaryCard.vue";

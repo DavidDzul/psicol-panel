@@ -266,7 +266,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       );
       const refrend = _mergeRefrend(res.data.data);
       _mergeBulkRow(refrend);
-      showAlert({ title: "Revisión de pedagogía guardada.", status: "success" });
+      showAlert({ title: "Revisión de aprobación guardada.", status: "success" });
       return refrend;
     } catch (error: unknown) {
       const msg = isAxiosError(error)

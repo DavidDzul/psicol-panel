@@ -79,7 +79,7 @@
       >
         {{ activeError }}
       </v-alert>
-      <AtencionRefrendTable
+      <VerificacionRefrendTable
         v-if="props.mode === 'verificacion'"
         :rows="activeRows"
         :loading="activeLoading"
@@ -87,7 +87,7 @@
         :month="selectedMonth"
         :view-variant="viewVariant"
       />
-      <PedagogiaRefrendTable
+      <AprobacionRefrendTable
         v-else
         :rows="activeRows"
         :loading="activeLoading"
@@ -158,17 +158,17 @@ watch(
 
 const requireGeneration = computed(() => viewVariant.value === "completa");
 
-const AtencionRefrendTable = defineAsyncComponent(
-  () => import("@/components/scholarships/AtencionRefrendTable.vue"),
+const VerificacionRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/VerificacionRefrendTable.vue"),
 );
-const PedagogiaRefrendTable = defineAsyncComponent(
-  () => import("@/components/scholarships/PedagogiaRefrendTable.vue"),
+const AprobacionRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/AprobacionRefrendTable.vue"),
 );
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
 
 const sectionTitle = computed(() =>
-  props.mode === "aprobacion" ? "Pedagogía" : "Atención a Becarios",
+  props.mode === "aprobacion" ? "Aprobación" : "Verificación",
 );
 
 const links = computed<LinkInterface[]>(() => [

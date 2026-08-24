@@ -122,7 +122,7 @@ const globalStubs = {
   ScholarshipDocumentsCard: true,
   ScholarshipDiscountsCard: true,
   ScholarshipHistoryTimeline: true,
-  ScholarshipAtencionReviewDialog: true,
+  ScholarshipVerificacionReviewDialog: true,
   ScholarshipReviewDialog: true,
 };
 

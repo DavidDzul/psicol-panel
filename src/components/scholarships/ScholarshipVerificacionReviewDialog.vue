@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title class="text-h6 pa-4 d-flex align-center ga-2">
         <v-icon color="blue" size="small">mdi-account-check</v-icon>
-        Revisión — Atención de Becarios
+        Revisión — Verificación
       </v-card-title>
 
       <v-card-text class="pt-0">
@@ -80,7 +80,7 @@
           </div>
           <div class="d-flex flex-wrap ga-2">
             <v-chip
-              v-for="label in ATENCION_LABELS"
+              v-for="label in VERIFICACION_LABELS"
               :key="label"
               :color="selectedLabels.includes(label) ? 'blue' : 'default'"
               :variant="selectedLabels.includes(label) ? 'tonal' : 'outlined'"
@@ -126,7 +126,7 @@
 import { computed, ref, watch } from "vue";
 import type { AttendanceSummary, ReviewForm, ScholarshipRefrend } from "@/interfaces/scholarship";
 
-const ATENCION_LABELS: string[] = [
+const VERIFICACION_LABELS: string[] = [
   "Falta injustificada",
   "Retardos acumulados",
   "Entregó justificante médico",
