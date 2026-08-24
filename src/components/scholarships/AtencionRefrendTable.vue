@@ -263,7 +263,7 @@
                   ? 'orange-darken-2'
                   : 'blue'
             "
-            :disabled="!canAtencion(item.refrend)"
+            :disabled="!canVerificacion(item.refrend)"
             @click="openAtencionDialog(item)"
           >
             {{
@@ -357,7 +357,7 @@ import {
   scholarshipTypeColor,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
-import { canAtencion, canRecordSituation } from "@/utils/refrendActionability";
+import { canVerificacion, canRecordSituation } from "@/utils/refrendActionability";
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────

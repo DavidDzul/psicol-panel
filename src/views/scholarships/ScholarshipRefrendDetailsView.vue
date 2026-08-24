@@ -161,11 +161,11 @@
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
-              <v-icon :color="atencionDone ? 'success' : 'grey'" size="small">
-                {{ atencionDone ? "mdi-check-circle" : "mdi-circle-outline" }}
+              <v-icon :color="verificacionDone ? 'success' : 'grey'" size="small">
+                {{ verificacionDone ? "mdi-check-circle" : "mdi-circle-outline" }}
               </v-icon>
               <span class="text-body-2">
-                {{ atencionDone ? "Revisado" : "Pendiente de revisión" }}
+                {{ verificacionDone ? "Revisado" : "Pendiente de revisión" }}
               </span>
               <span
                 v-if="refrend.atencion_reviewed_at"
@@ -209,14 +209,14 @@
             </div>
 
             <v-btn
-              v-if="!isLocked && canAtencionReview"
+              v-if="!isLocked && canVerificacionReview"
               color="blue"
               variant="tonal"
               size="small"
               prepend-icon="mdi-pencil"
-              @click="openAtencionReview"
+              @click="openVerificacionReview"
             >
-              {{ atencionDone ? "Actualizar revisión" : "Marcar revisado" }}
+              {{ verificacionDone ? "Actualizar revisión" : "Marcar revisado" }}
             </v-btn>
           </v-card-text>
         </v-card>
@@ -231,10 +231,10 @@
           </v-card-title>
           <v-card-text class="pt-3">
             <div class="d-flex align-center ga-2 mb-3">
-              <v-icon :color="pedagogiaDone ? 'success' : 'grey'" size="small">
-                {{ pedagogiaDone ? "mdi-check-circle" : "mdi-circle-outline" }}
+              <v-icon :color="aprobacionDone ? 'success' : 'grey'" size="small">
+                {{ aprobacionDone ? "mdi-check-circle" : "mdi-circle-outline" }}
               </v-icon>
-              <span class="text-body-2">{{ pedagogiaStatus }}</span>
+              <span class="text-body-2">{{ aprobacionStatus }}</span>
               <span
                 v-if="refrend.pedagogia_reviewed_at"
                 class="text-caption text-medium-emphasis"
@@ -254,14 +254,14 @@
 
             <div class="d-flex flex-wrap ga-2">
               <v-btn
-                v-if="!isLocked && canPedagogiaReview"
+                v-if="!isLocked && canAprobacionReview"
                 color="purple"
                 variant="tonal"
                 size="small"
                 prepend-icon="mdi-pencil"
-                @click="openPedagogiaReview"
+                @click="openAprobacionReview"
               >
-                {{ pedagogiaDone ? "Actualizar revisión" : "Revisar" }}
+                {{ aprobacionDone ? "Actualizar revisión" : "Revisar" }}
               </v-btn>
               <v-btn
                 v-if="!isLocked && canAuthorize"
@@ -508,16 +508,16 @@
   <!-- Atencion review dialog (with labels + rules) -->
   <ScholarshipAtencionReviewDialog
     v-model="reviewDialog"
-    :attendance-summary="reviewMode === 'atencion' ? attendanceSummary : null"
-    :refrend="reviewMode === 'atencion' ? refrend : null"
+    :attendance-summary="reviewMode === 'verificacion' ? attendanceSummary : null"
+    :refrend="reviewMode === 'verificacion' ? refrend : null"
     @submit="onSubmitReview"
   />
 
   <!-- Pedagogia review dialog (plain observations) -->
   <ScholarshipReviewDialog
-    v-model="pedagogiaReviewDialog"
+    v-model="aprobacionReviewDialog"
     title="Revisión — Pedagogía"
-    @submit="onSubmitPedagogiaReview"
+    @submit="onSubmitAprobacionReview"
   />
 
   <!-- Authorize dialog -->
@@ -805,8 +805,8 @@ const authorizeForm = reactive<{
 const graduateComment = ref<string>("");
 const graduateConfirmed = ref<boolean>(false);
 
-// Separate dialog ref for pedagogia (atencion uses reviewDialog from composable)
-const pedagogiaReviewDialog = ref<boolean>(false);
+// Separate dialog ref for aprobacion (verificacion uses reviewDialog from composable)
+const aprobacionReviewDialog = ref<boolean>(false);
 
 const {
   refrend,
@@ -821,8 +821,8 @@ const {
   withholdReason,
   authorizeDialog,
   graduateDialog,
-  openAtencionReview,
-  openPedagogiaReview: _openPedagogiaReview,
+  openVerificacionReview,
+  openAprobacionReview: _openAprobacionReview,
   onSubmitReview,
   openAuthorize,
   onAuthorize,
@@ -832,15 +832,15 @@ const {
   onGraduate,
 } = useScholarshipDetails();
 
-// Override pedagogia review to use separate dialog
-const openPedagogiaReview = (): void => {
-  reviewMode.value = "pedagogia";
-  pedagogiaReviewDialog.value = true;
+// Override aprobacion review to use separate dialog
+const openAprobacionReview = (): void => {
+  reviewMode.value = "aprobacion";
+  aprobacionReviewDialog.value = true;
 };
 
-const onSubmitPedagogiaReview = async (form: ReviewForm): Promise<void> => {
+const onSubmitAprobacionReview = async (form: ReviewForm): Promise<void> => {
   await onSubmitReview(form);
-  pedagogiaReviewDialog.value = false;
+  aprobacionReviewDialog.value = false;
 };
 
 // ── Attendance-based calculations ────────────────────────────────────────────
@@ -886,7 +886,7 @@ const hideWithholdAction = computed<boolean>(() =>
   refrend.value ? isFullyWithheld(refrend.value) : false,
 );
 
-const atencionDone = computed<boolean>(() =>
+const verificacionDone = computed<boolean>(() =>
   refrend.value
     ? ["ATENCION_REVIEW", "PEDAGOGIA_REVIEW", "AUTHORIZED", "PAID"].includes(
         refrend.value.status,
@@ -894,19 +894,19 @@ const atencionDone = computed<boolean>(() =>
     : false,
 );
 
-const pedagogiaDone = computed<boolean>(() =>
+const aprobacionDone = computed<boolean>(() =>
   refrend.value
     ? ["PEDAGOGIA_REVIEW", "AUTHORIZED", "PAID"].includes(refrend.value.status)
     : false,
 );
 
-const canAtencionReview = computed<boolean>(() =>
+const canVerificacionReview = computed<boolean>(() =>
   refrend.value
     ? ["DRAFT", "ATENCION_REVIEW"].includes(refrend.value.status)
     : false,
 );
 
-const canPedagogiaReview = computed<boolean>(() =>
+const canAprobacionReview = computed<boolean>(() =>
   refrend.value
     ? ["ATENCION_REVIEW", "PEDAGOGIA_REVIEW"].includes(refrend.value.status)
     : false,
@@ -916,7 +916,7 @@ const canAuthorize = computed<boolean>(() =>
   refrend.value ? refrend.value.status === "PEDAGOGIA_REVIEW" : false,
 );
 
-const pedagogiaStatus = computed<string>(() => {
+const aprobacionStatus = computed<string>(() => {
   if (!refrend.value) return "Pendiente";
   if (["AUTHORIZED", "PAID"].includes(refrend.value.status))
     return "Autorizado";

@@ -2,6 +2,7 @@ import { computed, onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
+import type { ReviewStage } from "@/stores/api/scholarshipStore";
 import { useScholarshipDocumentsStore } from "@/stores/api/scholarshipDocumentsStore";
 import type {
   ScholarshipProfile,
@@ -22,7 +23,7 @@ export function useScholarshipDetails() {
 
   const loading           = ref<boolean>(false);
   const reviewDialog      = ref<boolean>(false);
-  const reviewMode        = ref<'atencion' | 'pedagogia'>('atencion');
+  const reviewMode        = ref<ReviewStage>('verificacion');
   const withholdDialog    = ref<boolean>(false);
   const withholdReason    = ref<string>('');
   const authorizeDialog   = ref<boolean>(false);
@@ -88,23 +89,19 @@ export function useScholarshipDetails() {
   onBeforeMount(load);
   watch(() => route.fullPath, load);
 
-  const openAtencionReview = (): void => {
-    reviewMode.value = 'atencion';
+  const openVerificacionReview = (): void => {
+    reviewMode.value = 'verificacion';
     reviewDialog.value = true;
   };
 
-  const openPedagogiaReview = (): void => {
-    reviewMode.value = 'pedagogia';
+  const openAprobacionReview = (): void => {
+    reviewMode.value = 'aprobacion';
     reviewDialog.value = true;
   };
 
   const onSubmitReview = async (form: ReviewForm): Promise<void> => {
     if (!refrend.value) return;
-    if (reviewMode.value === 'atencion') {
-      await store.submitAtencionReview(refrend.value.id, form);
-    } else {
-      await store.submitPedagogiaReview(refrend.value.id, form);
-    }
+    await store.submitStageReview(refrend.value.id, reviewMode.value, form);
     reviewDialog.value = false;
   };
 
@@ -153,8 +150,8 @@ export function useScholarshipDetails() {
     withholdReason,
     authorizeDialog,
     graduateDialog,
-    openAtencionReview,
-    openPedagogiaReview,
+    openVerificacionReview,
+    openAprobacionReview,
     onSubmitReview,
     openAuthorize,
     onAuthorize,

@@ -173,14 +173,14 @@ const routes = [
         name: "ScholarshipAtencionView",
         component: () =>
           catchReload(import("@/views/scholarships/ScholarshipRefrendsView.vue")),
-        props: { mode: "atencion" },
+        props: { mode: "verificacion" },
       },
       {
         path: "/scholarships/pedagogia",
         name: "ScholarshipPedagogiaView",
         component: () =>
           catchReload(import("@/views/scholarships/ScholarshipRefrendsView.vue")),
-        props: { mode: "pedagogia" },
+        props: { mode: "aprobacion" },
       },
     ],
   },

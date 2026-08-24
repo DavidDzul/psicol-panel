@@ -35,6 +35,17 @@ import type {
   PendingWithholdingsMeta,
 } from "@/interfaces/api";
 
+// ── Boundary Rule seam ──────────────────────────────────────────────────────
+// UI vocabulary (ReviewStage) ↔ HTTP contract (endpoint segment). The values
+// on the right mirror backend routes and MUST NOT be renamed; this table is
+// the ONLY place in the frontend where both vocabularies meet.
+export type ReviewStage = "verificacion" | "aprobacion";
+
+const REVIEW_ENDPOINT: Record<ReviewStage, "atencion-review" | "pedagogia-review"> = {
+  verificacion: "atencion-review",
+  aprobacion: "pedagogia-review",
+};
+
 export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const { showAlert } = useAlertStore();
 
@@ -198,11 +209,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Refrends — status transitions ─────────────────────────────────────────
 
-  const submitAtencionReview = async (id: number, form: ReviewForm): Promise<ScholarshipRefrend | undefined> =>
-    _updateRefrend(`api/admin/scholarship-refrends/${id}/atencion-review`, form);
-
-  const submitPedagogiaReview = async (id: number, form: ReviewForm): Promise<ScholarshipRefrend | undefined> =>
-    _updateRefrend(`api/admin/scholarship-refrends/${id}/pedagogia-review`, form);
+  const submitStageReview = async (id: number, stage: ReviewStage, form: ReviewForm): Promise<ScholarshipRefrend | undefined> =>
+    _updateRefrend(`api/admin/scholarship-refrends/${id}/${REVIEW_ENDPOINT[stage]}`, form);
 
   const authorizeRefrend = async (id: number, form?: AuthorizeForm): Promise<ScholarshipRefrend | undefined> =>
     _updateRefrend(`api/admin/scholarship-refrends/${id}/authorize`, form ?? {});
@@ -730,8 +738,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     fetchRefrend,
     generatePeriod,
     generateForUser,
-    submitAtencionReview,
-    submitPedagogiaReview,
+    submitStageReview,
     authorizeRefrend,
     markPaid,
     withholdRefrend,

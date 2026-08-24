@@ -224,7 +224,7 @@
           size="x-small"
           variant="tonal"
           :color="item.refrend.pedagogia_observations ? 'gray' : 'purple'"
-          :disabled="!canPedagogia(item.refrend)"
+          :disabled="!canAprobacion(item.refrend)"
           @click="openPedagogiaDialog(item)"
         >
           {{ item.refrend.pedagogia_observations ? "Visualizar" : "Registrar" }}
@@ -469,7 +469,7 @@ import {
   scholarshipTypeColor,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
-import { canPedagogia, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
+import { canAprobacion, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
 import {
   uiPreferenceKey,
