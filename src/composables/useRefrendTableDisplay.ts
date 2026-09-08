@@ -15,7 +15,7 @@ export const fmt = (value: string | number): string =>
 //
 // Single source of truth lives in `@/utils/refrendActionability` (design ADR
 // D5). Re-exported here for backward compatibility with existing imports
-// (e.g. `PedagogiaRefrendTable.vue`) — do not re-implement this locally.
+// (e.g. `AprobacionRefrendTable.vue`) — do not re-implement this locally.
 
 export { LOCKED_STATUSES, isLocked } from "@/utils/refrendActionability";
 

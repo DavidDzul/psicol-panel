@@ -4,7 +4,7 @@ import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import { VSelect } from "vuetify/components";
-import PedagogiaRefrendTable from "@/components/scholarships/PedagogiaRefrendTable.vue";
+import AprobacionRefrendTable from "@/components/scholarships/AprobacionRefrendTable.vue";
 import { fmt } from "@/composables/useRefrendTableDisplay";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -66,7 +66,7 @@ afterEach(() => {
 const vuetify = createVuetify();
 
 const STUBS = {
-  RefrendPedagogiaDialog: true,
+  RefrendAprobacionDialog: true,
   SituationSinPagoDialog: true,
   SituationRetenidaDialog: true,
   SituationPagoMesesDialog: true,
@@ -165,7 +165,7 @@ const buildRow = (
 });
 
 const mountTable = (rows: BulkRefrendRow[]) =>
-  mount(PedagogiaRefrendTable, {
+  mount(AprobacionRefrendTable, {
     props: { rows, year: 2026, month: 5 },
     global: {
       plugins: [createPinia(), vuetify],
@@ -175,10 +175,10 @@ const mountTable = (rows: BulkRefrendRow[]) =>
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
-// spec "Criterio de inclusión de filas en Pedagogía": incidents_count > 0 OR
+// spec "Criterio de inclusión de filas en Aprobación": incidents_count > 0 OR
 // pending_withholding_count > 0.
 
-describe("PedagogiaRefrendTable — row filter", () => {
+describe("AprobacionRefrendTable — row filter", () => {
   it("includes a row with an incidencia and no pending withholding (preexisting behavior)", async () => {
     const rows = [buildRow(1, "Ana Incidencia", 1, 0)];
     const wrapper = mountTable(rows);
@@ -233,7 +233,7 @@ describe("PedagogiaRefrendTable — row filter", () => {
   });
 });
 
-describe('PedagogiaRefrendTable — "todos" mode', () => {
+describe('AprobacionRefrendTable — "todos" mode', () => {
   // Vuetify's real v-select menu doesn't reliably open/select in jsdom;
   // switching mode is driven directly through the VSelect's v-model emit,
   // same approach the design doc calls out.
@@ -331,7 +331,7 @@ describe('PedagogiaRefrendTable — "todos" mode', () => {
   });
 });
 
-describe('PedagogiaRefrendTable — "Pago adelantado" selector', () => {
+describe('AprobacionRefrendTable — "Pago adelantado" selector', () => {
   // Orthogonal to rowFilterMode (ANDs into displayRows), not a third
   // mutually-exclusive rowFilterMode value — a becario can have both,
   // either, or neither criterion. Second VSelect in template order (the
@@ -407,7 +407,7 @@ describe('PedagogiaRefrendTable — "Pago adelantado" selector', () => {
   });
 });
 
-describe("PedagogiaRefrendTable — due amount passed to RETENIDA/PAGO_MESES dialogs", () => {
+describe("AprobacionRefrendTable — due amount passed to RETENIDA/PAGO_MESES dialogs", () => {
   it("passes the recomputed due amount, not the stale final_amount left by a prior resolution", async () => {
     // Simulates a refrend already resolved as RETENIDA once (final_amount=600
     // is what's left over from that), now being re-resolved: the amount the
@@ -435,7 +435,7 @@ describe("PedagogiaRefrendTable — due amount passed to RETENIDA/PAGO_MESES dia
   });
 });
 
-describe("PedagogiaRefrendTable — activeSituationKey closes the dialog that was actually opened", () => {
+describe("AprobacionRefrendTable — activeSituationKey closes the dialog that was actually opened", () => {
   // SituationPagoMesesDialog can emit either BECA_MES or SIN_PAGO depending
   // on its "pagar mes en curso" checkbox. Inferring which situationDialogs
   // entry to close from `form.resolution_type` would close
@@ -488,7 +488,7 @@ describe("PedagogiaRefrendTable — activeSituationKey closes the dialog that wa
   });
 });
 
-describe("PedagogiaRefrendTable — onClearResolution wiring", () => {
+describe("AprobacionRefrendTable — onClearResolution wiring", () => {
   it("calls store.clearRefrendResolution with the row id and toggles loading around it", async () => {
     const row = buildRow(19, "Hilda Deshacer", 1, 0);
     const wrapper = mountTable([row]);
@@ -511,7 +511,7 @@ describe("PedagogiaRefrendTable — onClearResolution wiring", () => {
   });
 });
 
-describe("PedagogiaRefrendTable — onApproveFullPayment confirmation flow", () => {
+describe("AprobacionRefrendTable — onApproveFullPayment confirmation flow", () => {
   const clickButton = async (label: string): Promise<void> => {
     const btn = body()
       .findAll("button")
@@ -645,7 +645,7 @@ describe("PedagogiaRefrendTable — onApproveFullPayment confirmation flow", () 
   });
 });
 
-describe("PedagogiaRefrendTable — optional columns (Apoyo / Aumento temporal)", () => {
+describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)", () => {
   // Design: preference persisted at
   // impulsou.ui.pedagogia-refrend-table.optional-columns (array of visible
   // column keys). Each test starts from a clean localStorage so the default

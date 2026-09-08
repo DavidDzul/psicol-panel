@@ -2,7 +2,7 @@ import type { RefrendStatus, ScholarshipRefrend } from "@/interfaces/scholarship
 
 // ── Shared refrend actionability (single source of truth) ───────────────────
 //
-// Every surface that renders a refrend row (Atención table, Pedagogía card,
+// Every surface that renders a refrend row (Verificación table, Aprobación card,
 // the shared detail drawer) MUST derive lock/action state from these
 // predicates instead of re-implementing its own workflow_status check.
 // See design ADR D5 (sdd/scholarship-payment-flow-ux).
@@ -22,8 +22,8 @@ export const LOCKED_STATUSES = new Set<RefrendStatus>([
 export const isLocked = (refrend: ScholarshipRefrend): boolean =>
   LOCKED_STATUSES.has(refrend.status) || refrend.workflow_status === "CLOSED";
 
-/** Atención may act on a row while it is still DRAFT or CON_INCIDENCIA. */
-export const canAtencion = (refrend: ScholarshipRefrend): boolean =>
+/** Verificación may act on a row while it is still DRAFT or CON_INCIDENCIA. */
+export const canVerificacion = (refrend: ScholarshipRefrend): boolean =>
   !isLocked(refrend) &&
   (refrend.workflow_status === "DRAFT" ||
     refrend.workflow_status === "CON_INCIDENCIA");
@@ -43,8 +43,8 @@ export const computeDueAmount = (refrend: ScholarshipRefrend): number => {
   return Math.round(gross * (1 - academicPct / 100) * 100) / 100;
 };
 
-/** Pedagogía may act on a row only while it carries an open incidencia. */
-export const canPedagogia = (refrend: ScholarshipRefrend): boolean =>
+/** Aprobación may act on a row only while it carries an open incidencia. */
+export const canAprobacion = (refrend: ScholarshipRefrend): boolean =>
   !isLocked(refrend) && refrend.workflow_status === "CON_INCIDENCIA";
 
 /** Recording a payment situation is allowed for any unlocked row. */

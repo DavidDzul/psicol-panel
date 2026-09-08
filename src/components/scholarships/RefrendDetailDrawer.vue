@@ -77,13 +77,13 @@ import type { BulkRefrendRow } from "@/interfaces/scholarship";
 
 // ── Props / Emits ────────────────────────────────────────────────────────────
 //
-// Shared right-side detail drawer for Atención (design ADR D1). User feedback
+// Shared right-side detail drawer for Verificación (design ADR D1). User feedback
 // round 2: dropped the financial breakdown + relocated `profile_discount`
-// stat block and the "Revisión Pedagogía" section from here — the drawer now
+// stat block and the "Revisión Aprobación" section from here — the drawer now
 // focuses on the attendance stats-grid (reused from
 // ScholarshipAttendanceSummary). The recalcular action moved out to its own
-// row column in AtencionRefrendTable.vue. R. Pedagogía moved back to its own
-// icon+modal table column (see AtencionRefrendTable.vue /
+// row column in VerificacionRefrendTable.vue. R. Aprobación moved back to its own
+// icon+modal table column (see VerificacionRefrendTable.vue /
 // IncidentDetailIcon.vue). Widened (420px → 540px) per explicit request,
 // even though content shrank.
 

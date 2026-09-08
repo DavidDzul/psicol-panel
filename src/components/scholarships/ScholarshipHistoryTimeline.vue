@@ -47,8 +47,8 @@ const sortedLogs = computed<ScholarshipRefrendLog[]>(() =>
 
 const actionLabel = (action: string): string => {
   const map: Record<string, string> = {
-    atencion_review:  "Rev. Atención",
-    pedagogia_review: "Rev. Pedagogía",
+    atencion_review:  "Rev. Verificación",
+    pedagogia_review: "Rev. Aprobación",
     authorized:       "Autorizado",
     paid:             "Pagado",
     withheld:         "Retenido",

@@ -95,7 +95,7 @@ const buildRow = (
 // ── isLocked re-export (design ADR D5 single source of truth) ──────────────
 // useRefrendTableDisplay.ts no longer implements isLocked locally — it
 // re-exports refrendActionability.ts. This is a regression guard: existing
-// consumers (e.g. PedagogiaRefrendTable.vue) import isLocked/LOCKED_STATUSES
+// consumers (e.g. AprobacionRefrendTable.vue) import isLocked/LOCKED_STATUSES
 // from this module and must keep working after the Phase 2 refactor.
 
 describe("useRefrendTableDisplay — isLocked re-export", () => {

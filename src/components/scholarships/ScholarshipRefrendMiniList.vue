@@ -30,7 +30,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
-import type { ScholarshipRefrend, RefrendStatus } from "@/interfaces/scholarship";
+import type { ScholarshipRefrend } from "@/interfaces/scholarship";
+import {
+  refrendStatusColor as statusColor,
+  refrendStatusLabel as statusLabel,
+} from "@/utils/refrendStatusDisplay";
 
 const props = defineProps<{
   userId: number;
@@ -57,19 +61,4 @@ const monthLabel = (r: ScholarshipRefrend): string =>
 const fmt = (v: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(v));
 
-const statusColor = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "grey", ATENCION_REVIEW: "blue", PEDAGOGIA_REVIEW: "purple",
-    AUTHORIZED: "green", PAID: "teal", WITHHELD: "orange", CANCELLED: "red",
-  };
-  return map[status] ?? "grey";
-};
-
-const statusLabel = (status: RefrendStatus): string => {
-  const map: Record<RefrendStatus, string> = {
-    DRAFT: "Borrador", ATENCION_REVIEW: "Rev. Atención", PEDAGOGIA_REVIEW: "Rev. Pedagogía",
-    AUTHORIZED: "Autorizado", PAID: "Pagado", WITHHELD: "Retenido", CANCELLED: "Cancelado",
-  };
-  return map[status] ?? status;
-};
 </script>

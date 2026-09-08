@@ -1,5 +1,5 @@
 <template>
-  <div class="atencion-refrend-table-wrapper">
+  <div class="verificacion-refrend-table-wrapper">
     <div class="table-header mb-3">
       <div class="d-flex align-center ga-2 flex-wrap">
         <!-- Identidad del periodo -->
@@ -32,7 +32,7 @@
       :items="displayRows"
       :loading="loading"
       :group-by="groupBy"
-      class="elevation-1 atencion-refrend-table"
+      class="elevation-1 verificacion-refrend-table"
       :items-per-page="-1"
       hover
       item-value="refrend.id"
@@ -238,11 +238,11 @@
         <PendingWithholdingChip :row="item" />
       </template>
 
-      <template #item.atencion="{ item }">
+      <template #item.verificacion="{ item }">
         <div class="d-flex align-center ga-2">
           <v-btn
             :prepend-icon="
-              hasPedagogiaResponse(item)
+              hasAprobacionResponse(item)
                 ? 'mdi-eye-outline'
                 : item.refrend.workflow_status === 'CON_INCIDENCIA'
                   ? 'mdi-flag'
@@ -250,24 +250,24 @@
             "
             size="x-small"
             :variant="
-              hasPedagogiaResponse(item)
+              hasAprobacionResponse(item)
                 ? 'tonal'
                 : item.refrend.workflow_status === 'CON_INCIDENCIA'
                   ? 'tonal'
                   : 'tonal'
             "
             :color="
-              hasPedagogiaResponse(item)
+              hasAprobacionResponse(item)
                 ? 'grey'
                 : item.refrend.workflow_status === 'CON_INCIDENCIA'
                   ? 'orange-darken-2'
                   : 'blue'
             "
-            :disabled="!canAtencion(item.refrend)"
-            @click="openAtencionDialog(item)"
+            :disabled="!canVerificacion(item.refrend)"
+            @click="openVerificacionDialog(item)"
           >
             {{
-              hasPedagogiaResponse(item)
+              hasAprobacionResponse(item)
                 ? "Visualizar"
                 : item.refrend.workflow_status === "CON_INCIDENCIA"
                   ? "Editar"
@@ -284,16 +284,16 @@
         </div>
       </template>
 
-      <!-- R. Pedagogía restaurada como columna propia: botón que abre un
+      <!-- R. Aprobación restaurada como columna propia: botón que abre un
            modal con el texto completo (mismo patrón que la Incidencia de
-           Pedagogía, ver IncidentDetailIcon.vue). La variante Incidencias no
+           Aprobación, ver IncidentDetailIcon.vue). La variante Incidencias no
            tiene trigger para el detail drawer (removido a pedido del
            usuario). -->
-      <template #item.pedagogia_readonly="{ item }">
+      <template #item.aprobacion_readonly="{ item }">
         <div class="d-flex justify-center">
           <IncidentDetailIcon
             :text="item.refrend.pedagogia_observations"
-            title="Respuesta de Pedagogía"
+            title="Respuesta de Aprobación"
           />
         </div>
       </template>
@@ -327,14 +327,14 @@
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
 
-    <RefrendAtencionDialog
-      v-model="atencionOpen"
-      :loading="atencionLoading"
+    <RefrendVerificacionDialog
+      v-model="verificacionOpen"
+      :loading="verificacionLoading"
       :clear-loading="clearFlagLoading === activeRow?.refrend.id"
       :initial-description="activeRow?.incident_description ?? null"
       :initial-category="(activeRow?.incident_category as any) ?? null"
       :readonly="!!activeRow?.refrend.pedagogia_observations"
-      @submit="onAtencionSubmit"
+      @submit="onVerificacionSubmit"
       @remove="onClearFlagFromDialog"
     />
   </div>
@@ -342,7 +342,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import RefrendAtencionDialog from "@/components/scholarships/RefrendAtencionDialog.vue";
+import RefrendVerificacionDialog from "@/components/scholarships/RefrendVerificacionDialog.vue";
 import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
@@ -357,7 +357,7 @@ import {
   scholarshipTypeColor,
   statusChip,
 } from "@/composables/useRefrendTableDisplay";
-import { canAtencion, canRecordSituation } from "@/utils/refrendActionability";
+import { canVerificacion, canRecordSituation } from "@/utils/refrendActionability";
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -429,8 +429,8 @@ const hasAcademicDiscount = (item: BulkRefrendRow): boolean =>
 
 // ── Table headers ──────────────────────────────────────────────────────────
 
-const ATENCION_COMPLETA_HEADERS = [
-  { title: "Incidencia", key: "atencion", sortable: false },
+const VERIFICACION_COMPLETA_HEADERS = [
+  { title: "Incidencia", key: "verificacion", sortable: false },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
   { title: "F.mes", key: "month_absent", width: 75, sortable: true },
   {
@@ -448,11 +448,11 @@ const ATENCION_COMPLETA_HEADERS = [
   },
 ];
 
-const ATENCION_INCIDENCIAS_HEADERS = [
-  { title: "Incidencia", key: "atencion", sortable: false },
+const VERIFICACION_INCIDENCIAS_HEADERS = [
+  { title: "Incidencia", key: "verificacion", sortable: false },
   {
-    title: "R. Pedagogía",
-    key: "pedagogia_readonly",
+    title: "R. Aprobación",
+    key: "aprobacion_readonly",
     width: 100,
     align: "center" as const,
     sortable: false,
@@ -463,8 +463,8 @@ const ATENCION_INCIDENCIAS_HEADERS = [
 const headers = computed(() => [
   ...BASE_HEADERS,
   ...(viewVariant.value === "incidencias"
-    ? ATENCION_INCIDENCIAS_HEADERS
-    : ATENCION_COMPLETA_HEADERS),
+    ? VERIFICACION_INCIDENCIAS_HEADERS
+    : VERIFICACION_COMPLETA_HEADERS),
 ]);
 
 // ── Detail drawer (design ADR D1) ────────────────────────────────────────────
@@ -482,31 +482,31 @@ const openDetailDrawer = (item: BulkRefrendRow): void => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const hasPedagogiaResponse = (item: BulkRefrendRow): boolean =>
+const hasAprobacionResponse = (item: BulkRefrendRow): boolean =>
   !!item.refrend.pedagogia_observations;
 
 // ── Active row state ───────────────────────────────────────────────────────
 
 const activeRow = ref<BulkRefrendRow | null>(null);
 
-// ── Atencion dialog ────────────────────────────────────────────────────────
+// ── Verificacion dialog ────────────────────────────────────────────────────
 
-const atencionOpen = ref(false);
-const atencionLoading = ref(false);
+const verificacionOpen = ref(false);
+const verificacionLoading = ref(false);
 
-const openAtencionDialog = (item: BulkRefrendRow): void => {
+const openVerificacionDialog = (item: BulkRefrendRow): void => {
   activeRow.value = item;
-  atencionOpen.value = true;
+  verificacionOpen.value = true;
 };
 
-const onAtencionSubmit = async (form: AtencionFlagForm): Promise<void> => {
+const onVerificacionSubmit = async (form: AtencionFlagForm): Promise<void> => {
   if (!activeRow.value) return;
-  atencionLoading.value = true;
+  verificacionLoading.value = true;
   try {
     await store.atencionFlag(activeRow.value.refrend.id, form);
-    atencionOpen.value = false;
+    verificacionOpen.value = false;
   } finally {
-    atencionLoading.value = false;
+    verificacionLoading.value = false;
   }
 };
 
@@ -528,7 +528,7 @@ const onClearFlagFromDialog = async (): Promise<void> => {
   clearFlagLoading.value = activeRow.value.refrend.id;
   try {
     await store.clearFlag(activeRow.value.refrend.id);
-    atencionOpen.value = false;
+    verificacionOpen.value = false;
   } finally {
     clearFlagLoading.value = null;
   }
@@ -576,7 +576,7 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 </script>
 
 <style scoped>
-.atencion-refrend-table-wrapper {
+.verificacion-refrend-table-wrapper {
   position: relative;
   width: 100%;
   overflow-x: auto;
@@ -595,19 +595,19 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 }
 
 /* Columna fija: fondo sólido para ocultar el scroll */
-.atencion-refrend-table :deep(.v-data-table-column--fixed) {
+.verificacion-refrend-table :deep(.v-data-table-column--fixed) {
   background: rgb(var(--v-theme-surface));
   z-index: 3;
 }
-.atencion-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
+.verificacion-refrend-table :deep(tr.row-pending .v-data-table-column--fixed) {
   background-color: rgb(255, 249, 235) !important;
 }
-.atencion-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
+.verificacion-refrend-table :deep(tr.row-incident .v-data-table-column--fixed) {
   background-color: rgb(255, 248, 242) !important;
 }
 
 /* Sticky header */
-.atencion-refrend-table :deep(thead tr th) {
+.verificacion-refrend-table :deep(thead tr th) {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -621,15 +621,15 @@ const onRecalculate = async (item: BulkRefrendRow): Promise<void> => {
 }
 
 /* Filas con acción pendiente */
-.atencion-refrend-table :deep(tr.row-pending td) {
+.verificacion-refrend-table :deep(tr.row-pending td) {
   background-color: rgba(255, 193, 7, 0.06);
 }
-.atencion-refrend-table :deep(tr.row-incident td) {
+.verificacion-refrend-table :deep(tr.row-incident td) {
   background-color: rgba(255, 152, 0, 0.08);
 }
 
 /* Separador más visible entre filas */
-.atencion-refrend-table :deep(tbody tr td) {
+.verificacion-refrend-table :deep(tbody tr td) {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06) !important;
 }
 </style>

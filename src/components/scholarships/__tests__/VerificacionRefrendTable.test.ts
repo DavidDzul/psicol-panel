@@ -4,7 +4,7 @@ import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import { VSelect } from "vuetify/components";
-import AtencionRefrendTable from "@/components/scholarships/AtencionRefrendTable.vue";
+import VerificacionRefrendTable from "@/components/scholarships/VerificacionRefrendTable.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // atencionFlag/clearFlag/patchInline/recalculateRefrend hit axios directly
@@ -31,7 +31,7 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 const vuetify = createVuetify();
 
 const STUBS = {
-  RefrendAtencionDialog: true,
+  RefrendVerificacionDialog: true,
   RefrendDetailDrawer: true,
   IncidentDetailIcon: true,
   StatusIcon: true,
@@ -126,7 +126,7 @@ const mountTable = (
   rows: BulkRefrendRow[],
   viewVariant: "completa" | "incidencias" = "completa",
 ) =>
-  mount(AtencionRefrendTable, {
+  mount(VerificacionRefrendTable, {
     props: { rows, year: 2026, month: 5, viewVariant },
     global: {
       plugins: [createPinia(), vuetify],
@@ -145,10 +145,10 @@ const toggleAdvancePaymentOnly = async (
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
-// "Solo pago adelantado" mirrors PedagogiaRefrendTable's selector: orthogonal
+// "Solo pago adelantado" mirrors AprobacionRefrendTable's selector: orthogonal
 // to viewVariant, ANDs into displayRows instead of replacing it.
 
-describe('AtencionRefrendTable — "Pago adelantado" selector', () => {
+describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
   it("leaves all rows visible when left on Todos (default, unaffected)", async () => {
     const rows = [
       buildRow(1, "No Elegible", 0, false),

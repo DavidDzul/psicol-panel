@@ -7,18 +7,18 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
-        <div v-if="atencionObservations" class="mb-4">
+        <div v-if="verificacionObservations" class="mb-4">
           <div class="text-caption font-weight-medium text-medium-emphasis mb-1">
-            INCIDENCIA REGISTRADA POR ATENCIÓN
+            INCIDENCIA REGISTRADA POR VERIFICACIÓN
           </div>
           <v-sheet color="blue-grey-lighten-5" rounded="lg" class="pa-3">
-            <p class="text-body-2 mb-0">{{ atencionObservations }}</p>
+            <p class="text-body-2 mb-0">{{ verificacionObservations }}</p>
           </v-sheet>
         </div>
 
         <v-textarea
           v-model="form.comment"
-          label="Respuesta de Pedagogía (opcional)"
+          label="Respuesta de Aprobación (opcional)"
           rows="4"
           variant="outlined"
           counter="2000"
@@ -63,7 +63,7 @@ import type { PedagogiaResolveForm } from "@/interfaces/scholarship";
 const props = defineProps<{
   loading?: boolean;
   clearLoading?: boolean;
-  atencionObservations?: string | null;
+  verificacionObservations?: string | null;
   initialComment?: string | null;
 }>();
 

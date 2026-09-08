@@ -11,8 +11,8 @@
 //
 // Same space-saving pattern as IncidentDetailIcon.vue: the "Estado" column
 // repeats on every row, so it renders as a compact icon with the full label
-// only on hover, instead of a text chip. Used by AtencionRefrendTable.vue and
-// PedagogiaRefrendTable.vue.
+// only on hover, instead of a text chip. Used by VerificacionRefrendTable.vue and
+// AprobacionRefrendTable.vue.
 
 defineProps<{
   icon: string;

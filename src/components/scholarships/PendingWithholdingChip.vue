@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-// ── Pending withholding cell (shared by Atención/Pedagogía tables) ─────────
+// ── Pending withholding cell (shared by Verificación/Aprobación tables) ────
 //
 // Purely informational: no @click, no emitted event, no navigation (design
 // ADR D5 + spec "Chip de retención no interactivo"). The payment action

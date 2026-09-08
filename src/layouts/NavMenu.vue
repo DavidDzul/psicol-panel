@@ -94,8 +94,8 @@ const links = ref([
     group: true,
     key: "PS_GROUP_SCHOLARSHIPS",
     links: [
-      { text: "Atención a Becarios", link: "/scholarships/atencion", key: "PS_SCHOLARSHIPS_ATENCION" },
-      { text: "Pedagogía", link: "/scholarships/pedagogia", key: "PS_SCHOLARSHIPS_PEDAGOGIA" },
+      { text: "Verificación", link: "/scholarships/atencion", key: "PS_SCHOLARSHIPS_ATENCION" },
+      { text: "Aprobación", link: "/scholarships/pedagogia", key: "PS_SCHOLARSHIPS_PEDAGOGIA" },
     ],
   },
   {

@@ -6,8 +6,8 @@ import type {
   WorkflowStatus,
 } from "@/interfaces/scholarship";
 import {
-  canAtencion,
-  canPedagogia,
+  canVerificacion,
+  canAprobacion,
   canRecordSituation,
   computeDueAmount,
   isFullyWithheld,
@@ -95,49 +95,49 @@ describe("isLocked", () => {
   });
 });
 
-describe("canAtencion", () => {
+describe("canVerificacion", () => {
   it("is true for DRAFT when unlocked", () => {
-    expect(canAtencion(buildRefrend("DRAFT", "DRAFT"))).toBe(true);
+    expect(canVerificacion(buildRefrend("DRAFT", "DRAFT"))).toBe(true);
   });
 
   it("is true for CON_INCIDENCIA when unlocked", () => {
-    expect(canAtencion(buildRefrend("DRAFT", "CON_INCIDENCIA"))).toBe(true);
+    expect(canVerificacion(buildRefrend("DRAFT", "CON_INCIDENCIA"))).toBe(true);
   });
 
   it("is false for PENDIENTE_NOTIFICACION", () => {
-    expect(canAtencion(buildRefrend("DRAFT", "PENDIENTE_NOTIFICACION"))).toBe(
+    expect(canVerificacion(buildRefrend("DRAFT", "PENDIENTE_NOTIFICACION"))).toBe(
       false,
     );
   });
 
   it("is false for LISTO_PARA_PAGO", () => {
-    expect(canAtencion(buildRefrend("DRAFT", "LISTO_PARA_PAGO"))).toBe(false);
+    expect(canVerificacion(buildRefrend("DRAFT", "LISTO_PARA_PAGO"))).toBe(false);
   });
 
   it("is false for CLOSED (locked)", () => {
-    expect(canAtencion(buildRefrend("DRAFT", "CLOSED"))).toBe(false);
+    expect(canVerificacion(buildRefrend("DRAFT", "CLOSED"))).toBe(false);
   });
 
   it("is false when legacy status locks the row even though workflow_status is DRAFT", () => {
-    expect(canAtencion(buildRefrend("CANCELLED", "DRAFT"))).toBe(false);
+    expect(canVerificacion(buildRefrend("CANCELLED", "DRAFT"))).toBe(false);
   });
 });
 
-describe("canPedagogia", () => {
+describe("canAprobacion", () => {
   it("is true for CON_INCIDENCIA when unlocked", () => {
-    expect(canPedagogia(buildRefrend("DRAFT", "CON_INCIDENCIA"))).toBe(true);
+    expect(canAprobacion(buildRefrend("DRAFT", "CON_INCIDENCIA"))).toBe(true);
   });
 
   it("is false for DRAFT", () => {
-    expect(canPedagogia(buildRefrend("DRAFT", "DRAFT"))).toBe(false);
+    expect(canAprobacion(buildRefrend("DRAFT", "DRAFT"))).toBe(false);
   });
 
   it("is false for CLOSED (locked)", () => {
-    expect(canPedagogia(buildRefrend("DRAFT", "CLOSED"))).toBe(false);
+    expect(canAprobacion(buildRefrend("DRAFT", "CLOSED"))).toBe(false);
   });
 
   it("is false when legacy status locks the row even though workflow_status is CON_INCIDENCIA", () => {
-    expect(canPedagogia(buildRefrend("PAID", "CON_INCIDENCIA"))).toBe(false);
+    expect(canAprobacion(buildRefrend("PAID", "CON_INCIDENCIA"))).toBe(false);
   });
 });
 

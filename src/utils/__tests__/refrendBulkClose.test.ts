@@ -5,7 +5,7 @@ import { getCleanDraftIds } from "@/utils/refrendBulkClose";
 
 // ── Fixture factory ──────────────────────────────────────────────────────────
 //
-// Mirrors PedagogiaRefrendTable.vue's original `cleanDraftIds` predicate
+// Mirrors AprobacionRefrendTable.vue's original `cleanDraftIds` predicate
 // verbatim (see design ADR — highest-risk correctness point in this change):
 //   workflow_status === "DRAFT" && incidents_count === 0 &&
 //   !has_falta_discount && !has_retardos_discount &&

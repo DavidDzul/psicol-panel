@@ -3,7 +3,7 @@
 
   <v-row>
     <v-col cols="12">
-      <v-card v-if="props.mode === 'atencion'" color="white" variant="flat">
+      <v-card v-if="props.mode === 'verificacion'" color="white" variant="flat">
         <v-tabs
           v-model="viewVariant"
           align-tabs="center"
@@ -79,15 +79,15 @@
       >
         {{ activeError }}
       </v-alert>
-      <AtencionRefrendTable
-        v-if="props.mode === 'atencion'"
+      <VerificacionRefrendTable
+        v-if="props.mode === 'verificacion'"
         :rows="activeRows"
         :loading="activeLoading"
         :year="selectedYear"
         :month="selectedMonth"
         :view-variant="viewVariant"
       />
-      <PedagogiaRefrendTable
+      <AprobacionRefrendTable
         v-else
         :rows="activeRows"
         :loading="activeLoading"
@@ -137,38 +137,38 @@ import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue
 import type { LinkInterface } from "@/interfaces";
 
 const props = defineProps<{
-  mode: "atencion" | "pedagogia";
+  mode: "verificacion" | "aprobacion";
 }>();
 
 // ── View variant (Completa | Incidencias) ───────────────────────────────────
-// Solo Atención puede alternar (ver v-tabs arriba, oculto para Pedagogía).
-// Pedagogía queda fija en "incidencias", sin UI para cambiarla.
+// Solo Verificación puede alternar (ver v-tabs arriba, oculto para Aprobación).
+// Aprobación queda fija en "incidencias", sin UI para cambiarla.
 const viewVariant = ref<"completa" | "incidencias">(
-  props.mode === "pedagogia" ? "incidencias" : "completa",
+  props.mode === "aprobacion" ? "incidencias" : "completa",
 );
 
-// When the router reuses this component across atencion/pedagogia routes,
+// When the router reuses this component across verificacion/aprobacion routes,
 // the ref above keeps its previous value. Reset it whenever mode changes.
 watch(
   () => props.mode,
   (mode) => {
-    viewVariant.value = mode === "pedagogia" ? "incidencias" : "completa";
+    viewVariant.value = mode === "aprobacion" ? "incidencias" : "completa";
   },
 );
 
 const requireGeneration = computed(() => viewVariant.value === "completa");
 
-const AtencionRefrendTable = defineAsyncComponent(
-  () => import("@/components/scholarships/AtencionRefrendTable.vue"),
+const VerificacionRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/VerificacionRefrendTable.vue"),
 );
-const PedagogiaRefrendTable = defineAsyncComponent(
-  () => import("@/components/scholarships/PedagogiaRefrendTable.vue"),
+const AprobacionRefrendTable = defineAsyncComponent(
+  () => import("@/components/scholarships/AprobacionRefrendTable.vue"),
 );
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
 
 const sectionTitle = computed(() =>
-  props.mode === "pedagogia" ? "Pedagogía" : "Atención a Becarios",
+  props.mode === "aprobacion" ? "Aprobación" : "Verificación",
 );
 
 const links = computed<LinkInterface[]>(() => [
