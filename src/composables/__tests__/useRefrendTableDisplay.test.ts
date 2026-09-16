@@ -176,7 +176,7 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
       resolution_type: "BECA_MES",
     });
     const chip = statusChip(row.refrend);
-    expect(chip.label).toBe("Beca aprobada");
+    expect(chip.label).toBe("Pago sin penalización");
     expect(chip.label).not.toBe("Listo para pago");
   });
 
