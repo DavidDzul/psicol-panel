@@ -35,7 +35,6 @@ const buildRefrend = (
   withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
-  carryover_percentage: null,
   snapshot_gross_amount: null,
   snapshot_monto_apoyo: null,
   snapshot_temporary_increase_amount: null,

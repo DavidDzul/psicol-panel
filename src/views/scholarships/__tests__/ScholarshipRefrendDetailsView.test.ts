@@ -80,7 +80,6 @@ const baseRefrend: ScholarshipRefrend = {
   withholding_value: null,
   carryover_months_count: null,
   carryover_months_detail: null,
-  carryover_percentage: null,
   snapshot_gross_amount: "2500.00",
   snapshot_monto_apoyo: null,
   snapshot_temporary_increase_amount: null,

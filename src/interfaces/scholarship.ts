@@ -152,7 +152,6 @@ export interface ScholarshipRefrend {
   withholding_value: string | null
   carryover_months_count: number | null
   carryover_months_detail: string | null
-  carryover_percentage: string | null
   snapshot_gross_amount: string | null
   snapshot_monto_apoyo: string | null
   snapshot_temporary_increase_amount: string | null
