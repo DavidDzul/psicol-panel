@@ -146,7 +146,7 @@ import * as validations from "@/validations";
 import dayjs from "dayjs";
 import type { SelectOption } from "@/constants";
 import type { Generation } from "@/interfaces/generation";
-import type { ClassForm } from "@/interfaces/class";
+import type { ClassCreatePayload } from "@/interfaces/class";
 
 interface Props {
   modelValue: boolean
@@ -157,7 +157,7 @@ interface Props {
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void
-  (e: "submit", value: ClassForm): void
+  (e: "submit", value: ClassCreatePayload): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -265,7 +265,17 @@ const close = (): void => {
 
 const save = (): void => {
   if (meta.value.valid) {
-    emit("submit", { ...values } as ClassForm);
+    // The backend (ClassModel::createRules()) expects name/date/start_time/
+    // end_time, not this form's internal class_* field names — mirrors
+    // ClassUpdateDialog.vue's remap.
+    emit("submit", {
+      name: values.class_name,
+      date: values.class_date,
+      start_time: values.class_start_time,
+      end_time: values.class_end_time,
+      campus: values.campus,
+      generation_id: values.generation_id,
+    } as ClassCreatePayload);
   }
 };
 </script>

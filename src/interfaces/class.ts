@@ -33,6 +33,17 @@ export interface ClassForm {
   generation_id: number
 }
 
+// Shape actually sent to the backend (ClassModel::createRules()) — distinct
+// from ClassForm, which is vee-validate's internal field-name shape.
+export interface ClassCreatePayload {
+  name: string
+  date: string
+  start_time: string
+  end_time: string
+  campus: string
+  generation_id: number
+}
+
 export interface ClassUpdateForm {
   class_name: string
 }
