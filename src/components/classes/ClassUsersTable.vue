@@ -1,15 +1,10 @@
 <template>
   <v-row class="align-center pb-3">
     <v-col cols="12" md="6" v-if="classData">
-      <h3 class="font-weight-bold mb-1">{{ classData.name }}</h3>
-
+      <h3 class="font-weight-bold mb-0">{{ classData.name }}</h3>
       <p class="text-body-2 text-grey-darken-1 mb-2">
         📅 {{ dayjs(classData.date).format("DD-MM-YYYY") }}
       </p>
-
-      <h3 class="text-subtitle-1 text-primary font-weight-medium">
-        Asistencias generadas
-      </h3>
     </v-col>
 
     <v-col cols="12" md="6" class="d-flex justify-end align-center gap-2">
@@ -123,21 +118,21 @@ import dayjs from "dayjs";
 import type { ClassEntity, ClassAttendance } from "@/interfaces/class";
 
 interface AttendanceWithUserName extends ClassAttendance {
-  userName: string
+  userName: string;
 }
 
 interface Props {
-  classData: ClassEntity | null
-  attendances: ClassAttendance[]
-  loading: boolean
+  classData: ClassEntity | null;
+  attendances: ClassAttendance[];
+  loading: boolean;
 }
 
 interface Emits {
-  (e: "assign"): void
-  (e: "edit", id: number): void
-  (e: "delete", id: number): void
-  (e: "report"): void
-  (e: "sheet"): void
+  (e: "assign"): void;
+  (e: "edit", id: number): void;
+  (e: "delete", id: number): void;
+  (e: "report"): void;
+  (e: "sheet"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -166,11 +161,12 @@ const itemsWithUserName = computed<AttendanceWithUserName[]>(() =>
   props.attendances.map((a) => ({
     ...a,
     userName: `${a.user.first_name} ${a.user.last_name}`,
-  }))
+  })),
 );
 
 const editItem = (item: AttendanceWithUserName): void => emit("edit", item.id);
-const deleteItem = (item: AttendanceWithUserName): void => emit("delete", item.id);
+const deleteItem = (item: AttendanceWithUserName): void =>
+  emit("delete", item.id);
 const reportItem = (): void => emit("report");
 const reportSheet = (): void => emit("sheet");
 const assignItem = (): void => {

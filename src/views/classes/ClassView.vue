@@ -1,9 +1,6 @@
 <template>
   <BreadCrumbs :items="links" />
   <v-row>
-    <v-col cols="12" class="pb-0">
-      <span style="color: gray">Buscar por:</span>
-    </v-col>
     <v-col cols="12" md="4">
       <v-select
         clearable
@@ -34,7 +31,6 @@
         <v-icon>mdi-file-search</v-icon> BUSCAR
       </v-btn>
     </v-col>
-    <v-spacer></v-spacer>
 
     <v-col cols="12" md="2" class="d-flex align-center pt-md-0 pb-3">
       <v-btn color="warning" block @click="openReportModal">
@@ -124,7 +120,7 @@ const campus = ref(null);
 const generation_id = ref(null);
 
 const filteredGenerations = computed(() =>
-  generations.value.filter((g) => g.campus === campus.value)
+  generations.value.filter((g) => g.campus === campus.value),
 );
 
 watch(
@@ -134,7 +130,7 @@ watch(
       campus.value = newCampusList[0].value;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(campus, (newCampusValue, oldCampusValue) => {
