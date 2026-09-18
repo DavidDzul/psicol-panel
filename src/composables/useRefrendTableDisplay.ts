@@ -160,7 +160,7 @@ export const BASE_HEADERS = [
     sortable: true,
   },
   {
-    title: "Retención",
+    title: "Retención P.",
     key: "pending_withholding_amount",
     width: 110,
     align: "center" as const,
