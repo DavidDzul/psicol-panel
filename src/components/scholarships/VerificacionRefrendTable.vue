@@ -222,11 +222,7 @@
           <StatusIcon
             :icon="statusChip(item.refrend).icon"
             :color="statusChip(item.refrend).color"
-            :label="
-              item.refrend.workflow_status === 'CLOSED'
-                ? statusTooltipLabel(item.refrend)
-                : statusChip(item.refrend).label
-            "
+            :label="statusChip(item.refrend).label"
           />
           <span
             v-if="item.refrend.workflow_status !== 'CLOSED' && resolutionCauseLabel(item.refrend)"
@@ -331,6 +327,35 @@
         />
       </template>
 
+      <!-- Only once Pagado: statusChip() collapses to a plain "Pagado" icon by
+           then (design), so this is the only place a reviewer can see WHICH
+           resolution the becario ended up with without reopening the row. -->
+      <template #item.final_status="{ item }">
+        <div v-if="item.refrend.workflow_status === 'CLOSED' && finalResolutionChip(item.refrend)">
+          <v-tooltip
+            v-if="resolutionCauseLabel(item.refrend)"
+            :text="`Motivo: ${resolutionCauseLabel(item.refrend)}`"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <v-chip
+                v-bind="tooltipProps"
+                :color="finalResolutionChip(item.refrend)?.color"
+                variant="tonal"
+                size="small"
+              >
+                <v-icon :icon="finalResolutionChip(item.refrend)?.icon" size="small" start />
+                {{ finalResolutionChip(item.refrend)?.label }}
+              </v-chip>
+            </template>
+          </v-tooltip>
+          <v-chip v-else :color="finalResolutionChip(item.refrend)?.color" variant="tonal" size="small">
+            <v-icon :icon="finalResolutionChip(item.refrend)?.icon" size="small" start />
+            {{ finalResolutionChip(item.refrend)?.label }}
+          </v-chip>
+        </div>
+        <span v-else class="text-disabled text-caption">—</span>
+      </template>
+
     </v-data-table>
 
     <!-- ── Detail drawer (secondary/audit fields, design ADR D1) ───────────── -->
@@ -368,11 +393,11 @@ import {
   BASE_HEADERS,
   buildTableInfo,
   filterRowsByName,
+  finalResolutionChip,
   resolutionCauseLabel,
   rowClass,
   scholarshipTypeColor,
   statusChip,
-  statusTooltipLabel,
 } from "@/composables/useRefrendTableDisplay";
 import { canVerificacion, canRecordSituation } from "@/utils/refrendActionability";
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
@@ -465,6 +490,13 @@ const VERIFICACION_COMPLETA_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
+  {
+    title: "",
+    key: "final_status",
+    width: 130,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 const VERIFICACION_INCIDENCIAS_HEADERS = [
@@ -477,6 +509,13 @@ const VERIFICACION_INCIDENCIAS_HEADERS = [
     sortable: false,
   },
   { title: "¿Notificado?", key: "notificado", width: 65, sortable: false },
+  {
+    title: "",
+    key: "final_status",
+    width: 130,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 const headers = computed(() => [

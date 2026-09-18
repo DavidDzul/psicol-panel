@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  finalResolutionChip,
   isLocked,
   LOCKED_STATUSES,
   pendingWithholdingChip,
   rowClass,
   statusChip,
-  statusTooltipLabel,
 } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -157,32 +157,39 @@ describe("useRefrendTableDisplay — pendingWithholdingChip", () => {
   });
 });
 
-describe("useRefrendTableDisplay — statusTooltipLabel", () => {
-  it("is just the status label when there's no resolution_cause", () => {
-    const row = buildRow({
-      workflow_status: "LISTO_PARA_PAGO",
-      resolution_type: "RETENIDA",
-      resolution_cause: null,
-    });
-    expect(statusTooltipLabel(row.refrend)).toBe("Retenida");
+describe("useRefrendTableDisplay — finalResolutionChip", () => {
+  it("returns null when resolution_type is null", () => {
+    const row = buildRow({ resolution_type: null });
+    expect(finalResolutionChip(row.refrend)).toBeNull();
   });
 
-  it('appends "· Motivo: {cause}" when resolution_cause is present', () => {
-    const row = buildRow({
-      workflow_status: "LISTO_PARA_PAGO",
-      resolution_type: "RETENIDA",
-      resolution_cause: "FALTAS_FI",
+  it("returns the resolution chip even when workflow_status is CLOSED (Pagado) — unlike statusChip", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "RETENIDA" });
+    expect(finalResolutionChip(row.refrend)).toEqual({
+      label: "Retenida",
+      color: "amber-darken-2",
+      icon: "mdi-lock-outline",
     });
-    expect(statusTooltipLabel(row.refrend)).toBe("Retenida · Motivo: Faltas a F.I.");
+    // statusChip collapses to the generic Pagado label for the same row.
+    expect(statusChip(row.refrend).label).toBe("Pagado");
   });
 
-  it("still appends the motivo once the refrend is paid/closed", () => {
+  it("covers REEMBOLSO_PARCIAL", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "REEMBOLSO_PARCIAL" });
+    expect(finalResolutionChip(row.refrend)).toEqual({
+      label: "Reembolso parcial",
+      color: "teal",
+      icon: "mdi-cash-refund",
+    });
+  });
+
+  it("includes the suspension percentage for SUSPENDIDA", () => {
     const row = buildRow({
       workflow_status: "CLOSED",
-      resolution_type: "RETENIDA",
-      resolution_cause: "FALTAS_FI",
+      resolution_type: "SUSPENDIDA",
+      suspension_percentage: "50",
     });
-    expect(statusTooltipLabel(row.refrend)).toBe("Pagado · Motivo: Faltas a F.I.");
+    expect(finalResolutionChip(row.refrend)?.label).toBe("Suspendido 50%");
   });
 });
 

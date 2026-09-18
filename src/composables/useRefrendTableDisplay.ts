@@ -26,11 +26,43 @@ export { LOCKED_STATUSES, isLocked } from "@/utils/refrendActionability";
 // tooltip, instead of a text chip — same space-saving pattern already
 // approved for the raw incident text (IncidentDetailIcon.vue).
 
+// Shared by statusChip (LISTO_PARA_PAGO only, unchanged behavior) and
+// finalResolutionChip (any workflow_status — the "Estado final" chip needs
+// this same icon/color/label regardless of whether the refrend is still
+// LISTO_PARA_PAGO or already CLOSED/Pagado).
+const _resolutionTypeMeta = (
+  refrend: BulkRefrendRow["refrend"],
+): { label: string; color: string; icon: string } | null => {
+  const r = refrend.resolution_type;
+  if (r === "BECA_MES")
+    return { label: "Pago sin penalización", color: "green", icon: "mdi-cash-check" };
+  if (r === "SIN_PAGO")
+    return { label: "Sin pago", color: "red", icon: "mdi-cash-remove" };
+  if (r === "RETENIDA")
+    return { label: "Retenida", color: "amber-darken-2", icon: "mdi-lock-outline" };
+  if (r === "DESCUENTO_DEFINITIVO")
+    return { label: "Descuento definitivo", color: "purple-darken-2", icon: "mdi-cash-minus" };
+  if (r === "EGRESADO")
+    return { label: "Egresado", color: "blue-grey", icon: "mdi-account-check-outline" };
+  if (r === "BAJA_DEFINITIVA")
+    return { label: "Baja definitiva", color: "red-darken-3", icon: "mdi-account-remove-outline" };
+  if (r === "REEMBOLSO_PARCIAL")
+    return { label: "Reembolso parcial", color: "teal", icon: "mdi-cash-refund" };
+  if (r === "SUSPENDIDA") {
+    const pct = refrend.suspension_percentage ?? null;
+    return {
+      label: pct ? `Suspendido ${pct}%` : "Suspendido",
+      color: "deep-orange",
+      icon: "mdi-pause-circle-outline",
+    };
+  }
+  return null;
+};
+
 export const statusChip = (
   refrend: BulkRefrendRow["refrend"],
 ): { label: string; color: string; icon: string } => {
   const s = refrend.workflow_status;
-  const r = refrend.resolution_type;
 
   if (s === "DRAFT")
     return { label: "Borrador", color: "grey", icon: "mdi-file-document-edit-outline" };
@@ -44,35 +76,33 @@ export const statusChip = (
     return { label: "Baja", color: "red-darken-3", icon: "mdi-account-cancel-outline" };
 
   if (s === "LISTO_PARA_PAGO") {
-    if (r === "BECA_MES")
-      return { label: "Pago sin penalización", color: "green", icon: "mdi-cash-check" };
-    if (r === "SIN_PAGO")
-      return { label: "Sin pago", color: "red", icon: "mdi-cash-remove" };
-    if (r === "RETENIDA")
-      return { label: "Retenida", color: "amber-darken-2", icon: "mdi-lock-outline" };
-    if (r === "DESCUENTO_DEFINITIVO")
-      return { label: "Descuento definitivo", color: "purple-darken-2", icon: "mdi-cash-minus" };
-    if (r === "EGRESADO")
-      return { label: "Egresado", color: "blue-grey", icon: "mdi-account-check-outline" };
-    if (r === "BAJA_DEFINITIVA")
-      return {
-        label: "Baja definitiva",
-        color: "red-darken-3",
-        icon: "mdi-account-remove-outline",
-      };
-    if (r === "SUSPENDIDA") {
-      const pct = refrend.suspension_percentage ?? null;
-      return {
-        label: pct ? `Suspendido ${pct}%` : "Suspendido",
-        color: "deep-orange",
-        icon: "mdi-pause-circle-outline",
-      };
-    }
-    return { label: "Listo para pago", color: "green", icon: "mdi-check-circle-outline" };
+    return (
+      _resolutionTypeMeta(refrend) ?? {
+        label: "Listo para pago",
+        color: "green",
+        icon: "mdi-check-circle-outline",
+      }
+    );
   }
 
   return { label: s ?? "—", color: "grey", icon: "mdi-help-circle-outline" };
 };
+
+// ── Final resolution chip (Estado final column, Pagado rows only) ───────────
+//
+// statusChip() collapses to a plain "Pagado" once workflow_status=CLOSED —
+// by design, so the dense per-row Estado icon doesn't repeat resolution
+// detail forever. But once paid, a reviewer scanning the batch still wants
+// to see WHICH resolution the becario ended up with (Retenida, Sin pago,
+// etc.) without reopening the row — this is that chip, visible (not
+// hover-only, user override of the icon-only precedent) and shown only for
+// Pagado rows via v-if at the call site (`workflow_status === 'CLOSED'`).
+// Mirrors administration-panel's resolutionMeta.ts chip (icon+color+visible
+// label) for the same 8 resolution_type values.
+
+export const finalResolutionChip = (
+  refrend: BulkRefrendRow["refrend"],
+): { label: string; color: string; icon: string } | null => _resolutionTypeMeta(refrend);
 
 // ── Resolution cause label ────────────────────────────────────────────────────
 
@@ -98,25 +128,6 @@ export const resolutionCauseLabel = (
   if (refrend.resolution_cause === "OTRO")
     return refrend.resolution_notes ?? null;
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
-};
-
-// ── Status tooltip label (icon+hover, no permanent caption) ─────────────────
-//
-// StatusIcon.vue shows only an icon — statusChip()'s label surfaces on
-// hover. resolution_cause (the specific motivo, e.g. "FALTAS_FI") used to
-// render as a second, always-visible caption underneath, which stayed even
-// once the refrend was CLOSED/Pagado, long after it stopped being actionable
-// (user-reported). Folded into the same tooltip instead — same "{label} ·
-// Motivo: {cause}" pattern already used in administration-panel's resolution
-// chip aria-label — so it's still one click/hover away without taking up
-// permanent row space.
-
-export const statusTooltipLabel = (
-  refrend: BulkRefrendRow["refrend"],
-): string => {
-  const cause = resolutionCauseLabel(refrend);
-  const label = statusChip(refrend).label;
-  return cause ? `${label} · Motivo: ${cause}` : label;
 };
 
 // ── Scholarship type chip ────────────────────────────────────────────────────

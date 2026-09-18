@@ -187,11 +187,7 @@
           <StatusIcon
             :icon="statusChip(item.refrend).icon"
             :color="statusChip(item.refrend).color"
-            :label="
-              item.refrend.workflow_status === 'CLOSED'
-                ? statusTooltipLabel(item.refrend)
-                : statusChip(item.refrend).label
-            "
+            :label="statusChip(item.refrend).label"
           />
           <span
             v-if="item.refrend.workflow_status !== 'CLOSED' && resolutionCauseLabel(item.refrend)"
@@ -349,6 +345,35 @@
           />
         </div>
       </template>
+
+      <!-- Only once Pagado: statusChip() collapses to a plain "Pagado" icon by
+           then (design), so this is the only place a reviewer can see WHICH
+           resolution the becario ended up with without reopening the row. -->
+      <template #item.final_status="{ item }">
+        <div v-if="item.refrend.workflow_status === 'CLOSED' && finalResolutionChip(item.refrend)">
+          <v-tooltip
+            v-if="resolutionCauseLabel(item.refrend)"
+            :text="`Motivo: ${resolutionCauseLabel(item.refrend)}`"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <v-chip
+                v-bind="tooltipProps"
+                :color="finalResolutionChip(item.refrend)?.color"
+                variant="tonal"
+                size="small"
+              >
+                <v-icon :icon="finalResolutionChip(item.refrend)?.icon" size="small" start />
+                {{ finalResolutionChip(item.refrend)?.label }}
+              </v-chip>
+            </template>
+          </v-tooltip>
+          <v-chip v-else :color="finalResolutionChip(item.refrend)?.color" variant="tonal" size="small">
+            <v-icon :icon="finalResolutionChip(item.refrend)?.icon" size="small" start />
+            {{ finalResolutionChip(item.refrend)?.label }}
+          </v-chip>
+        </div>
+        <span v-else class="text-disabled text-caption">—</span>
+      </template>
     </v-data-table>
 
     <!-- ── Dialogs (mounted once) ────────────────────────────────────────── -->
@@ -466,13 +491,13 @@ import {
   BASE_HEADERS,
   buildTableInfo,
   filterRowsByName,
+  finalResolutionChip,
   fmt,
   MONTHS_ES,
   resolutionCauseLabel,
   rowClass,
   scholarshipTypeColor,
   statusChip,
-  statusTooltipLabel,
 } from "@/composables/useRefrendTableDisplay";
 import { canAprobacion, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
@@ -614,6 +639,13 @@ const APROBACION_AMOUNT_HEADERS = [
   { title: "Desc.%", key: "discount_pct", width: 80, sortable: false },
   { title: "Final", key: "projected_amount", width: 110, sortable: false },
   { title: "", key: "payment_verify", width: 160, sortable: false },
+  {
+    title: "",
+    key: "final_status",
+    width: 130,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 type OptionalColumnKey = (typeof OPTIONAL_HEADERS)[number]["key"];

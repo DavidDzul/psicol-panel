@@ -986,8 +986,52 @@ describe('AprobacionRefrendTable — "Estado" motivo caption (removed only once 
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
+    // Motivo isn't rendered as visible text anywhere by default — it's the
+    // new Estado final chip's tooltip content, unopened. Under the Estado
+    // icon specifically, the label is plain now (no motivo folded in).
     expect(wrapper.text()).not.toContain("Faltas a F.I.");
     const statusIcon = wrapper.findComponent(StatusIcon);
-    expect(statusIcon.props("label")).toBe("Pagado · Motivo: Faltas a F.I.");
+    expect(statusIcon.props("label")).toBe("Pagado");
+  });
+});
+
+describe('AprobacionRefrendTable — "Estado final" chip (Pagado rows only)', () => {
+  it("shows the resolution chip (icon + visible label) once the row is Pagado (CLOSED)", async () => {
+    const row = buildRow(53, "Pagado Retenida", 1, 0);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = null;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Retenida");
+  });
+
+  it("shows the motivo via tooltip on the chip when resolution_cause is present", async () => {
+    const row = buildRow(54, "Pagado Con Motivo", 1, 0);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const tooltip = wrapper.findComponent({ name: "VTooltip" });
+    expect(tooltip.exists()).toBe(true);
+    expect(tooltip.props("text")).toContain("Faltas a F.I.");
+  });
+
+  it("shows nothing (dash) for a non-paid row, even with a resolution_type set", async () => {
+    const row = buildRow(55, "No Pagado Aun", 1, 0);
+    row.refrend.workflow_status = "LISTO_PARA_PAGO";
+    row.refrend.resolution_type = "RETENIDA";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("No Pagado Aun"));
+    const cells = dataRow!.findAll("td");
+    expect(cells[cells.length - 1].text()).toBe("—");
   });
 });

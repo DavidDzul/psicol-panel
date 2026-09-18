@@ -354,7 +354,7 @@ describe('VerificacionRefrendTable — "Estado" motivo caption (removed only onc
     expect(wrapper.text()).toContain("Faltas a F.I.");
   });
 
-  it("hides the motivo caption once the row is Pagado (CLOSED), folding it into the status tooltip instead", async () => {
+  it("hides the motivo caption once the row is Pagado (CLOSED) — it moves into the Estado final chip instead", async () => {
     const row = buildRow(32, "Pagado", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = "RETENIDA";
@@ -363,8 +363,66 @@ describe('VerificacionRefrendTable — "Estado" motivo caption (removed only onc
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.text()).not.toContain("Faltas a F.I.");
+    // Under the Estado icon specifically (not the new Estado final column,
+    // which does show the label as its own chip text).
     const statusIcon = wrapper.findComponent(StatusIcon);
-    expect(statusIcon.props("label")).toBe("Pagado · Motivo: Faltas a F.I.");
+    expect(statusIcon.props("label")).toBe("Pagado");
+  });
+});
+
+describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only)', () => {
+  it("shows the resolution chip (icon + visible label) once the row is Pagado (CLOSED)", async () => {
+    const row = buildRow(33, "Pagado Retenida", 1);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = null;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Retenida");
+  });
+
+  it("shows the motivo via tooltip on the chip when resolution_cause is present", async () => {
+    const row = buildRow(34, "Pagado Con Motivo", 1);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const tooltip = wrapper.findComponent({ name: "VTooltip" });
+    expect(tooltip.exists()).toBe(true);
+    expect(tooltip.props("text")).toContain("Faltas a F.I.");
+  });
+
+  it('shows a dash for a Pagado row with no resolution_type (e.g. plain "BECA_MES")', async () => {
+    const row = buildRow(35, "Pagado Sin Resolucion", 1);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = null;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    // findAll("tbody tr")[0] is the collapsible group-header row in
+    // "incidencias" mode (single <td colspan> with the generación name) —
+    // find the actual data row by its content instead.
+    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("Pagado Sin Resolucion"));
+    const cells = dataRow!.findAll("td");
+    expect(cells[cells.length - 1].text()).toBe("—");
+  });
+
+  it("shows nothing (dash) for a non-paid row, even with a resolution_type set", async () => {
+    const row = buildRow(36, "No Pagado Aun", 1);
+    row.refrend.workflow_status = "LISTO_PARA_PAGO";
+    row.refrend.resolution_type = "RETENIDA";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("No Pagado Aun"));
+    const cells = dataRow!.findAll("td");
+    expect(cells[cells.length - 1].text()).toBe("—");
   });
 });
