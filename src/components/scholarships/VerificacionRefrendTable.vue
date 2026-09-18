@@ -274,6 +274,24 @@
                   : "Registrar"
             }}
           </v-btn>
+          <v-tooltip
+            v-if="
+              viewVariant === 'incidencias' &&
+              item.incidents_count === 0 &&
+              (item.has_falta_discount || item.has_retardos_discount)
+            "
+            text="Falta registrada"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <v-icon
+                v-bind="tooltipProps"
+                data-testid="attendance-discount-reason"
+                icon="mdi-calendar-remove-outline"
+                color="error"
+                size="18"
+              />
+            </template>
+          </v-tooltip>
           <span
             v-if="item.refrend.atencion_observations"
             class="text-caption text-medium-emphasis text-truncate"

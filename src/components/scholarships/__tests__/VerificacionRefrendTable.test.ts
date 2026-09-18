@@ -183,6 +183,60 @@ describe('VerificacionRefrendTable — "Incidencias" row filter', () => {
   });
 });
 
+describe("VerificacionRefrendTable — attendance-discount reason icon", () => {
+  it('shows the reason icon in "incidencias" mode when there\'s an attendance discount but no incidencia', async () => {
+    const row = buildRow(23, "Solo Falta", 0);
+    row.has_falta_discount = true;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(true);
+  });
+
+  it('hides the reason icon in "completa" mode even with an attendance discount and no incidencia', async () => {
+    const row = buildRow(26, "Solo Falta Completa", 0);
+    row.has_falta_discount = true;
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
+  });
+
+  it('hides the reason icon in "incidencias" mode when a real incidencia already exists, even with an attendance discount', async () => {
+    const row = buildRow(24, "Con Incidencia Y Falta", 1);
+    row.has_falta_discount = true;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
+  });
+
+  it('hides the reason icon in "incidencias" mode when there\'s neither an incidencia nor an attendance discount', async () => {
+    const row = buildRow(25, "Limpio", 0);
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
+  });
+
+  it('uses the fixed tooltip text "Falta registrada" regardless of falta vs retardos', async () => {
+    const row = buildRow(27, "Solo Retardos", 0);
+    row.has_retardos_discount = true;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const icon = wrapper.find('[data-testid="attendance-discount-reason"]');
+    expect(icon.attributes("aria-describedby") ?? icon.exists()).toBeTruthy();
+    const tooltip = wrapper.findComponent({ name: "VTooltip" });
+    expect(tooltip.props("text")).toBe("Falta registrada");
+  });
+});
+
 describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
   it("leaves all rows visible when left on Todos (default, unaffected)", async () => {
     const rows = [
