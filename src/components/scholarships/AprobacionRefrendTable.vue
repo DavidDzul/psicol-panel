@@ -224,7 +224,7 @@
           size="x-small"
           variant="tonal"
           :color="item.refrend.pedagogia_observations ? 'gray' : 'purple'"
-          :disabled="!canAprobacion(item.refrend)"
+          :disabled="!canAprobacion(item.refrend) && !item.refrend.pedagogia_observations"
           @click="openAprobacionDialog(item)"
         >
           {{ item.refrend.pedagogia_observations ? "Visualizar" : "Registrar" }}
@@ -384,6 +384,7 @@
       :clear-loading="clearAprobacionLoading === activeRow?.refrend.id"
       :verificacion-observations="activeRow?.refrend.atencion_observations ?? null"
       :initial-comment="activeRow?.refrend.pedagogia_observations ?? null"
+      :readonly="!!activeRow && !canAprobacion(activeRow.refrend)"
       @submit="onAprobacionSubmit"
       @remove="onClearAprobacionFromDialog"
     />

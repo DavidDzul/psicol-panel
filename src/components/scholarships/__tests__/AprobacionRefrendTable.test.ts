@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VSelect } from "vuetify/components";
+import { VBtn, VSelect } from "vuetify/components";
 import AprobacionRefrendTable from "@/components/scholarships/AprobacionRefrendTable.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
+import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
 import { fmt } from "@/composables/useRefrendTableDisplay";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -1033,5 +1034,53 @@ describe('AprobacionRefrendTable — "Estado final" chip (Pagado rows only)', ()
     const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("No Pagado Aun"));
     const cells = dataRow!.findAll("td");
     expect(cells[cells.length - 1].text()).toBe("—");
+  });
+});
+
+describe('AprobacionRefrendTable — "Respuesta" button view-only for rows canAprobacion no longer allows', () => {
+  it("lets you open the dialog to view an existing response even when Pagado (CLOSED) blocks editing", async () => {
+    const row = buildRow(60, "Pagado Con Respuesta", 1, 0);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.pedagogia_observations = "Ya resuelto.";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const btn = wrapper.findAllComponents(VBtn).find((b) => b.text() === "Visualizar");
+    expect(btn?.props("disabled")).toBe(false);
+
+    await btn?.trigger("click");
+    await wrapper.vm.$nextTick();
+
+    const dialog = wrapper.findComponent(RefrendAprobacionDialog);
+    expect(dialog.props("readonly")).toBe(true);
+  });
+
+  it("stays disabled for a Pagado row with no response to view", async () => {
+    const row = buildRow(61, "Pagado Sin Respuesta", 1, 0);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.pedagogia_observations = null;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const btn = wrapper.findAllComponents(VBtn).find((b) => b.text() === "Registrar");
+    expect(btn?.props("disabled")).toBe(true);
+  });
+
+  it("opens in edit mode (not readonly) for a CON_INCIDENCIA row, even with an existing response", async () => {
+    const row = buildRow(62, "Con Incidencia Editable", 1, 0);
+    row.refrend.workflow_status = "CON_INCIDENCIA";
+    row.refrend.pedagogia_observations = "Comentario previo.";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const btn = wrapper.findAllComponents(VBtn).find((b) => b.text() === "Visualizar");
+    await btn?.trigger("click");
+    await wrapper.vm.$nextTick();
+
+    const dialog = wrapper.findComponent(RefrendAprobacionDialog);
+    expect(dialog.props("readonly")).toBe(false);
   });
 });

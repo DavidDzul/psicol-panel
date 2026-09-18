@@ -263,7 +263,7 @@
                   ? 'orange-darken-2'
                   : 'blue'
             "
-            :disabled="!canVerificacion(item.refrend)"
+            :disabled="!canVerificacion(item.refrend) && !hasAprobacionResponse(item)"
             @click="openVerificacionDialog(item)"
           >
             {{

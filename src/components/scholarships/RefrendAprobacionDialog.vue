@@ -25,32 +25,39 @@
           maxlength="2000"
           placeholder="Anotá la resolución, acuerdos o indicaciones para el becario..."
           class="mb-2"
+          :readonly="readonly"
         />
 
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
-        <v-btn
-          v-if="isEditMode"
-          variant="text"
-          color="error"
-          :loading="clearLoading"
-          :disabled="loading"
-          @click="emit('remove')"
-        >
-          Remover respuesta
-        </v-btn>
-        <v-spacer />
-        <v-btn variant="text" :disabled="loading || clearLoading" @click="model = false">Cancelar</v-btn>
-        <v-btn
-          color="deep-purple"
-          variant="elevated"
-          :loading="loading"
-          :disabled="clearLoading"
-          @click="submit"
-        >
-          {{ isEditMode ? 'Guardar cambios' : 'Guardar validación' }}
-        </v-btn>
+        <template v-if="readonly">
+          <v-spacer />
+          <v-btn variant="text" @click="model = false">Cerrar</v-btn>
+        </template>
+        <template v-else>
+          <v-btn
+            v-if="isEditMode"
+            variant="text"
+            color="error"
+            :loading="clearLoading"
+            :disabled="loading"
+            @click="emit('remove')"
+          >
+            Remover respuesta
+          </v-btn>
+          <v-spacer />
+          <v-btn variant="text" :disabled="loading || clearLoading" @click="model = false">Cancelar</v-btn>
+          <v-btn
+            color="deep-purple"
+            variant="elevated"
+            :loading="loading"
+            :disabled="clearLoading"
+            @click="submit"
+          >
+            {{ isEditMode ? 'Guardar cambios' : 'Guardar validación' }}
+          </v-btn>
+        </template>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -65,6 +72,10 @@ const props = defineProps<{
   clearLoading?: boolean;
   verificacionObservations?: string | null;
   initialComment?: string | null;
+  // View-only mode for a row that can no longer be edited (e.g. already
+  // Pagado) but still has a comment worth reading — shows the textarea as
+  // read-only text with a single "Cerrar" action, no Remover/Guardar.
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -80,11 +91,15 @@ const form = reactive<PedagogiaResolveForm>({
   comment: null,
 });
 
-watch(model, (v) => {
-  if (v) {
-    form.comment = props.initialComment ?? null;
-  }
-});
+watch(
+  model,
+  (v) => {
+    if (v) {
+      form.comment = props.initialComment ?? null;
+    }
+  },
+  { immediate: true },
+);
 
 const submit = (): void => {
   emit("submit", {
