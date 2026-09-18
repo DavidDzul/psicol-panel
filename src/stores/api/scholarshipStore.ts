@@ -320,14 +320,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/recalculate`
       );
       const refrend = _mergeRefrend(res.data.data);
-      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS' && Number(d.discount_percentage) > 0) ?? false;
-      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA' && Number(d.discount_percentage) > 0) ?? false;
-      _mergeBulkRow(refrend, {
-        has_retardos_discount:     hasRetardos,
-        has_falta_discount:        hasFalta,
-        semester_lates_unconsumed: refrend.attendance_summary_snapshot?.late_unconsumed ?? 0,
-        attendance_late:           refrend.attendance_summary_snapshot?.late ?? 0,
-      });
+      await _refreshActiveTables();
       showAlert({ title: "Refrendo recalculado.", status: "success" });
       return refrend;
     } catch (error: unknown) {
@@ -554,6 +547,18 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // A single action can shift many derived, cross-cutting fields at once
+  // (attendance summary, discounts, incidents count...) that a hand-picked
+  // partial merge keeps missing one at a time. Reusing the real search
+  // (same params already on file) is the only way to guarantee the row is
+  // byte-identical to what a manual "Buscar" would show. Mirrors bulkApprove's
+  // existing pattern — a changed row can live in either query, so refresh
+  // whichever ones currently have an active search.
+  const _refreshActiveTables = async (): Promise<void> => {
+    if (bulkParams.value) await fetchBulkTable(bulkParams.value);
+    if (incidenciasParams.value) await fetchIncidenciasTable(incidenciasParams.value);
+  };
+
   const _mergeRefrend = (refrend: ScholarshipRefrend): ScholarshipRefrend => {
     const newMap = new Map(refrends.value);
     newMap.set(refrend.id, refrend);
@@ -594,14 +599,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
         `api/admin/scholarship-refrends/${id}/clear-resolution`,
       );
       const refrend = _mergeRefrend(res.data.data);
-      const hasRetardos = refrend.discounts?.some(d => d.discount_type === 'RETARDOS' && Number(d.discount_percentage) > 0) ?? false;
-      const hasFalta   = refrend.discounts?.some(d => d.discount_type === 'FALTA_INJUSTIFICADA' && Number(d.discount_percentage) > 0) ?? false;
-      _mergeBulkRow(refrend, {
-        has_retardos_discount:     hasRetardos,
-        has_falta_discount:        hasFalta,
-        semester_lates_unconsumed: refrend.attendance_summary_snapshot?.late_unconsumed ?? 0,
-        attendance_late:           refrend.attendance_summary_snapshot?.late ?? 0,
-      });
+      await _refreshActiveTables();
       showAlert({ title: "Resolución deshecha.", status: "success" });
       return refrend;
     } catch (error: unknown) {
@@ -700,10 +698,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     try {
       const res = await axios.post("api/admin/scholarship-refrends/bulk/approve", { ids });
       const { approved, skipped } = res.data.data ?? {};
-      // Una fila aprobada puede vivir en cualquiera de las dos queries (Completa
-      // e Incidencias) — refrescamos las que tengan una búsqueda activa.
-      if (bulkParams.value) await fetchBulkTable(bulkParams.value);
-      if (incidenciasParams.value) await fetchIncidenciasTable(incidenciasParams.value);
+      await _refreshActiveTables();
       const msg = skipped > 0
         ? `${approved} aprobado(s), ${skipped} omitido(s).`
         : `${approved} refrendo(s) aprobado(s).`;
