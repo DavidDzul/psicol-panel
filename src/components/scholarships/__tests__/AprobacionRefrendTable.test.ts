@@ -175,7 +175,11 @@ const mountTable = (rows: BulkRefrendRow[]) =>
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
 // spec "Criterio de inclusión de filas en Aprobación": incidents_count > 0 OR
-// pending_withholding_count > 0.
+// pending_withholding_count > 0 OR has_falta_discount OR has_retardos_discount.
+// The last two are deliberately the *already-applied* discount flags, not a
+// raw "1 retardo sin consumir todavía" signal — a single unconsumed retardo
+// isn't a chargeable event yet (needs 2 to fire the discount), so it must
+// stay invisible here (see AttendancePenaltyService::applyPenaltyIfDue).
 
 describe("AprobacionRefrendTable — row filter", () => {
   it("includes a row with an incidencia and no pending withholding (preexisting behavior)", async () => {
@@ -203,6 +207,36 @@ describe("AprobacionRefrendTable — row filter", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.text()).not.toContain("Carla Limpia");
+  });
+
+  it("includes a row with has_falta_discount=true and none of the other criteria (new behavior)", async () => {
+    const row = buildRow(60, "Fabio Falta", 0, 0);
+    row.has_falta_discount = true;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Fabio Falta");
+  });
+
+  it("includes a row with has_retardos_discount=true and none of the other criteria (new behavior)", async () => {
+    const row = buildRow(61, "Gina Retardos", 0, 0);
+    row.has_retardos_discount = true;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Gina Retardos");
+  });
+
+  it("excludes a row with a single unconsumed retardo — semester_lates_unconsumed=1 never fires the discount, so it must not surface here", async () => {
+    const row = buildRow(62, "Hector Un Retardo", 0, 0);
+    row.semester_lates_unconsumed = 1;
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Hector Un Retardo");
   });
 
   it("shows both indicators for a row with an incidencia and a pending withholding", async () => {

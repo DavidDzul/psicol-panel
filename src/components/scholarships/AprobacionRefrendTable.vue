@@ -529,7 +529,11 @@ const displayRows = computed(() => {
     rowFilterMode.value === "todos"
       ? props.rows
       : props.rows.filter(
-          (r) => r.incidents_count > 0 || r.pending_withholding_count > 0,
+          (r) =>
+            r.incidents_count > 0 ||
+            r.pending_withholding_count > 0 ||
+            r.has_falta_discount ||
+            r.has_retardos_discount,
         );
   if (advancePaymentOnly.value) {
     rows = rows.filter((r) => r.advance_payment_eligible);
