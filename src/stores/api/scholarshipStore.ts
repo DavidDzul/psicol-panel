@@ -457,6 +457,13 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // incidents_count is never touched here — it's the real count of
+  // scholarship_refrend_incidents rows (server-computed, see
+  // RefrendBulkQueryService), unrelated to atencion_labels. Previously reset
+  // to atencion_labels.length on every call (even a plain notified_at
+  // toggle), which zeroed a row's real incident count and made it wrongly
+  // vanish/reappear from incident-based filters (user-reported).
+  // atencionFlag/clearFlag already own incidents_count correctly.
   const patchInline = async (id: number, payload: InlinePatchPayload): Promise<void> => {
     const locations = _findRowLocations(id);
     const snapshots = locations.map(({ rows, idx }) => ({
@@ -486,7 +493,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       if (payload.notified_at !== undefined) {
         row.refrend.notified_at = payload.notified_at;
       }
-      row.incidents_count = row.refrend.atencion_labels?.length ?? 0;
     }
 
     try {
