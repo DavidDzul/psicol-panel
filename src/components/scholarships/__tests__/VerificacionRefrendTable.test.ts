@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VSelect } from "vuetify/components";
+import { VCheckbox, VSelect } from "vuetify/components";
 import VerificacionRefrendTable from "@/components/scholarships/VerificacionRefrendTable.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -234,6 +234,44 @@ describe("VerificacionRefrendTable — attendance-discount reason icon", () => {
     expect(icon.attributes("aria-describedby") ?? icon.exists()).toBeTruthy();
     const tooltip = wrapper.findComponent({ name: "VTooltip" });
     expect(tooltip.props("text")).toBe("Falta registrada");
+  });
+});
+
+describe('VerificacionRefrendTable — "Respuesta" column (renamed from "R. Aprobación")', () => {
+  it('titles the column "Respuesta"', async () => {
+    const wrapper = mountTable([buildRow(28, "Uno", 0)], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers).toContain("Respuesta");
+    expect(headers).not.toContain("R. Aprobación");
+  });
+});
+
+describe('VerificacionRefrendTable — "Notificado" checkbox gating', () => {
+  it("is disabled when there is no aprobación response yet, even if workflow_status is LISTO_PARA_PAGO", async () => {
+    // incidentsCount=1 so the row passes the "Incidencias" row filter —
+    // unrelated to what this test actually checks (the checkbox gating).
+    const row = buildRow(29, "Sin Respuesta", 1);
+    row.refrend.workflow_status = "LISTO_PARA_PAGO";
+    row.refrend.pedagogia_observations = null;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(VCheckbox).props("disabled")).toBe(true);
+  });
+
+  it("is enabled once there's an aprobación response, even if workflow_status is not LISTO_PARA_PAGO — no need to wait until payment processing", async () => {
+    const row = buildRow(30, "Con Respuesta", 1);
+    row.refrend.workflow_status = "CON_INCIDENCIA";
+    row.refrend.pedagogia_observations = "Aprobado con condiciones.";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(VCheckbox).props("disabled")).toBe(false);
   });
 });
 

@@ -322,14 +322,8 @@
           color="teal"
           density="compact"
           hide-details
-          :disabled="
-            item.refrend.workflow_status !== 'LISTO_PARA_PAGO' ||
-            notificadoLoading === item.refrend.id
-          "
-          @update:model-value="
-            item.refrend.workflow_status === 'LISTO_PARA_PAGO' &&
-            toggleNotificado(item, $event)
-          "
+          :disabled="!hasAprobacionResponse(item) || notificadoLoading === item.refrend.id"
+          @update:model-value="hasAprobacionResponse(item) && toggleNotificado(item, $event)"
         />
       </template>
 
@@ -471,7 +465,7 @@ const VERIFICACION_COMPLETA_HEADERS = [
 const VERIFICACION_INCIDENCIAS_HEADERS = [
   { title: "Incidencia", key: "verificacion", sortable: false },
   {
-    title: "R. Aprobación",
+    title: "Respuesta",
     key: "aprobacion_readonly",
     width: 100,
     align: "center" as const,
