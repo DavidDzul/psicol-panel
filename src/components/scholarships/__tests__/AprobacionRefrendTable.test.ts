@@ -5,6 +5,7 @@ import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import { VSelect } from "vuetify/components";
 import AprobacionRefrendTable from "@/components/scholarships/AprobacionRefrendTable.vue";
+import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { fmt } from "@/composables/useRefrendTableDisplay";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -960,5 +961,33 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(aumento).toBe(200);
     expect(base).toBe(1200);
     expect(monthly + apoyo + aumento).toBe(base);
+  });
+});
+
+describe('AprobacionRefrendTable — "Estado" motivo caption (removed only once Pagado)', () => {
+  it("keeps the motivo caption visible for a non-paid row with a resolution_cause", async () => {
+    const row = buildRow(51, "No Pagado", 1, 0);
+    row.refrend.workflow_status = "LISTO_PARA_PAGO";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Faltas a F.I.");
+  });
+
+  it("hides the motivo caption once the row is Pagado (CLOSED), folding it into the status tooltip instead", async () => {
+    const row = buildRow(52, "Pagado", 1, 0);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Faltas a F.I.");
+    const statusIcon = wrapper.findComponent(StatusIcon);
+    expect(statusIcon.props("label")).toBe("Pagado · Motivo: Faltas a F.I.");
   });
 });

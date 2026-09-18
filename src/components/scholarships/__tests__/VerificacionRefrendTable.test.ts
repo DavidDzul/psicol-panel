@@ -5,6 +5,7 @@ import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
 import { VCheckbox, VSelect } from "vuetify/components";
 import VerificacionRefrendTable from "@/components/scholarships/VerificacionRefrendTable.vue";
+import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // atencionFlag/clearFlag/patchInline/recalculateRefrend hit axios directly
@@ -337,5 +338,33 @@ describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
 
     expect(wrapper.text()).toContain("Karla Elegible");
     expect(wrapper.text()).not.toContain("Luis Elegible");
+  });
+});
+
+describe('VerificacionRefrendTable — "Estado" motivo caption (removed only once Pagado)', () => {
+  it("keeps the motivo caption visible for a non-paid row with a resolution_cause", async () => {
+    const row = buildRow(31, "No Pagado", 1);
+    row.refrend.workflow_status = "LISTO_PARA_PAGO";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Faltas a F.I.");
+  });
+
+  it("hides the motivo caption once the row is Pagado (CLOSED), folding it into the status tooltip instead", async () => {
+    const row = buildRow(32, "Pagado", 1);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = "RETENIDA";
+    row.refrend.resolution_cause = "FALTAS_FI";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Faltas a F.I.");
+    const statusIcon = wrapper.findComponent(StatusIcon);
+    expect(statusIcon.props("label")).toBe("Pagado · Motivo: Faltas a F.I.");
   });
 });

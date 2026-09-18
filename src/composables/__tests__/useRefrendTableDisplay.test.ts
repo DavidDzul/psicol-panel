@@ -5,6 +5,7 @@ import {
   pendingWithholdingChip,
   rowClass,
   statusChip,
+  statusTooltipLabel,
 } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -153,6 +154,35 @@ describe("useRefrendTableDisplay — pendingWithholdingChip", () => {
     expect(chip).not.toBeNull();
     expect(chip?.label).toBe("$1,500.50");
     expect(chip?.tooltip).toBe("3 retenciones pendientes · $1,500.50 en total");
+  });
+});
+
+describe("useRefrendTableDisplay — statusTooltipLabel", () => {
+  it("is just the status label when there's no resolution_cause", () => {
+    const row = buildRow({
+      workflow_status: "LISTO_PARA_PAGO",
+      resolution_type: "RETENIDA",
+      resolution_cause: null,
+    });
+    expect(statusTooltipLabel(row.refrend)).toBe("Retenida");
+  });
+
+  it('appends "· Motivo: {cause}" when resolution_cause is present', () => {
+    const row = buildRow({
+      workflow_status: "LISTO_PARA_PAGO",
+      resolution_type: "RETENIDA",
+      resolution_cause: "FALTAS_FI",
+    });
+    expect(statusTooltipLabel(row.refrend)).toBe("Retenida · Motivo: Faltas a F.I.");
+  });
+
+  it("still appends the motivo once the refrend is paid/closed", () => {
+    const row = buildRow({
+      workflow_status: "CLOSED",
+      resolution_type: "RETENIDA",
+      resolution_cause: "FALTAS_FI",
+    });
+    expect(statusTooltipLabel(row.refrend)).toBe("Pagado · Motivo: Faltas a F.I.");
   });
 });
 

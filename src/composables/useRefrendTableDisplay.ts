@@ -100,6 +100,25 @@ export const resolutionCauseLabel = (
   return CAUSE_LABELS[refrend.resolution_cause] ?? refrend.resolution_cause;
 };
 
+// ── Status tooltip label (icon+hover, no permanent caption) ─────────────────
+//
+// StatusIcon.vue shows only an icon — statusChip()'s label surfaces on
+// hover. resolution_cause (the specific motivo, e.g. "FALTAS_FI") used to
+// render as a second, always-visible caption underneath, which stayed even
+// once the refrend was CLOSED/Pagado, long after it stopped being actionable
+// (user-reported). Folded into the same tooltip instead — same "{label} ·
+// Motivo: {cause}" pattern already used in administration-panel's resolution
+// chip aria-label — so it's still one click/hover away without taking up
+// permanent row space.
+
+export const statusTooltipLabel = (
+  refrend: BulkRefrendRow["refrend"],
+): string => {
+  const cause = resolutionCauseLabel(refrend);
+  const label = statusChip(refrend).label;
+  return cause ? `${label} · Motivo: ${cause}` : label;
+};
+
 // ── Scholarship type chip ────────────────────────────────────────────────────
 //
 // `snapshot_scholarship_type` comes from the becario's ScholarshipProfile,

@@ -187,10 +187,14 @@
           <StatusIcon
             :icon="statusChip(item.refrend).icon"
             :color="statusChip(item.refrend).color"
-            :label="statusChip(item.refrend).label"
+            :label="
+              item.refrend.workflow_status === 'CLOSED'
+                ? statusTooltipLabel(item.refrend)
+                : statusChip(item.refrend).label
+            "
           />
           <span
-            v-if="resolutionCauseLabel(item.refrend)"
+            v-if="item.refrend.workflow_status !== 'CLOSED' && resolutionCauseLabel(item.refrend)"
             class="text-caption text-medium-emphasis"
             style="max-width: 90px"
           >
@@ -468,6 +472,7 @@ import {
   rowClass,
   scholarshipTypeColor,
   statusChip,
+  statusTooltipLabel,
 } from "@/composables/useRefrendTableDisplay";
 import { canAprobacion, canRecordSituation, computeDueAmount } from "@/utils/refrendActionability";
 import { getCleanDraftIds } from "@/utils/refrendBulkClose";
