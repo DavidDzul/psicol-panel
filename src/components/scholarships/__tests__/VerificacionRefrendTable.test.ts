@@ -147,6 +147,42 @@ const toggleAdvancePaymentOnly = async (
 // "Solo pago adelantado" mirrors AprobacionRefrendTable's selector: orthogonal
 // to viewVariant, ANDs into displayRows instead of replacing it.
 
+describe('VerificacionRefrendTable — "Incidencias" row filter', () => {
+  // Mirrors AprobacionRefrendTable's row-inclusion criterion: a becario who
+  // lost the whole month's pay to an attendance discount (falta or 2
+  // accumulated retardos) never gets an incidencia record, so the
+  // incidents_count-only filter silently hid them here too.
+
+  it("includes a row with has_falta_discount=true and incidents_count=0 (new behavior)", async () => {
+    const row = buildRow(20, "Falta Sin Incidencia", 0);
+    row.has_falta_discount = true;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Falta Sin Incidencia");
+  });
+
+  it("includes a row with has_retardos_discount=true and incidents_count=0 (new behavior)", async () => {
+    const row = buildRow(21, "Retardos Sin Incidencia", 0);
+    row.has_retardos_discount = true;
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Retardos Sin Incidencia");
+  });
+
+  it("excludes a row with neither an incidencia nor an active attendance discount (preexisting behavior)", async () => {
+    const row = buildRow(22, "Limpio", 0);
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Limpio");
+  });
+});
+
 describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
   it("leaves all rows visible when left on Todos (default, unaffected)", async () => {
     const rows = [
