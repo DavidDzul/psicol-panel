@@ -100,7 +100,7 @@ const yearOptions = Array.from(
   (_, i) => new Date().getFullYear() - i,
 );
 
-const monthOptions = [
+const MONTH_DEFS = [
   { title: "Enero", value: 1 },
   { title: "Febrero", value: 2 },
   { title: "Marzo", value: 3 },
@@ -114,4 +114,22 @@ const monthOptions = [
   { title: "Noviembre", value: 11 },
   { title: "Diciembre", value: 12 },
 ];
+
+// A refrend can never exist for a period that hasn't started yet
+// (GenerateMonthlyRefrendsService::assertPeriodWithinReticula rejects it
+// server-side) — disabling the month here prevents reaching that error in
+// the first place, for both the "Generar ref." flow and plain browsing.
+// yearOptions never offers a future year, so the check only needs to
+// compare months within the current real year.
+const currentRealMonth = new Date().getMonth() + 1;
+const currentRealYear = new Date().getFullYear();
+
+const monthOptions = computed(() =>
+  MONTH_DEFS.map((m) => ({
+    ...m,
+    props: {
+      disabled: internalYear.value === currentRealYear && m.value > currentRealMonth,
+    },
+  })),
+);
 </script>
