@@ -40,6 +40,14 @@ describe("visibleSituationMenuItems", () => {
     expect(item?.color).toBe("purple-darken-2");
   });
 
+  it("includes PAGO_ADELANTADO as a visible entry (not hidden) — new situation, no separate entry point", () => {
+    const visible = visibleSituationMenuItems();
+    const item = visible.find((entry) => entry.key === "PAGO_ADELANTADO");
+
+    expect(item).toBeTruthy();
+    expect(item?.label).toBe("Pago adelantado");
+  });
+
   it("does not drop any other entry", () => {
     const visible = visibleSituationMenuItems();
     const nonHiddenKeys = SITUATION_MENU_ITEMS.filter(

@@ -91,6 +91,7 @@ import type {
   AttendanceSummary,
   ScholarshipSemesterGrade,
   ScholarshipWithholding,
+  ScholarshipAdvancePayment,
 } from './scholarship'
 
 export interface ScholarshipProfileResponse { data: ScholarshipProfile }
@@ -114,3 +115,4 @@ export interface AttendanceSummaryResponse { res: boolean; data: AttendanceSumma
 export interface SemesterGradesResponse { res: boolean; data: ScholarshipSemesterGrade[] }
 export interface SemesterGradeResponse { res: boolean; data: ScholarshipSemesterGrade }
 export interface GraduatePersonResponse { res: boolean; msg: string; data: User }
+export interface AdvancePaymentResponse { data: ScholarshipAdvancePayment }

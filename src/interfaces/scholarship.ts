@@ -298,6 +298,58 @@ export interface RecordSituationForm {
   withholding_value?: number | null
   withholding_payments?: WithholdingPaymentInput[]
   refund_amount?: number | null
+  // Required only when this refrendo was previously advance-paid and the
+  // resolution being applied now diverges from what was advance-paid (see
+  // RecordPaymentSituationAction's arrival-time reconciliation block).
+  // Optional/capturable here — the server enforces "required on divergence"
+  // since a static frontend rule can't know the divergence outcome ahead of
+  // the request.
+  advance_divergence_reason?: string | null
+}
+
+// ── Advance payment (pago adelantado) ──────────────────────────────────────
+
+export interface AdvancePaymentMonthInput {
+  year: number
+  month: number
+}
+
+// months carries ONLY {year, month} pairs — amount is server-computed from
+// each future refrendo's calculated final_amount (RecordAdvancePaymentAction,
+// design D6). The frontend must never send an amount here.
+export interface AdvancePaymentForm {
+  months: AdvancePaymentMonthInput[]
+  cause?: string
+  notes?: string
+}
+
+export interface ScholarshipAdvancePaymentMonth {
+  id: number
+  advance_payment_id: number
+  user_id: number
+  period_year: number
+  period_month: number
+  amount: string
+  refrend_id: number
+  status: 'PENDING' | 'REACHED' | 'OVERRIDDEN'
+  reached_at: string | null
+  settled_resolution_type: ResolutionType | null
+  divergence_reason: string | null
+}
+
+export interface ScholarshipAdvancePayment {
+  id: number
+  user_id: number
+  origin_refrend_id: number
+  origin_period_year: number
+  origin_period_month: number
+  months_count: number
+  total_amount: string
+  status: 'ACTIVE' | 'VOIDED'
+  cause: string | null
+  notes: string | null
+  created_by_id: number | null
+  months?: ScholarshipAdvancePaymentMonth[]
 }
 
 // ── Form interfaces ────────────────────────────────────────────────────────

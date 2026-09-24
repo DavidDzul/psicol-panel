@@ -12,19 +12,22 @@ import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.v
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
+import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
-// recordPaymentSituation hits axios directly (no repository seam) — mocked
-// at the module boundary so the "close the right dialog" tests below never
-// touch the network. incidenciasRows is read by `cleanDraftIds` on every
-// render regardless of which test runs.
+// recordPaymentSituation/recordAdvancePayment hit axios directly (no
+// repository seam) — mocked at the module boundary so the "close the right
+// dialog" tests below never touch the network. incidenciasRows is read by
+// `cleanDraftIds` on every render regardless of which test runs.
 const recordPaymentSituation = vi.fn().mockResolvedValue(undefined);
+const recordAdvancePayment = vi.fn().mockResolvedValue(undefined);
 const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
 const approveFullPayment = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
     incidenciasRows: [],
     recordPaymentSituation,
+    recordAdvancePayment,
     approveFullPayment,
     clearRefrendResolution,
     bulkApprove: vi.fn(),
@@ -75,6 +78,7 @@ const STUBS = {
   SituationSuspendidaDialog: true,
   SituationBajaDialog: true,
   SituationEgresadoDialog: true,
+  SituationPagoAdelantadoDialog: true,
   RefrendSituationBar: true,
   IncidentDetailIcon: true,
   StatusIcon: true,
@@ -520,6 +524,49 @@ describe("AprobacionRefrendTable — activeSituationKey closes the dialog that w
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+  });
+
+  // Same category of bug PAGO_MESES/SIN_PAGO's regression guard above
+  // protects against: closing by inferred form shape (or by any hardcoded
+  // key) instead of by activeSituationKey could close the wrong dialog.
+  // PAGO_ADELANTADO submits a completely different form shape
+  // (AdvancePaymentForm, no resolution_type at all) through a different
+  // store method (recordAdvancePayment, not recordPaymentSituation) — this
+  // proves activeSituationKey closes PAGO_ADELANTADO's own dialog
+  // specifically, not any of the others, and leaves them untouched.
+  it("closes situationDialogs.PAGO_ADELANTADO (and only that dialog) when it submits, via store.recordAdvancePayment", async () => {
+    // Shared module-level mocks accumulate calls across every test in this
+    // file (only approveFullPayment.mockClear() precedent exists) — clear
+    // both before asserting call counts here.
+    recordPaymentSituation.mockClear();
+    recordAdvancePayment.mockClear();
+    const row = buildRow(23, "Ivan Adelantado", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "PAGO_ADELANTADO");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationPagoAdelantadoDialog).props("modelValue")).toBe(true);
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(false);
+
+    await wrapper.findComponent(SituationPagoAdelantadoDialog).vm.$emit("submit", {
+      months: [{ year: 2026, month: 9 }],
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(recordAdvancePayment).toHaveBeenCalledWith(23, {
+      months: [{ year: 2026, month: 9 }],
+    });
+    expect(recordPaymentSituation).not.toHaveBeenCalled();
+    expect(wrapper.findComponent(SituationPagoAdelantadoDialog).props("modelValue")).toBe(false);
+    // The other dialogs stay closed/untouched — proves the close is scoped
+    // to activeSituationKey, not a blanket reset.
+    expect(wrapper.findComponent(SituationPagoMesesDialog).props("modelValue")).toBe(false);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(false);
   });
 });
 

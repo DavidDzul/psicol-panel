@@ -10,7 +10,7 @@ import type { ResolutionType } from "@/interfaces/scholarship";
 // (dialogs, `situationDialogs` keys, historical rendering) from *being
 // offered* in the "Acciones" menu.
 
-export type SituationKey = ResolutionType | "PAGO_MESES";
+export type SituationKey = ResolutionType | "PAGO_MESES" | "PAGO_ADELANTADO";
 
 export interface SituationMenuItem {
   key: SituationKey;
@@ -66,6 +66,12 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
     // catálogo, `SituationSuspendidaDialog.vue` y cualquier refrendo
     // histórico con resolution_cause=SUSPENDIDA siguen intactos.
     hidden: true,
+  },
+  {
+    key: "PAGO_ADELANTADO",
+    icon: "mdi-cash-clock",
+    label: "Pago adelantado",
+    color: "cyan-darken-2",
   },
   {
     key: "BAJA_DEFINITIVA",

@@ -22,6 +22,8 @@ import type {
   RefrendPaymentVerifyForm,
   RecordSituationForm,
   ScholarshipWithholding,
+  AdvancePaymentForm,
+  ScholarshipAdvancePayment,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -33,6 +35,7 @@ import type {
   GraduatePersonResponse,
   ScholarshipWithholdingsResponse,
   PendingWithholdingsMeta,
+  AdvancePaymentResponse,
 } from "@/interfaces/api";
 
 // ── Boundary Rule seam ──────────────────────────────────────────────────────
@@ -639,6 +642,37 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // ── Advance payment (pago adelantado) ───────────────────────────────────────
+  //
+  // Distinct endpoint/store method from recordPaymentSituation: this records a
+  // NEW batch of future advance-paid months on the origin refrendo, it does
+  // not resolve the origin refrendo's own current-month situation. The
+  // response is a ScholarshipAdvancePayment header, not a ScholarshipRefrend,
+  // so there is nothing to _mergeRefrend — but the origin refrendo's own
+  // advance_payment_amount/total_to_pay change server-side (design D6), so
+  // active tables are refreshed the same way clearRefrendResolution does for
+  // other cross-cutting derived-field changes.
+
+  const recordAdvancePayment = async (
+    id: number,
+    form: AdvancePaymentForm,
+  ): Promise<ScholarshipAdvancePayment | undefined> => {
+    try {
+      const res = await axios.post<AdvancePaymentResponse>(
+        `api/admin/scholarship-refrends/${id}/advance-payment`,
+        form,
+      );
+      await _refreshActiveTables();
+      showAlert({ title: "Pago adelantado registrado.", status: "success" });
+      return res.data.data;
+    } catch (error: unknown) {
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al registrar pago adelantado.")
+        : "Error de red.";
+      showAlert({ title: msg, status: "error" });
+    }
+  };
+
   // ── Withholding ledger (retenciones individuales) ──────────────────────────
 
   const fetchPendingWithholdings = async (
@@ -761,6 +795,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     approveFullPayment,
     clearRefrendResolution,
     recordPaymentSituation,
+    recordAdvancePayment,
     bulkApprove,
     fetchPendingWithholdings,
     voidWithholdingPayment,

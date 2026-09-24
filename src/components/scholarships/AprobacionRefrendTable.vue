@@ -430,6 +430,13 @@
       :loading="situationSubmitLoading"
       @submit="onSituationSubmit"
     />
+    <SituationPagoAdelantadoDialog
+      v-model="situationDialogs.PAGO_ADELANTADO"
+      :loading="situationSubmitLoading"
+      :period-year="activeRow?.refrend.period_year"
+      :period-month="activeRow?.refrend.period_month"
+      @submit="onAdvancePaymentSubmit"
+    />
 
     <ConfirmationDialog ref="confirmationDialog" />
 
@@ -486,6 +493,7 @@ import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMes
 import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
+import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {
@@ -511,6 +519,7 @@ import type {
   ResolutionType,
   PedagogiaResolveForm,
   RecordSituationForm,
+  AdvancePaymentForm,
 } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -774,7 +783,7 @@ const onClearAprobacionFromDialog = async (): Promise<void> => {
 
 // ── Situation dialogs ─────────────────────────────────────────────────────
 
-type SituationKey = ResolutionType | "PAGO_MESES";
+type SituationKey = ResolutionType | "PAGO_MESES" | "PAGO_ADELANTADO";
 
 const situationDialogs = ref<Record<SituationKey, boolean>>({
   BECA_MES: false,
@@ -786,6 +795,7 @@ const situationDialogs = ref<Record<SituationKey, boolean>>({
   BAJA_DEFINITIVA: false,
   EGRESADO: false,
   REEMBOLSO_PARCIAL: false,
+  PAGO_ADELANTADO: false,
 });
 const situationSubmitLoading = ref(false);
 const situationLoadingId = ref<number | null>(null);
@@ -882,6 +892,28 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
     // can emit either BECA_MES or SIN_PAGO depending on its "pagar mes en
     // curso" checkbox, and inferring from SIN_PAGO would close the wrong
     // (standalone) dialog.
+    if (activeSituationKey.value) {
+      situationDialogs.value[activeSituationKey.value] = false;
+      activeSituationKey.value = null;
+    }
+  } finally {
+    situationSubmitLoading.value = false;
+  }
+};
+
+// Separate from onSituationSubmit: PAGO_ADELANTADO submits an
+// AdvancePaymentForm (no resolution_type at all — a different shape
+// entirely) through a different store method (recordAdvancePayment, not
+// recordPaymentSituation) — it records a NEW batch of future advance-paid
+// months, it does not resolve the origin refrendo's own current-month
+// situation. Still closes via the same activeSituationKey pattern as every
+// other situation dialog, for the same reason: closing by an inferred key
+// (or a hardcoded one) risks closing the wrong dialog.
+const onAdvancePaymentSubmit = async (form: AdvancePaymentForm): Promise<void> => {
+  if (!activeRow.value) return;
+  situationSubmitLoading.value = true;
+  try {
+    await store.recordAdvancePayment(activeRow.value.refrend.id, form);
     if (activeSituationKey.value) {
       situationDialogs.value[activeSituationKey.value] = false;
       activeSituationKey.value = null;
