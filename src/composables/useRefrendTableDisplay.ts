@@ -196,6 +196,13 @@ export const BASE_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
+  {
+    title: "Pago adelantado",
+    key: "advance_paid_amount",
+    width: 130,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────
@@ -214,6 +221,31 @@ export const MONTHS_ES = [
   "Noviembre",
   "Diciembre",
 ];
+
+// ── Advance payment chip (shared cell, sdd/pago-adelantado row indicator) ──
+//
+// Purely informational: label with the formatted amount, tooltip with the
+// origin batch's month/year (design's AdvancePaidRowFields). Returns null
+// when the row isn't advance-paid, or when the backend's `advance_paid_amount`
+// is missing (mirrors pendingWithholdingChip's null-on-nothing-to-show
+// convention — the backend emits `null`, never "0.00").
+
+export const advancePaymentChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  if (!row.advance_paid || !row.advance_paid_amount) return null;
+  const amount = fmt(row.advance_paid_amount);
+  const month = row.advance_paid_origin_month;
+  const year = row.advance_paid_origin_year;
+  const monthName = month ? MONTHS_ES[month - 1] ?? String(month) : null;
+  const origin = monthName && year ? `${monthName} ${year}` : null;
+  return {
+    label: amount,
+    tooltip: origin
+      ? `Pago adelantado · lote de ${origin} · ${amount}`
+      : `Pago adelantado · ${amount}`,
+  };
+};
 
 export const buildTableInfo = (
   rows: BulkRefrendRow[],

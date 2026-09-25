@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advancePaymentChip,
   finalResolutionChip,
   isLocked,
   LOCKED_STATUSES,
@@ -90,6 +91,10 @@ const buildRow = (
   pending_withholding_count: 0,
   pending_withholding_amount: null,
   advance_payment_eligible: false,
+  advance_paid: false,
+  advance_paid_amount: null,
+  advance_paid_origin_year: null,
+  advance_paid_origin_month: null,
 });
 
 // ── isLocked re-export (design ADR D5 single source of truth) ──────────────
@@ -154,6 +159,45 @@ describe("useRefrendTableDisplay — pendingWithholdingChip", () => {
     expect(chip).not.toBeNull();
     expect(chip?.label).toBe("$1,500.50");
     expect(chip?.tooltip).toBe("3 retenciones pendientes · $1,500.50 en total");
+  });
+});
+
+describe("useRefrendTableDisplay — advancePaymentChip", () => {
+  it("returns null when advance_paid is false", () => {
+    const row = { ...buildRow(), advance_paid: false, advance_paid_amount: "500.00" };
+    expect(advancePaymentChip(row)).toBeNull();
+  });
+
+  it("returns null when advance_paid is true but amount is missing", () => {
+    const row = { ...buildRow(), advance_paid: true, advance_paid_amount: null };
+    expect(advancePaymentChip(row)).toBeNull();
+  });
+
+  it("returns the formatted amount and origin month/year in the tooltip", () => {
+    const row = {
+      ...buildRow(),
+      advance_paid: true,
+      advance_paid_amount: "850.00",
+      advance_paid_origin_year: 2026,
+      advance_paid_origin_month: 7,
+    };
+    const chip = advancePaymentChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.label).toBe("$850.00");
+    expect(chip?.tooltip).toBe("Pago adelantado · lote de Julio 2026 · $850.00");
+  });
+
+  it("falls back to a tooltip without the origin period when year/month are missing", () => {
+    const row = {
+      ...buildRow(),
+      advance_paid: true,
+      advance_paid_amount: "300.00",
+      advance_paid_origin_year: null,
+      advance_paid_origin_month: null,
+    };
+    const chip = advancePaymentChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.tooltip).toBe("Pago adelantado · $300.00");
   });
 });
 

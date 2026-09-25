@@ -230,6 +230,17 @@ export interface BulkRefrendRow {
   pending_withholding_count: number
   pending_withholding_amount: string | null
   advance_payment_eligible: boolean
+  // Row indicator (sdd/pago-adelantado, design D6 + "AdvancePaidRowFields"):
+  // true when THIS row's own refrend was pre-created by
+  // RecordAdvancePaymentAction. Purely informational — never read by
+  // PaymentReadinessEvaluator, never affects is_payable/blocking_reasons
+  // (same isolation this codebase already enforces for resolution_type).
+  // advance_paid_amount is a decimal string, never "0.00" (backend emits
+  // null when advance_paid is false, mirroring pending_withholding_amount).
+  advance_paid: boolean
+  advance_paid_amount: string | null
+  advance_paid_origin_year: number | null
+  advance_paid_origin_month: number | null
 }
 
 export interface BulkTableParams {

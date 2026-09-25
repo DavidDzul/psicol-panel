@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createVuetify } from "vuetify";
-import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
+import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // ── Test harness ─────────────────────────────────────────────────────────────
@@ -66,8 +66,10 @@ const baseRefrend: ScholarshipRefrend = {
 
 const buildRow = (
   overrides: {
-    pending_withholding_count?: number;
-    pending_withholding_amount?: string | null;
+    advance_paid?: boolean;
+    advance_paid_amount?: string | null;
+    advance_paid_origin_year?: number | null;
+    advance_paid_origin_month?: number | null;
   } = {},
 ): BulkRefrendRow => ({
   refrend: { ...baseRefrend },
@@ -94,56 +96,63 @@ const buildRow = (
   profile_discount_pct: null,
   profile_discount_valid_until: null,
   profile_discount_reason: null,
-  pending_withholding_count: overrides.pending_withholding_count ?? 0,
-  pending_withholding_amount: overrides.pending_withholding_amount ?? null,
+  pending_withholding_count: 0,
+  pending_withholding_amount: null,
   advance_payment_eligible: false,
-  advance_paid: false,
-  advance_paid_amount: null,
-  advance_paid_origin_year: null,
-  advance_paid_origin_month: null,
+  advance_paid: overrides.advance_paid ?? false,
+  advance_paid_amount: overrides.advance_paid_amount ?? null,
+  advance_paid_origin_year: overrides.advance_paid_origin_year ?? null,
+  advance_paid_origin_month: overrides.advance_paid_origin_month ?? null,
 });
 
 const mountChip = (row: BulkRefrendRow) =>
-  mount(PendingWithholdingChip, {
+  mount(AdvancePaymentChip, {
     props: { row },
     global: { plugins: [vuetify] },
   });
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
-describe("PendingWithholdingChip", () => {
-  it("renders a chip with the formatted amount when count > 0", () => {
-    const wrapper = mountChip(
-      buildRow({ pending_withholding_count: 2, pending_withholding_amount: "600.00" }),
-    );
-
-    expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(true);
-    expect(wrapper.text()).toContain("$600.00");
-  });
-
-  it("renders the — fallback and no chip when count is 0", () => {
+describe("AdvancePaymentChip", () => {
+  it("renders the — fallback and no chip when advance_paid is false", () => {
     const wrapper = mountChip(buildRow());
 
     expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(false);
     expect(wrapper.text()).toBe("—");
   });
 
+  it("renders a chip with the formatted amount when advance_paid is true", () => {
+    const wrapper = mountChip(
+      buildRow({
+        advance_paid: true,
+        advance_paid_amount: "850.00",
+        advance_paid_origin_year: 2026,
+        advance_paid_origin_month: 7,
+      }),
+    );
+
+    expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(true);
+    expect(wrapper.text()).toContain("$850.00");
+  });
+
   it("does not emit any event on click — purely informational", async () => {
     const wrapper = mountChip(
-      buildRow({ pending_withholding_count: 1, pending_withholding_amount: "300.00" }),
+      buildRow({
+        advance_paid: true,
+        advance_paid_amount: "850.00",
+        advance_paid_origin_year: 2026,
+        advance_paid_origin_month: 7,
+      }),
     );
 
     await wrapper.findComponent({ name: "VChip" }).trigger("click");
 
-    // PendingWithholdingChip itself wires no @click, no router, no store
-    // action — it never emits anything of its own. (VChip's internal
-    // self-emitted "click", used by Vuetify for its own ripple/a11y
-    // bookkeeping, is not listened to by this component and triggers no
-    // app-level action, modal, or navigation.)
+    // AdvancePaymentChip itself wires no @click, no router, no store action
+    // — it never emits anything of its own (same non-interactive precedent
+    // as PendingWithholdingChip.vue).
     expect(wrapper.emitted()).not.toHaveProperty("pay");
     expect(wrapper.emitted()).not.toHaveProperty("open");
     expect(wrapper.emitted()).not.toHaveProperty("navigate");
-    // Rendering is unaffected — nothing happens.
-    expect(wrapper.text()).toContain("$300.00");
+    expect(wrapper.text()).toContain("$850.00");
   });
 });

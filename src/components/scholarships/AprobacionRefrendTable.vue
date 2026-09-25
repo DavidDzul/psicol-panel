@@ -203,6 +203,10 @@
         <PendingWithholdingChip :row="item" />
       </template>
 
+      <template #item.advance_paid_amount="{ item }">
+        <AdvancePaymentChip :row="item" />
+      </template>
+
       <!-- Incidencia cruda: botón que abre un modal con el texto completo, no
            texto inline ni tooltip (ver IncidentDetailIcon.vue). -->
       <template #item.incident_description="{ item }">
@@ -484,6 +488,7 @@ import { computed, ref, watch } from "vue";
 import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.vue";
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
+import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";

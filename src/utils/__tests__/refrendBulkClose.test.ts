@@ -94,6 +94,10 @@ const buildRow = (
   pending_withholding_count: 0,
   pending_withholding_amount: null,
   advance_payment_eligible: false,
+  advance_paid: false,
+  advance_paid_amount: null,
+  advance_paid_origin_year: null,
+  advance_paid_origin_month: null,
   ...rowOverrides,
 });
 

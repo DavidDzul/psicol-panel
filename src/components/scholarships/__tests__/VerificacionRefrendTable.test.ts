@@ -93,6 +93,12 @@ const buildRow = (
   name: string,
   incidentsCount: number,
   advancePaymentEligible = false,
+  advancePaid: {
+    paid?: boolean;
+    amount?: string | null;
+    originYear?: number | null;
+    originMonth?: number | null;
+  } = {},
 ): BulkRefrendRow => ({
   refrend: { ...baseRefrend, id, snapshot_name: name },
   attendance_present: 0,
@@ -121,6 +127,10 @@ const buildRow = (
   pending_withholding_count: 0,
   pending_withholding_amount: null,
   advance_payment_eligible: advancePaymentEligible,
+  advance_paid: advancePaid.paid ?? false,
+  advance_paid_amount: advancePaid.amount ?? null,
+  advance_paid_origin_year: advancePaid.originYear ?? null,
+  advance_paid_origin_month: advancePaid.originMonth ?? null,
 });
 
 const mountTable = (
@@ -236,6 +246,32 @@ describe("VerificacionRefrendTable — attendance-discount reason icon", () => {
     expect(icon.attributes("aria-describedby") ?? icon.exists()).toBeTruthy();
     const tooltip = wrapper.findComponent({ name: "VTooltip" });
     expect(tooltip.props("text")).toBe("Falta registrada");
+  });
+});
+
+describe("VerificacionRefrendTable — advance-paid row indicator (sdd/pago-adelantado PR7a)", () => {
+  it("renders the AdvancePaymentChip amount when the row is advance_paid", async () => {
+    const row = buildRow(30, "Adelantado", 0, false, {
+      paid: true,
+      amount: "850.00",
+      originYear: 2026,
+      originMonth: 7,
+    });
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("$850.00");
+  });
+
+  it("renders the — fallback for a row that was not advance-paid", async () => {
+    const row = buildRow(31, "Normal", 0);
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers).toContain("Pago adelantado");
   });
 });
 
