@@ -92,6 +92,7 @@ const baseRefrend: ScholarshipRefrend = {
   final_amount: "2500.00",
   amount_pending_from_previous: "0",
   total_to_pay: "2500.00",
+  advance_payment_amount: "0.00",
   snapshot_name: "Becario de Prueba",
   snapshot_generation: "Gen 1",
   snapshot_generation_id: 1,

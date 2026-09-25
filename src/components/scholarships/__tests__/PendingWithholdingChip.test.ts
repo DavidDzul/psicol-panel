@@ -43,6 +43,7 @@ const baseRefrend: ScholarshipRefrend = {
   final_amount: "1000",
   amount_pending_from_previous: "0",
   total_to_pay: "1000",
+  advance_payment_amount: "0.00",
   snapshot_name: "Test Becario",
   snapshot_generation: "Gen 1",
   snapshot_generation_id: 1,
@@ -101,7 +102,6 @@ const buildRow = (
   advance_paid_amount: null,
   advance_paid_origin_year: null,
   advance_paid_origin_month: null,
-  advance_payment_amount: "0.00",
 });
 
 const mountChip = (row: BulkRefrendRow) =>

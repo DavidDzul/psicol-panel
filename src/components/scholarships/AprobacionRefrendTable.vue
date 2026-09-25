@@ -333,6 +333,10 @@
 
       <template #item.payment_verify="{ item }">
         <div class="d-flex align-center ga-1">
+          <!-- PR9: relocated from its own "Adelanto registrado" column
+               (user feedback, live review) into the actions cell, before
+               the situation actions, for a more compact table. -->
+          <AdvancePaymentRegisteredChip :row="item" />
           <RefrendSituationBar
             v-if="canRecordSituation(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
@@ -347,10 +351,6 @@
             @clear-resolution="onClearResolution(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
-          <!-- PR9: relocated from its own "Adelanto registrado" column
-               (user feedback, live review) into the actions cell, next to
-               the situation actions, for a more compact table. -->
-          <AdvancePaymentRegisteredChip :row="item" />
         </div>
       </template>
 

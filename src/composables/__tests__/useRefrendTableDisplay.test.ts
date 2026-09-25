@@ -42,6 +42,7 @@ const baseRefrend: ScholarshipRefrend = {
   final_amount: "1000",
   amount_pending_from_previous: "0",
   total_to_pay: "1000",
+  advance_payment_amount: "0.00",
   snapshot_name: "Test Becario",
   snapshot_generation: "Gen 1",
   snapshot_generation_id: 1,
@@ -97,7 +98,6 @@ const buildRow = (
   advance_paid_amount: null,
   advance_paid_origin_year: null,
   advance_paid_origin_month: null,
-  advance_payment_amount: "0.00",
 });
 
 // ── isLocked re-export (design ADR D5 single source of truth) ──────────────
@@ -222,12 +222,12 @@ describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-r
   });
 
   it('returns null when advance_payment_amount is "0.00" (no batch registered against this row)', () => {
-    const row = { ...buildRow(), advance_payment_amount: "0.00" };
+    const row = buildRow({ advance_payment_amount: "0.00" });
     expect(advancePaymentRegisteredChip(row)).toBeNull();
   });
 
   it("returns the registered chip with the fixed label and formatted-amount tooltip", () => {
-    const row = { ...buildRow(), advance_payment_amount: "1200.00" };
+    const row = buildRow({ advance_payment_amount: "1200.00" });
     const chip = advancePaymentRegisteredChip(row);
     expect(chip).not.toBeNull();
     expect(chip?.label).toBe("Pago adelantado registrado");
@@ -239,14 +239,14 @@ describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-r
   // Regression: Number(undefined) is NaN, and `NaN <= 0` is FALSE in JS —
   // a plain "<= 0" guard lets a missing/malformed field slip through and
   // render "+NaN" in the tooltip instead of hiding the chip (live bug
-  // report). BulkRefrendRow's type claims this field is always a string,
-  // but that's not a runtime guarantee (e.g. a stale/partial API response),
-  // so the guard must not trust the type.
+  // report). ScholarshipRefrend's type claims this field is always a
+  // string, but that's not a runtime guarantee (e.g. a stale/partial API
+  // response), so the guard must not trust the type.
   it('treats a missing or non-numeric advance_payment_amount as nothing to show (never renders "+NaN")', () => {
-    const row = { ...buildRow() } as ReturnType<typeof buildRow>;
+    const row = buildRow();
     // @ts-expect-error — simulating a field genuinely missing at runtime,
     // despite the type saying it can't be.
-    delete row.advance_payment_amount;
+    delete row.refrend.advance_payment_amount;
     expect(advancePaymentRegisteredChip(row)).toBeNull();
   });
 });

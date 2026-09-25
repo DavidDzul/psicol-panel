@@ -7,7 +7,6 @@
       </v-chip>
     </template>
   </v-tooltip>
-  <span v-else class="text-disabled">—</span>
 </template>
 
 <script setup lang="ts">

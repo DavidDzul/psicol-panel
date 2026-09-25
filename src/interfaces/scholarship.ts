@@ -165,6 +165,15 @@ export interface ScholarshipRefrend {
   amount_pending_from_previous: string
   refund_amount_from_previous?: string
   total_to_pay: string
+  // Origin-refrend advance-payment indicator (sdd/pago-adelantado, design
+  // D6). Lives on the refrend itself (a real column, `RecordAdvancePaymentAction`
+  // writes it), unlike advance_paid/advance_paid_amount below which come
+  // from a separate JOIN — that's why this one is nested here on
+  // ScholarshipRefrend and NOT a top-level BulkRefrendRow field (verified
+  // directly against RefrendBulkQueryService::buildTable()'s `$refrend`
+  // sub-array, where this key actually lives). Always a decimal string,
+  // "0.00" when nothing is registered — never null.
+  advance_payment_amount: string
   snapshot_name: string
   snapshot_generation: string | null
   snapshot_generation_id: number | null
@@ -241,18 +250,6 @@ export interface BulkRefrendRow {
   advance_paid_amount: string | null
   advance_paid_origin_year: number | null
   advance_paid_origin_month: number | null
-  // Row indicator (sdd/pago-adelantado PR8) — OPPOSITE direction from the
-  // advance_paid family above. advance_paid means "this row IS one of the
-  // future months pre-created and settled by SOMEONE ELSE'S earlier
-  // advance-payment batch". advance_payment_amount means "this row itself
-  // HAS an advance-payment batch registered FROM it" — i.e. this row is the
-  // origin refrend, and staff already recorded 1-3 future months as
-  // advance-paid when/if this refrend was resolved (design D6, feeds
-  // total_to_pay). Both fields can be non-null on different rows in the same
-  // table at the same time — never conflate them. Always a decimal string,
-  // "0.00" when nothing is registered — unlike advance_paid_amount, the
-  // backend never emits null here (RefrendBulkQueryService::buildTable()).
-  advance_payment_amount: string
 }
 
 export interface BulkTableParams {

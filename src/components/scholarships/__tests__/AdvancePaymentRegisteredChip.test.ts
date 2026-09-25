@@ -43,6 +43,7 @@ const baseRefrend: ScholarshipRefrend = {
   final_amount: "1000",
   amount_pending_from_previous: "0",
   total_to_pay: "1000",
+  advance_payment_amount: "0.00",
   snapshot_name: "Test Becario",
   snapshot_generation: "Gen 1",
   snapshot_generation_id: 1,
@@ -65,7 +66,7 @@ const baseRefrend: ScholarshipRefrend = {
 };
 
 const buildRow = (advancePaymentAmount = "0.00"): BulkRefrendRow => ({
-  refrend: { ...baseRefrend },
+  refrend: { ...baseRefrend, advance_payment_amount: advancePaymentAmount },
   attendance_present: 0,
   attendance_late: 0,
   attendance_late_justified: 0,
@@ -96,7 +97,6 @@ const buildRow = (advancePaymentAmount = "0.00"): BulkRefrendRow => ({
   advance_paid_amount: null,
   advance_paid_origin_year: null,
   advance_paid_origin_month: null,
-  advance_payment_amount: advancePaymentAmount,
 });
 
 const mountChip = (row: BulkRefrendRow) =>
@@ -112,11 +112,11 @@ const mountChip = (row: BulkRefrendRow) =>
 // origin refrend), not a row that IS a future advance-paid month.
 
 describe("AdvancePaymentRegisteredChip", () => {
-  it('renders the — fallback and no chip when advance_payment_amount is "0.00"', () => {
+  it('renders nothing when advance_payment_amount is "0.00" (no "—" placeholder — user feedback: only show something when there is something to show)', () => {
     const wrapper = mountChip(buildRow("0.00"));
 
     expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(false);
-    expect(wrapper.text()).toBe("—");
+    expect(wrapper.text()).toBe("");
   });
 
   it("renders a chip with the fixed label when advance_payment_amount is non-zero", () => {

@@ -112,6 +112,7 @@ const baseRefrend: ScholarshipRefrend = {
   final_amount: "1000",
   amount_pending_from_previous: "0",
   total_to_pay: "1000",
+  advance_payment_amount: "0.00",
   snapshot_name: "Becario",
   snapshot_generation: "Gen Única",
   snapshot_generation_id: 1,
@@ -147,7 +148,12 @@ const buildRow = (
   } = {},
   advancePaymentAmount = "0.00",
 ): BulkRefrendRow => ({
-  refrend: { ...baseRefrend, id, snapshot_name: name },
+  refrend: {
+    ...baseRefrend,
+    id,
+    snapshot_name: name,
+    advance_payment_amount: advancePaymentAmount,
+  },
   attendance_present: 0,
   attendance_late: 0,
   attendance_late_justified: 0,
@@ -178,7 +184,6 @@ const buildRow = (
   advance_paid_amount: advancePaid.amount ?? null,
   advance_paid_origin_year: advancePaid.originYear ?? null,
   advance_paid_origin_month: advancePaid.originMonth ?? null,
-  advance_payment_amount: advancePaymentAmount,
 });
 
 const mountTable = (rows: BulkRefrendRow[]) =>
@@ -1177,7 +1182,7 @@ describe("AprobacionRefrendTable — origin advance-payment-registered indicator
   // rows in the same table at the same time.
   //
   // PR9 (live user review feedback): no longer its own dedicated column —
-  // the chip renders inline inside the actions cell, next to
+  // the chip renders inline inside the actions cell, before
   // RefrendSituationBar, to keep the table compact.
 
   it('does not render a dedicated "Adelanto registrado" column header', async () => {

@@ -41,6 +41,7 @@ const buildRefrend = (
   final_amount: "0",
   amount_pending_from_previous: "0",
   total_to_pay: "0",
+  advance_payment_amount: "0.00",
   snapshot_name: "Fixture Becario",
   snapshot_generation: null,
   snapshot_generation_id: null,
@@ -98,7 +99,6 @@ const buildRow = (
   advance_paid_amount: null,
   advance_paid_origin_year: null,
   advance_paid_origin_month: null,
-  advance_payment_amount: "0.00",
   ...rowOverrides,
 });
 

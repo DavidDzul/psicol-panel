@@ -266,6 +266,15 @@ export const advancePaymentChip = (
 // cell by AprobacionRefrendTable.vue/VerificacionRefrendTable.vue, next to
 // the row's action button, for a more compact table. The helper itself is
 // unchanged; only where its output gets rendered moved.
+//
+// Reads row.refrend.advance_payment_amount, NOT a top-level row field —
+// unlike advance_paid/advance_paid_amount (which come from a separate JOIN
+// in RefrendBulkQueryService::buildTable() and are genuinely top-level),
+// advance_payment_amount is a real column on scholarship_refrends, so the
+// backend nests it inside that method's `$refrend` sub-array. A prior
+// version of this helper read it as a top-level field, which always
+// silently evaluated to undefined/NaN — a live bug (chip rendered nothing
+// or "+NaN" regardless of the real, non-zero value in the database).
 
 export const advancePaymentRegisteredChip = (
   row: BulkRefrendRow,
@@ -274,9 +283,9 @@ export const advancePaymentRegisteredChip = (
   // check alone would let a missing/malformed field slip through and
   // render "+NaN" instead of hiding the chip. The type says this field is
   // always a string, but that's not a runtime guarantee.
-  const raw = Number(row.advance_payment_amount);
+  const raw = Number(row.refrend.advance_payment_amount);
   if (!Number.isFinite(raw) || raw <= 0) return null;
-  const amount = fmt(row.advance_payment_amount);
+  const amount = fmt(row.refrend.advance_payment_amount);
   return {
     label: "Pago adelantado registrado",
     tooltip: `+${amount} · Se sumará al monto de esta decisión`,
