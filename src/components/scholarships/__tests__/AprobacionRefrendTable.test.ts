@@ -1170,28 +1170,47 @@ describe("AprobacionRefrendTable — advance-paid row indicator (sdd/pago-adelan
   });
 });
 
-describe("AprobacionRefrendTable — origin advance-payment-registered indicator (sdd/pago-adelantado PR8)", () => {
+describe("AprobacionRefrendTable — origin advance-payment-registered indicator (sdd/pago-adelantado PR8/PR9)", () => {
   // OPPOSITE direction from the PR7a block above: this row is the ORIGIN
   // refrend that a batch was registered FROM, not a future month settled by
   // someone else's batch — the two fields can both be non-null on different
   // rows in the same table at the same time.
+  //
+  // PR9 (live user review feedback): no longer its own dedicated column —
+  // the chip renders inline inside the actions cell, next to
+  // RefrendSituationBar, to keep the table compact.
 
-  it("renders the registered-advance chip label when advance_payment_amount is non-zero", async () => {
-    const row = buildRow(65, "Origen", 1, 0, false, {}, "500.00");
-    const wrapper = mountTable([row]);
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
-
-    expect(wrapper.text()).toContain("Pago adelantado registrado");
-  });
-
-  it("renders the Adelanto registrado column header for a row without a registered batch", async () => {
+  it('does not render a dedicated "Adelanto registrado" column header', async () => {
     const row = buildRow(66, "Normal", 1, 0);
     const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
     const headers = wrapper.findAll("th").map((th) => th.text().trim());
-    expect(headers).toContain("Adelanto registrado");
+    expect(headers).not.toContain("Adelanto registrado");
+  });
+
+  it("renders the registered-advance chip inside the actions cell, next to RefrendSituationBar, when advance_payment_amount is non-zero", async () => {
+    const row = buildRow(65, "Origen", 1, 0, false, {}, "500.00");
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const actionsCell = wrapper
+      .findComponent(RefrendSituationBar)
+      .element.closest("td");
+    expect(actionsCell?.textContent).toContain("Pago adelantado registrado");
+  });
+
+  it("omits the chip from the actions cell for a row without a registered batch", async () => {
+    const row = buildRow(67, "Sin Batch", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const actionsCell = wrapper
+      .findComponent(RefrendSituationBar)
+      .element.closest("td");
+    expect(actionsCell?.textContent).not.toContain("Pago adelantado registrado");
   });
 });

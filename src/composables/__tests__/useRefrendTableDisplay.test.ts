@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   advancePaymentChip,
   advancePaymentRegisteredChip,
+  BASE_HEADERS,
   finalResolutionChip,
   isLocked,
   LOCKED_STATUSES,
@@ -209,6 +210,16 @@ describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-r
   // family). This one marks a row that itself HAS a batch registered against
   // it — this row is the origin refrend. Backend emits advance_payment_amount
   // as a decimal string, "0.00" when nothing is registered, never null.
+
+  // PR9: the caller (AprobacionRefrendTable.vue / VerificacionRefrendTable.vue)
+  // now renders this chip's output inline inside the actions cell instead of
+  // through a dedicated "Adelanto registrado" column — BASE_HEADERS must no
+  // longer carry an entry for advance_payment_amount.
+  it("is not present in BASE_HEADERS as its own column", () => {
+    expect(BASE_HEADERS.some((h) => h.key === "advance_payment_amount")).toBe(
+      false,
+    );
+  });
 
   it('returns null when advance_payment_amount is "0.00" (no batch registered against this row)', () => {
     const row = { ...buildRow(), advance_payment_amount: "0.00" };

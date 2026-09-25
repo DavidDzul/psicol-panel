@@ -207,10 +207,6 @@
         <AdvancePaymentChip :row="item" />
       </template>
 
-      <template #item.advance_payment_amount="{ item }">
-        <AdvancePaymentRegisteredChip :row="item" />
-      </template>
-
       <!-- Incidencia cruda: botón que abre un modal con el texto completo, no
            texto inline ni tooltip (ver IncidentDetailIcon.vue). -->
       <template #item.incident_description="{ item }">
@@ -351,6 +347,10 @@
             @clear-resolution="onClearResolution(item)"
             @open="(type) => openSituationDialog(item, type)"
           />
+          <!-- PR9: relocated from its own "Adelanto registrado" column
+               (user feedback, live review) into the actions cell, next to
+               the situation actions, for a more compact table. -->
+          <AdvancePaymentRegisteredChip :row="item" />
         </div>
       </template>
 

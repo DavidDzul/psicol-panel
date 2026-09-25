@@ -203,13 +203,6 @@ export const BASE_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
-  {
-    title: "Adelanto registrado",
-    key: "advance_payment_amount",
-    width: 150,
-    align: "center" as const,
-    sortable: false,
-  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────
@@ -267,6 +260,12 @@ export const advancePaymentChip = (
 // decimal string, "0.00" when nothing is registered — never null (unlike
 // pending_withholding_amount/advance_paid_amount's null-on-nothing
 // convention), so the guard here is a numeric zero check, not truthiness.
+//
+// PR9 (live user review feedback): this chip no longer backs its own
+// dedicated BASE_HEADERS column — it is rendered inline inside the actions
+// cell by AprobacionRefrendTable.vue/VerificacionRefrendTable.vue, next to
+// the row's action button, for a more compact table. The helper itself is
+// unchanged; only where its output gets rendered moved.
 
 export const advancePaymentRegisteredChip = (
   row: BulkRefrendRow,
