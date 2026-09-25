@@ -270,7 +270,12 @@ export const advancePaymentChip = (
 export const advancePaymentRegisteredChip = (
   row: BulkRefrendRow,
 ): { label: string; tooltip: string } | null => {
-  if (Number(row.advance_payment_amount) <= 0) return null;
+  // Number(undefined) is NaN, and `NaN <= 0` is FALSE — a plain "<= 0"
+  // check alone would let a missing/malformed field slip through and
+  // render "+NaN" instead of hiding the chip. The type says this field is
+  // always a string, but that's not a runtime guarantee.
+  const raw = Number(row.advance_payment_amount);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
   const amount = fmt(row.advance_payment_amount);
   return {
     label: "Pago adelantado registrado",
