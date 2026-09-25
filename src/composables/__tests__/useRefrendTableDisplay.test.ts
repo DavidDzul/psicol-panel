@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   advancePaymentChip,
+  advancePaymentRegisteredChip,
   finalResolutionChip,
   isLocked,
   LOCKED_STATUSES,
@@ -95,6 +96,7 @@ const buildRow = (
   advance_paid_amount: null,
   advance_paid_origin_year: null,
   advance_paid_origin_month: null,
+  advance_payment_amount: "0.00",
 });
 
 // ── isLocked re-export (design ADR D5 single source of truth) ──────────────
@@ -198,6 +200,29 @@ describe("useRefrendTableDisplay — advancePaymentChip", () => {
     const chip = advancePaymentChip(row);
     expect(chip).not.toBeNull();
     expect(chip?.tooltip).toBe("Pago adelantado · $300.00");
+  });
+});
+
+describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-refrend indicator)", () => {
+  // OPPOSITE direction from advancePaymentChip: that one marks a row that IS
+  // a future month settled by someone else's advance batch (advance_paid
+  // family). This one marks a row that itself HAS a batch registered against
+  // it — this row is the origin refrend. Backend emits advance_payment_amount
+  // as a decimal string, "0.00" when nothing is registered, never null.
+
+  it('returns null when advance_payment_amount is "0.00" (no batch registered against this row)', () => {
+    const row = { ...buildRow(), advance_payment_amount: "0.00" };
+    expect(advancePaymentRegisteredChip(row)).toBeNull();
+  });
+
+  it("returns the registered chip with the fixed label and formatted-amount tooltip", () => {
+    const row = { ...buildRow(), advance_payment_amount: "1200.00" };
+    const chip = advancePaymentRegisteredChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.label).toBe("Pago adelantado registrado");
+    expect(chip?.tooltip).toBe(
+      "+$1,200.00 · Se sumará al monto de esta decisión",
+    );
   });
 });
 

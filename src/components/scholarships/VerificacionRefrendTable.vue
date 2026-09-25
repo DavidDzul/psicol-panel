@@ -242,6 +242,10 @@
         <AdvancePaymentChip :row="item" />
       </template>
 
+      <template #item.advance_payment_amount="{ item }">
+        <AdvancePaymentRegisteredChip :row="item" />
+      </template>
+
       <template #item.verificacion="{ item }">
         <div class="d-flex align-center ga-2">
           <v-btn
@@ -392,6 +396,7 @@ import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.v
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
+import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import {

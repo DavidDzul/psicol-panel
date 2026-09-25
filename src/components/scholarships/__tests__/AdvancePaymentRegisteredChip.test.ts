@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createVuetify } from "vuetify";
-import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
+import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // ── Test harness ─────────────────────────────────────────────────────────────
@@ -64,14 +64,7 @@ const baseRefrend: ScholarshipRefrend = {
   updated_at: "2026-01-01",
 };
 
-const buildRow = (
-  overrides: {
-    advance_paid?: boolean;
-    advance_paid_amount?: string | null;
-    advance_paid_origin_year?: number | null;
-    advance_paid_origin_month?: number | null;
-  } = {},
-): BulkRefrendRow => ({
+const buildRow = (advancePaymentAmount = "0.00"): BulkRefrendRow => ({
   refrend: { ...baseRefrend },
   attendance_present: 0,
   attendance_late: 0,
@@ -99,61 +92,52 @@ const buildRow = (
   pending_withholding_count: 0,
   pending_withholding_amount: null,
   advance_payment_eligible: false,
-  advance_paid: overrides.advance_paid ?? false,
-  advance_paid_amount: overrides.advance_paid_amount ?? null,
-  advance_paid_origin_year: overrides.advance_paid_origin_year ?? null,
-  advance_paid_origin_month: overrides.advance_paid_origin_month ?? null,
-  advance_payment_amount: "0.00",
+  advance_paid: false,
+  advance_paid_amount: null,
+  advance_paid_origin_year: null,
+  advance_paid_origin_month: null,
+  advance_payment_amount: advancePaymentAmount,
 });
 
 const mountChip = (row: BulkRefrendRow) =>
-  mount(AdvancePaymentChip, {
+  mount(AdvancePaymentRegisteredChip, {
     props: { row },
     global: { plugins: [vuetify] },
   });
 
 // ── Tests ─────────────────────────────────────────────────────────────────
+//
+// OPPOSITE direction from AdvancePaymentChip.vue: this chip marks a row that
+// itself HAS an advance-payment batch registered against it (the row is the
+// origin refrend), not a row that IS a future advance-paid month.
 
-describe("AdvancePaymentChip", () => {
-  it("renders the — fallback and no chip when advance_paid is false", () => {
-    const wrapper = mountChip(buildRow());
+describe("AdvancePaymentRegisteredChip", () => {
+  it('renders the — fallback and no chip when advance_payment_amount is "0.00"', () => {
+    const wrapper = mountChip(buildRow("0.00"));
 
     expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(false);
     expect(wrapper.text()).toBe("—");
   });
 
-  it("renders a chip with the formatted amount when advance_paid is true", () => {
-    const wrapper = mountChip(
-      buildRow({
-        advance_paid: true,
-        advance_paid_amount: "850.00",
-        advance_paid_origin_year: 2026,
-        advance_paid_origin_month: 7,
-      }),
-    );
+  it("renders a chip with the fixed label when advance_payment_amount is non-zero", () => {
+    const wrapper = mountChip(buildRow("1200.00"));
 
     expect(wrapper.findComponent({ name: "VChip" }).exists()).toBe(true);
-    expect(wrapper.text()).toContain("$850.00");
+    expect(wrapper.text()).toContain("Pago adelantado registrado");
   });
 
   it("does not emit any event on click — purely informational", async () => {
-    const wrapper = mountChip(
-      buildRow({
-        advance_paid: true,
-        advance_paid_amount: "850.00",
-        advance_paid_origin_year: 2026,
-        advance_paid_origin_month: 7,
-      }),
-    );
+    const wrapper = mountChip(buildRow("1200.00"));
 
     await wrapper.findComponent({ name: "VChip" }).trigger("click");
 
-    // AdvancePaymentChip itself wires no @click, no router, no store action
-    // — it never emits anything of its own (same non-interactive precedent
-    // as PendingWithholdingChip.vue).
+    // AdvancePaymentRegisteredChip itself wires no @click, no router, no
+    // store action — it never emits anything of its own (same
+    // non-interactive precedent as AdvancePaymentChip.vue/
+    // PendingWithholdingChip.vue).
     expect(wrapper.emitted()).not.toHaveProperty("pay");
     expect(wrapper.emitted()).not.toHaveProperty("open");
     expect(wrapper.emitted()).not.toHaveProperty("navigate");
-    expect(wrapper.text()).toContain("$850.00");
+    expect(wrapper.text()).toContain("Pago adelantado registrado");
   });
 });

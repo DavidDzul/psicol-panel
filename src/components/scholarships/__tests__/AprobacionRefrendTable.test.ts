@@ -145,6 +145,7 @@ const buildRow = (
     originYear?: number | null;
     originMonth?: number | null;
   } = {},
+  advancePaymentAmount = "0.00",
 ): BulkRefrendRow => ({
   refrend: { ...baseRefrend, id, snapshot_name: name },
   attendance_present: 0,
@@ -177,6 +178,7 @@ const buildRow = (
   advance_paid_amount: advancePaid.amount ?? null,
   advance_paid_origin_year: advancePaid.originYear ?? null,
   advance_paid_origin_month: advancePaid.originMonth ?? null,
+  advance_payment_amount: advancePaymentAmount,
 });
 
 const mountTable = (rows: BulkRefrendRow[]) =>
@@ -1165,5 +1167,31 @@ describe("AprobacionRefrendTable — advance-paid row indicator (sdd/pago-adelan
 
     const headers = wrapper.findAll("th").map((th) => th.text().trim());
     expect(headers).toContain("Pago adelantado");
+  });
+});
+
+describe("AprobacionRefrendTable — origin advance-payment-registered indicator (sdd/pago-adelantado PR8)", () => {
+  // OPPOSITE direction from the PR7a block above: this row is the ORIGIN
+  // refrend that a batch was registered FROM, not a future month settled by
+  // someone else's batch — the two fields can both be non-null on different
+  // rows in the same table at the same time.
+
+  it("renders the registered-advance chip label when advance_payment_amount is non-zero", async () => {
+    const row = buildRow(65, "Origen", 1, 0, false, {}, "500.00");
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Pago adelantado registrado");
+  });
+
+  it("renders the Adelanto registrado column header for a row without a registered batch", async () => {
+    const row = buildRow(66, "Normal", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers).toContain("Adelanto registrado");
   });
 });

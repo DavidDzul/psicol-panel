@@ -203,6 +203,13 @@ export const BASE_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
+  {
+    title: "Adelanto registrado",
+    key: "advance_payment_amount",
+    width: 150,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────
@@ -244,6 +251,31 @@ export const advancePaymentChip = (
     tooltip: origin
       ? `Pago adelantado · lote de ${origin} · ${amount}`
       : `Pago adelantado · ${amount}`,
+  };
+};
+
+// ── Advance payment REGISTERED chip (origin-refrend indicator, PR8) ────────
+//
+// OPPOSITE direction from advancePaymentChip() above: that one marks a row
+// that IS one of the future months pre-created and settled by SOMEONE ELSE'S
+// earlier advance-payment batch (the advance_paid family, PR7a). This one
+// marks a row that itself HAS an advance-payment batch registered FROM it —
+// i.e. this row is the origin refrend, and staff already recorded 1-3 future
+// months as advance-paid against it (RecordAdvancePaymentAction, design D6).
+// Both fields can be non-null on different rows in the same table at the
+// same time; never conflate them. Backend emits advance_payment_amount as a
+// decimal string, "0.00" when nothing is registered — never null (unlike
+// pending_withholding_amount/advance_paid_amount's null-on-nothing
+// convention), so the guard here is a numeric zero check, not truthiness.
+
+export const advancePaymentRegisteredChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  if (Number(row.advance_payment_amount) <= 0) return null;
+  const amount = fmt(row.advance_payment_amount);
+  return {
+    label: "Pago adelantado registrado",
+    tooltip: `+${amount} · Se sumará al monto de esta decisión`,
   };
 };
 

@@ -241,6 +241,18 @@ export interface BulkRefrendRow {
   advance_paid_amount: string | null
   advance_paid_origin_year: number | null
   advance_paid_origin_month: number | null
+  // Row indicator (sdd/pago-adelantado PR8) — OPPOSITE direction from the
+  // advance_paid family above. advance_paid means "this row IS one of the
+  // future months pre-created and settled by SOMEONE ELSE'S earlier
+  // advance-payment batch". advance_payment_amount means "this row itself
+  // HAS an advance-payment batch registered FROM it" — i.e. this row is the
+  // origin refrend, and staff already recorded 1-3 future months as
+  // advance-paid when/if this refrend was resolved (design D6, feeds
+  // total_to_pay). Both fields can be non-null on different rows in the same
+  // table at the same time — never conflate them. Always a decimal string,
+  // "0.00" when nothing is registered — unlike advance_paid_amount, the
+  // backend never emits null here (RefrendBulkQueryService::buildTable()).
+  advance_payment_amount: string
 }
 
 export interface BulkTableParams {
