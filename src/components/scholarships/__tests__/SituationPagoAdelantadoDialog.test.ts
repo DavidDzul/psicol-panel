@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createVuetify } from "vuetify";
+import { VBtn, VSelect } from "vuetify/components";
 import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
 
 // ── Test harness ─────────────────────────────────────────────────────────────
@@ -9,7 +10,10 @@ import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPa
 // v-dialog teleports its content to `document.body` — outside the mounted
 // wrapper's own DOM subtree — so DOM queries go through a `DOMWrapper` over
 // `document.body`, same pattern as SituationPagoMesesDialog.test.ts /
-// SituationRetenidaDialog's siblings.
+// SituationRetenidaDialog's siblings. Year/Month selection is asserted and
+// driven through `VSelect` component wrappers directly (same pattern as
+// ScholarshipFilters.test.ts / ClassCreateDialog.test.ts), not by clicking
+// through Vuetify's actual dropdown DOM.
 
 if (!("visualViewport" in window)) {
   Object.defineProperty(window, "visualViewport", { value: null, writable: true });
@@ -36,8 +40,8 @@ afterEach(() => {
 const body = () => new DOMWrapper(document.body);
 
 // Mounted with `modelValue: false` and flipped to `true` right after — the
-// candidate month list is (re)built on a false→true `watch` transition, same
-// convention as SituationPagoMesesDialog's `load()`.
+// row list is (re)built on a false→true `watch` transition, same convention
+// as SituationPagoMesesDialog's `load()`.
 const mountDialog = async (
   extraProps: Record<string, unknown> = {},
 ): Promise<ReturnType<typeof mount>> => {
@@ -57,6 +61,26 @@ const mountDialog = async (
   return wrapper;
 };
 
+const yearSelects = (w: ReturnType<typeof mount>) =>
+  w.findAllComponents(VSelect).filter((s) => s.props("label") === "Año");
+
+const monthSelects = (w: ReturnType<typeof mount>) =>
+  w.findAllComponents(VSelect).filter((s) => s.props("label") === "Mes");
+
+const setRow = async (
+  w: ReturnType<typeof mount>,
+  rowIndex: number,
+  year: number,
+  month: number,
+): Promise<void> => {
+  await yearSelects(w)[rowIndex]!.vm.$emit("update:modelValue", year);
+  await monthSelects(w)[rowIndex]!.vm.$emit("update:modelValue", month);
+  await w.vm.$nextTick();
+};
+
+const addMonthButton = (w: ReturnType<typeof mount>) =>
+  w.findAllComponents(VBtn).find((b) => b.text() === "Agregar mes");
+
 const clickConfirmar = async (): Promise<void> => {
   const buttons = body().findAll("button");
   const confirmBtn = buttons.find((b) => b.text() === "Confirmar");
@@ -64,55 +88,103 @@ const clickConfirmar = async (): Promise<void> => {
   await confirmBtn.trigger("click");
 };
 
-describe("SituationPagoAdelantadoDialog — candidate months", () => {
-  it("renders septiembre 2026 (origin + 1) as the first candidate, pre-selected", async () => {
-    await mountDialog();
+describe("SituationPagoAdelantadoDialog — default row", () => {
+  it("starts with a single row pre-filled with septiembre 2026 (origin + 1)", async () => {
+    const w = await mountDialog();
 
-    expect(body().text()).toContain("septiembre 2026");
-    const checkboxes = body().findAll('input[type="checkbox"]');
-    expect((checkboxes[0].element as HTMLInputElement).checked).toBe(true);
+    expect(yearSelects(w)).toHaveLength(1);
+    expect(yearSelects(w)[0]!.props("modelValue")).toBe(2026);
+    expect(monthSelects(w)[0]!.props("modelValue")).toBe(9);
   });
 
-  it("does not offer the origin period itself (agosto 2026) as a candidate — advance path requires a strictly future period", async () => {
-    await mountDialog();
+  it("disables the origin period itself (agosto 2026) and anything before it in the month options — advance path requires a strictly future period", async () => {
+    const w = await mountDialog();
 
-    expect(body().text()).not.toContain("agosto 2026");
+    const items = monthSelects(w)[0]!.props("items") as {
+      title: string;
+      value: number;
+      props?: { disabled?: boolean };
+    }[];
+    const august = items.find((i) => i.value === 8);
+    const september = items.find((i) => i.value === 9);
+
+    expect(august?.props?.disabled).toBe(true);
+    expect(september?.props?.disabled ?? false).toBe(false);
+  });
+
+  it("offers years well beyond the next 12 months — a becario can advance-pay periods years into the future", async () => {
+    const w = await mountDialog();
+
+    const items = yearSelects(w)[0]!.props("items") as number[];
+    expect(items).toContain(2030);
   });
 });
 
-describe("SituationPagoAdelantadoDialog — client-side 1-3 cap (UX convenience only, server re-validates)", () => {
-  it("allows selecting up to 3 months", async () => {
-    await mountDialog();
-    const checkboxes = body().findAll('input[type="checkbox"]');
+describe("SituationPagoAdelantadoDialog — free month+year selection (not limited to the next 12 months)", () => {
+  it("lets staff pick an arbitrary far-future month+year on the first row, e.g. junio 2030", async () => {
+    const w = await mountDialog();
 
-    await checkboxes[1].setValue(true);
-    await checkboxes[2].setValue(true);
-    await wrapper!.vm.$nextTick();
+    await setRow(w, 0, 2030, 6);
 
-    expect((checkboxes[0].element as HTMLInputElement).checked).toBe(true);
-    expect((checkboxes[1].element as HTMLInputElement).checked).toBe(true);
-    expect((checkboxes[2].element as HTMLInputElement).checked).toBe(true);
+    expect(yearSelects(w)[0]!.props("modelValue")).toBe(2030);
+    expect(monthSelects(w)[0]!.props("modelValue")).toBe(6);
+  });
+});
+
+describe("SituationPagoAdelantadoDialog — client-side 1-6 cap (UX convenience only, server re-validates)", () => {
+  it("adds a new row via 'Agregar mes', up to 6 rows total", async () => {
+    const w = await mountDialog();
+
+    for (let i = 2; i <= 6; i++) {
+      await addMonthButton(w)?.trigger("click");
+      await w.vm.$nextTick();
+      expect(yearSelects(w)).toHaveLength(i);
+    }
   });
 
-  it("disables further selection once 3 months are already selected", async () => {
-    await mountDialog();
-    const checkboxes = body().findAll('input[type="checkbox"]');
+  it("hides 'Agregar mes' once 6 rows already exist", async () => {
+    const w = await mountDialog();
 
-    await checkboxes[1].setValue(true);
-    await checkboxes[2].setValue(true);
-    await wrapper!.vm.$nextTick();
+    for (let i = 2; i <= 6; i++) {
+      await addMonthButton(w)?.trigger("click");
+      await w.vm.$nextTick();
+    }
 
-    expect((checkboxes[3].element as HTMLInputElement).disabled).toBe(true);
+    expect(addMonthButton(w)).toBeUndefined();
   });
 
-  it("shows a validation message and disables Confirmar when 0 months are selected", async () => {
-    await mountDialog();
-    const checkboxes = body().findAll('input[type="checkbox"]');
+  it("removes a row via its remove button, but never the last remaining row", async () => {
+    const w = await mountDialog();
+    await addMonthButton(w)?.trigger("click");
+    await w.vm.$nextTick();
+    expect(yearSelects(w)).toHaveLength(2);
 
-    await checkboxes[0].setValue(false);
-    await wrapper!.vm.$nextTick();
+    const removeButtons = w
+      .findAllComponents(VBtn)
+      .filter((b) => (b.attributes("aria-label") ?? "").startsWith("Quitar mes"));
+    expect(removeButtons).toHaveLength(2);
 
-    expect(body().text()).toContain("Seleccioná al menos un mes.");
+    await removeButtons[1]!.trigger("click");
+    await w.vm.$nextTick();
+    expect(yearSelects(w)).toHaveLength(1);
+
+    // With a single row left, there is nothing left to remove.
+    const removeButtonsAfter = w
+      .findAllComponents(VBtn)
+      .filter((b) => (b.attributes("aria-label") ?? "").startsWith("Quitar mes"));
+    expect(removeButtonsAfter).toHaveLength(0);
+  });
+});
+
+describe("SituationPagoAdelantadoDialog — validation", () => {
+  it("shows a warning and disables Confirmar when two rows share the same month+year", async () => {
+    const w = await mountDialog();
+    await addMonthButton(w)?.trigger("click");
+    await w.vm.$nextTick();
+
+    await setRow(w, 1, 2026, 9); // same as the row 0 default
+
+    expect(body().text()).toContain("No podés repetir el mismo mes en dos filas.");
     const confirmBtn = body()
       .findAll("button")
       .find((b) => b.text() === "Confirmar");
@@ -134,13 +206,18 @@ describe("SituationPagoAdelantadoDialog — submit payload", () => {
     expect((form.months as unknown[])[0]).not.toHaveProperty("amount");
   });
 
-  it("emits submit with all 3 months in chronological order when 3 are selected", async () => {
+  it("emits submit with far-future and near-future months together, sorted chronologically", async () => {
     const w = await mountDialog();
-    const checkboxes = body().findAll('input[type="checkbox"]');
-
-    await checkboxes[1].setValue(true);
-    await checkboxes[2].setValue(true);
+    await addMonthButton(w)?.trigger("click");
     await w.vm.$nextTick();
+    await addMonthButton(w)?.trigger("click");
+    await w.vm.$nextTick();
+
+    // Row 0 default is 2026-09. Set row 1 to a far-future year, row 2 to a
+    // nearer one — out of chronological order on purpose, to prove the
+    // payload gets sorted regardless of entry order.
+    await setRow(w, 1, 2030, 6);
+    await setRow(w, 2, 2027, 1);
 
     await clickConfirmar();
 
@@ -148,8 +225,8 @@ describe("SituationPagoAdelantadoDialog — submit payload", () => {
     const form = emitted![0][0] as Record<string, unknown>;
     expect(form.months).toEqual([
       { year: 2026, month: 9 },
-      { year: 2026, month: 10 },
-      { year: 2026, month: 11 },
+      { year: 2027, month: 1 },
+      { year: 2030, month: 6 },
     ]);
   });
 
@@ -179,11 +256,12 @@ describe("SituationPagoAdelantadoDialog — submit payload", () => {
 });
 
 describe("SituationPagoAdelantadoDialog — reset on reopen", () => {
-  it("resets selection back to the default (origin+1 only) after closing and reopening", async () => {
+  it("resets back to a single default row after closing and reopening", async () => {
     const w = await mountDialog();
-    const checkboxes = body().findAll('input[type="checkbox"]');
-    await checkboxes[1].setValue(true);
+    await addMonthButton(w)?.trigger("click");
     await w.vm.$nextTick();
+    await setRow(w, 1, 2030, 6);
+    expect(yearSelects(w)).toHaveLength(2);
 
     await w.setProps({ modelValue: false });
     await w.vm.$nextTick();
@@ -191,8 +269,8 @@ describe("SituationPagoAdelantadoDialog — reset on reopen", () => {
     await w.vm.$nextTick();
     await w.vm.$nextTick();
 
-    const reopenedCheckboxes = body().findAll('input[type="checkbox"]');
-    expect((reopenedCheckboxes[0].element as HTMLInputElement).checked).toBe(true);
-    expect((reopenedCheckboxes[1].element as HTMLInputElement).checked).toBe(false);
+    expect(yearSelects(w)).toHaveLength(1);
+    expect(yearSelects(w)[0]!.props("modelValue")).toBe(2026);
+    expect(monthSelects(w)[0]!.props("modelValue")).toBe(9);
   });
 });
