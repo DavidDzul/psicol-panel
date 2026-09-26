@@ -445,6 +445,12 @@
       :period-month="activeRow?.refrend.period_month"
       @submit="onAdvancePaymentSubmit"
     />
+    <AdvanceDivergenceReasonDialog
+      v-model="divergenceDialogOpen"
+      :loading="situationSubmitLoading"
+      @submit="onDivergenceReasonSubmit"
+      @cancel="onDivergenceReasonCancel"
+    />
 
     <ConfirmationDialog ref="confirmationDialog" />
 
@@ -494,6 +500,7 @@ import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
+import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -892,23 +899,67 @@ const onClearResolution = async (item: BulkRefrendRow): Promise<void> => {
   }
 };
 
+// Divergence-reason follow-up (sdd/pago-adelantado, design D4 fix
+// 2026-09-25). recordPaymentSituation() returns status "divergence_required"
+// when staff resolves an already-advance-paid month with a non-zero amount
+// and no reason yet — a real, previously-unimplemented dead end (sdd-verify
+// CRITICAL). A single shared dialog covers all 8 resolution types instead of
+// embedding a conditional field into each one; the original situation
+// dialog stays open underneath while this one is shown.
+const divergenceDialogOpen = ref(false);
+const pendingDivergenceForm = ref<RecordSituationForm | null>(null);
+
 const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   if (!activeRow.value) return;
   situationSubmitLoading.value = true;
   try {
-    await store.recordPaymentSituation(activeRow.value.refrend.id, form);
-    // Close the dialog the user actually opened (activeSituationKey), not
-    // the one inferred from form.resolution_type — SituationPagoMesesDialog
-    // can emit either BECA_MES or SIN_PAGO depending on its "pagar mes en
-    // curso" checkbox, and inferring from SIN_PAGO would close the wrong
-    // (standalone) dialog.
-    if (activeSituationKey.value) {
-      situationDialogs.value[activeSituationKey.value] = false;
-      activeSituationKey.value = null;
+    const result = await store.recordPaymentSituation(activeRow.value.refrend.id, form);
+    if (result.status === "divergence_required") {
+      pendingDivergenceForm.value = form;
+      divergenceDialogOpen.value = true;
+      return;
+    }
+    if (result.status === "success") {
+      // Close the dialog the user actually opened (activeSituationKey), not
+      // the one inferred from form.resolution_type — SituationPagoMesesDialog
+      // can emit either BECA_MES or SIN_PAGO depending on its "pagar mes en
+      // curso" checkbox, and inferring from SIN_PAGO would close the wrong
+      // (standalone) dialog.
+      if (activeSituationKey.value) {
+        situationDialogs.value[activeSituationKey.value] = false;
+        activeSituationKey.value = null;
+      }
     }
   } finally {
     situationSubmitLoading.value = false;
   }
+};
+
+const onDivergenceReasonSubmit = async (reason: string): Promise<void> => {
+  if (!activeRow.value || !pendingDivergenceForm.value) return;
+  situationSubmitLoading.value = true;
+  try {
+    const result = await store.recordPaymentSituation(activeRow.value.refrend.id, {
+      ...pendingDivergenceForm.value,
+      advance_divergence_reason: reason,
+    });
+    if (result.status === "success") {
+      divergenceDialogOpen.value = false;
+      pendingDivergenceForm.value = null;
+      if (activeSituationKey.value) {
+        situationDialogs.value[activeSituationKey.value] = false;
+        activeSituationKey.value = null;
+      }
+    }
+    // On any other result the store already toasted the error — leave both
+    // dialogs open so staff can retry instead of losing their selection.
+  } finally {
+    situationSubmitLoading.value = false;
+  }
+};
+
+const onDivergenceReasonCancel = (): void => {
+  pendingDivergenceForm.value = null;
 };
 
 // Separate from onSituationSubmit: PAGO_ADELANTADO submits an

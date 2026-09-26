@@ -21,6 +21,7 @@ import type {
   PedagogiaResolveForm,
   RefrendPaymentVerifyForm,
   RecordSituationForm,
+  RecordSituationResult,
   ScholarshipWithholding,
   AdvancePaymentForm,
   ScholarshipAdvancePayment,
@@ -621,10 +622,15 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Payment situation ─────────────────────────────────────────────────────
 
+  // Returns a discriminated result instead of throwing/toasting-only on
+  // every failure (sdd/pago-adelantado, design D4 fix 2026-09-25) — the
+  // server's ADVANCE_DIVERGENCE_REQUIRED code must reach the caller
+  // distinctly so it can show AdvanceDivergenceReasonDialog and resubmit,
+  // rather than leaving staff at a dead end with only a generic error toast.
   const recordPaymentSituation = async (
     id: number,
     form: RecordSituationForm,
-  ): Promise<ScholarshipRefrend | undefined> => {
+  ): Promise<RecordSituationResult> => {
     try {
       const res = await axios.post<ScholarshipRefrendResponse>(
         `api/admin/scholarship-refrends/${id}/situation`,
@@ -633,12 +639,18 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       const refrend = _mergeRefrend(res.data.data);
       _mergeBulkRow(refrend);
       showAlert({ title: "Situación registrada.", status: "success" });
-      return refrend;
+      return { status: "success", refrend };
     } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al registrar situación.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
+      if (isAxiosError(error)) {
+        const data = error.response?.data as { msg?: string; code?: string } | undefined;
+        if (data?.code === "ADVANCE_DIVERGENCE_REQUIRED") {
+          return { status: "divergence_required" };
+        }
+        showAlert({ title: data?.msg ?? "Error al registrar situación.", status: "error" });
+        return { status: "error" };
+      }
+      showAlert({ title: "Error de red.", status: "error" });
+      return { status: "error" };
     }
   };
 

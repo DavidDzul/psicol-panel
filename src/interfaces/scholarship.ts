@@ -327,6 +327,19 @@ export interface RecordSituationForm {
   advance_divergence_reason?: string | null
 }
 
+// Discriminated result for scholarshipStore.recordPaymentSituation() (sdd/
+// pago-adelantado, design D4 fix 2026-09-25). Previously this method just
+// toasted a generic error and returned undefined on ANY failure — including
+// the server's ADVANCE_DIVERGENCE_REQUIRED case, which left staff with no
+// way to actually supply the reason and complete the resolution (a genuine
+// dead end, caught by sdd-verify). "divergence_required" lets the caller
+// react by showing AdvanceDivergenceReasonDialog and resubmitting the same
+// form with advance_divergence_reason filled in, instead of dead-ending.
+export type RecordSituationResult =
+  | { status: 'success'; refrend: ScholarshipRefrend }
+  | { status: 'divergence_required' }
+  | { status: 'error' }
+
 // ── Advance payment (pago adelantado) ──────────────────────────────────────
 
 export interface AdvancePaymentMonthInput {

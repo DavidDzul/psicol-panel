@@ -13,13 +13,22 @@ import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDi
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
+import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // recordPaymentSituation/recordAdvancePayment hit axios directly (no
 // repository seam) — mocked at the module boundary so the "close the right
 // dialog" tests below never touch the network. incidenciasRows is read by
 // `cleanDraftIds` on every render regardless of which test runs.
-const recordPaymentSituation = vi.fn().mockResolvedValue(undefined);
+//
+// recordPaymentSituation resolves to a discriminated result (design D4 fix
+// 2026-09-25) — the component reads `.status`, so the default mock must
+// resolve to a shape with one, not bare `undefined` (see the dedicated
+// "divergence-reason follow-up" describe block below for the
+// divergence_required/error branches).
+const recordPaymentSituation = vi
+  .fn()
+  .mockResolvedValue({ status: "success", refrend: {} });
 const recordAdvancePayment = vi.fn().mockResolvedValue(undefined);
 const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
 const approveFullPayment = vi.fn().mockResolvedValue(undefined);
@@ -1217,5 +1226,96 @@ describe("AprobacionRefrendTable — origin advance-payment-registered indicator
       .findComponent(RefrendSituationBar)
       .element.closest("td");
     expect(actionsCell?.textContent).not.toContain("Pago adelantado registrado");
+  });
+});
+
+describe("AprobacionRefrendTable — divergence-reason follow-up (sdd/pago-adelantado, design D4 fix 2026-09-25)", () => {
+  // Previously a MISSING feature (sdd-verify CRITICAL finding): the store
+  // just toasted a generic error on the server's ADVANCE_DIVERGENCE_REQUIRED
+  // 422, with no way for staff to actually supply the reason and complete
+  // the resolution. AdvanceDivergenceReasonDialog closes that gap.
+
+  afterEach(() => {
+    recordPaymentSituation.mockReset();
+    recordPaymentSituation.mockResolvedValue({ status: "success", refrend: {} });
+  });
+
+  it("opens AdvanceDivergenceReasonDialog and keeps the original situation dialog open when the store reports divergence_required", async () => {
+    recordPaymentSituation.mockResolvedValueOnce({ status: "divergence_required" });
+    const row = buildRow(20, "Hugo Divergente", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "SIN_PAGO");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(true);
+
+    await wrapper.findComponent(SituationSinPagoDialog).vm.$emit("submit", {
+      resolution_type: "SIN_PAGO",
+      resolution_cause: "FALTAS_FI",
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(true);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(true);
+  });
+
+  it("resubmits the same form with the entered reason appended, and closes both dialogs on success", async () => {
+    recordPaymentSituation.mockResolvedValueOnce({ status: "divergence_required" });
+    recordPaymentSituation.mockResolvedValueOnce({ status: "success", refrend: {} });
+    const row = buildRow(21, "Inés Retry", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "SIN_PAGO");
+    await wrapper.vm.$nextTick();
+
+    const originalForm = { resolution_type: "SIN_PAGO", resolution_cause: "FALTAS_FI" };
+    await wrapper.findComponent(SituationSinPagoDialog).vm.$emit("submit", originalForm);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper
+      .findComponent(AdvanceDivergenceReasonDialog)
+      .vm.$emit("submit", "Autorizado por dirección.");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(recordPaymentSituation).toHaveBeenLastCalledWith(21, {
+      ...originalForm,
+      advance_divergence_reason: "Autorizado por dirección.",
+    });
+    expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(false);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(false);
+  });
+
+  it("keeps both dialogs open, without losing the pending form, if the retry fails again for an unrelated reason", async () => {
+    recordPaymentSituation.mockResolvedValueOnce({ status: "divergence_required" });
+    recordPaymentSituation.mockResolvedValueOnce({ status: "error" });
+    const row = buildRow(22, "Julia Retry2", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "SIN_PAGO");
+    await wrapper.vm.$nextTick();
+    await wrapper.findComponent(SituationSinPagoDialog).vm.$emit("submit", {
+      resolution_type: "SIN_PAGO",
+      resolution_cause: "FALTAS_FI",
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper
+      .findComponent(AdvanceDivergenceReasonDialog)
+      .vm.$emit("submit", "Motivo cualquiera.");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(true);
+    expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(true);
   });
 });
