@@ -100,9 +100,31 @@ export const statusChip = (
 // Mirrors administration-panel's resolutionMeta.ts chip (icon+color+visible
 // label) for the same 8 resolution_type values.
 
+// resolution_type stays null for a refrend approved via the quick "Aprobar"
+// path when nothing was forgiven (ApproveFullPaymentAction only tags
+// BECA_MES when an attendance penalty was actually forgiven). That does NOT
+// always mean 100% — an active academic discount is kept (not touched) by
+// that action — so the fallback below derives the real outcome from
+// discount_percentage instead of assuming full payment (live user report
+// 2026-09-27: showing a blanket "100%" would misreport a row actually paid
+// at a discount).
 export const finalResolutionChip = (
   refrend: BulkRefrendRow["refrend"],
-): { label: string; color: string; icon: string } | null => _resolutionTypeMeta(refrend);
+): { label: string; color: string; icon: string } | null => {
+  const explicit = _resolutionTypeMeta(refrend);
+  if (explicit) return explicit;
+  if (refrend.resolution_type !== null) return null;
+
+  const discountPct = Number(refrend.discount_percentage ?? 0);
+  if (discountPct > 0) {
+    return {
+      label: `Descuento académico ${discountPct}%`,
+      color: "blue",
+      icon: "mdi-school-outline",
+    };
+  }
+  return { label: "Pago sin penalización", color: "green", icon: "mdi-cash-check" };
+};
 
 // ── Resolution cause label ────────────────────────────────────────────────────
 

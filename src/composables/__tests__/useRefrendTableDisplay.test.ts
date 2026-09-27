@@ -252,9 +252,29 @@ describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-r
 });
 
 describe("useRefrendTableDisplay — finalResolutionChip", () => {
-  it("returns null when resolution_type is null", () => {
-    const row = buildRow({ resolution_type: null });
-    expect(finalResolutionChip(row.refrend)).toBeNull();
+  // resolution_type stays null for a refrend approved via the quick
+  // "Aprobar" path when nothing was forgiven (ApproveFullPaymentAction) —
+  // that does NOT always mean 100%: an active academic discount is kept
+  // (not touched) by that action, so the chip must be derived from the
+  // real discount_percentage instead of assuming full payment (live user
+  // report 2026-09-27 — showing "100%" unconditionally would be a false
+  // claim for a row that was actually paid at a discount).
+  it("falls back to a clean-payment chip when resolution_type is null and discount_percentage is 0", () => {
+    const row = buildRow({ resolution_type: null, discount_percentage: "0" });
+    expect(finalResolutionChip(row.refrend)).toEqual({
+      label: "Pago sin penalización",
+      color: "green",
+      icon: "mdi-cash-check",
+    });
+  });
+
+  it("falls back to an academic-discount chip when resolution_type is null but discount_percentage is non-zero", () => {
+    const row = buildRow({ resolution_type: null, discount_percentage: "20" });
+    expect(finalResolutionChip(row.refrend)).toEqual({
+      label: "Descuento académico 20%",
+      color: "blue",
+      icon: "mdi-school-outline",
+    });
   });
 
   it("returns the resolution chip even when workflow_status is CLOSED (Pagado) — unlike statusChip", () => {

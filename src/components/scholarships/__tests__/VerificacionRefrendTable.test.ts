@@ -488,10 +488,16 @@ describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only)', 
     expect(tooltip.props("text")).toContain("Faltas a F.I.");
   });
 
-  it('shows a dash for a Pagado row with no resolution_type (e.g. plain "BECA_MES")', async () => {
+  // Corrected 2026-09-27 (live user report): a Pagado row with
+  // resolution_type null (the quick "Aprobar" path when nothing was
+  // forgiven) is NOT nothing to show — it's a real outcome, derived from
+  // discount_percentage instead of assuming 100% (see
+  // finalResolutionChip's fallback in useRefrendTableDisplay.ts).
+  it('shows "Pago sin penalización" for a Pagado row with no resolution_type and no discount', async () => {
     const row = buildRow(35, "Pagado Sin Resolucion", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = null;
+    row.refrend.discount_percentage = "0";
     const wrapper = mountTable([row], "incidencias");
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
@@ -501,7 +507,21 @@ describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only)', 
     // find the actual data row by its content instead.
     const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("Pagado Sin Resolucion"));
     const cells = dataRow!.findAll("td");
-    expect(cells[cells.length - 1].text()).toBe("—");
+    expect(cells[cells.length - 1].text()).toBe("Pago sin penalización");
+  });
+
+  it('shows the academic-discount chip for a Pagado row with no resolution_type but a kept academic discount', async () => {
+    const row = buildRow(37, "Pagado Con Descuento Academico", 1);
+    row.refrend.workflow_status = "CLOSED";
+    row.refrend.resolution_type = null;
+    row.refrend.discount_percentage = "20";
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("Pagado Con Descuento Academico"));
+    const cells = dataRow!.findAll("td");
+    expect(cells[cells.length - 1].text()).toBe("Descuento académico 20%");
   });
 
   it("shows nothing (dash) for a non-paid row, even with a resolution_type set", async () => {
