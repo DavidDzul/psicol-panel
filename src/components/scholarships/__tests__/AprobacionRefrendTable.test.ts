@@ -1319,3 +1319,35 @@ describe("AprobacionRefrendTable — divergence-reason follow-up (sdd/pago-adela
     expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(true);
   });
 });
+
+describe('AprobacionRefrendTable — "Final" column shows the advance-payment breakdown (live user report, 2026-09-27)', () => {
+  // The "Final" column only showed the final_amount + extra = total_to_pay
+  // breakdown for the amount_pending_from_previous and
+  // refund_amount_from_previous cases — there was no branch at all for
+  // advance_payment_amount, so a row with ONLY an advance payment registered
+  // (no retention, no refund) silently fell through to showing just
+  // final_amount, hiding the advance amount even though total_to_pay itself
+  // was already computed correctly server-side.
+
+  it("shows final_amount + advance amount = total_to_pay when advance_payment_amount is the only extra present", async () => {
+    const row = buildRow(23, "Karla Adelanto", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      final_amount: "1200.00",
+      amount_pending_from_previous: "0",
+      refund_amount_from_previous: "0",
+      advance_payment_amount: "3600.00",
+      total_to_pay: "4800.00",
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const finalCell = wrapper
+      .findAll("td")
+      .find((td) => td.text().includes("$1,200.00"));
+    expect(finalCell).toBeTruthy();
+    expect(finalCell!.text()).toContain("adelanto");
+    expect(finalCell!.text()).toContain("$4,800.00");
+  });
+});

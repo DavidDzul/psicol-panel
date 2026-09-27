@@ -326,6 +326,22 @@
               = {{ fmt(item.refrend.total_to_pay) }}
             </span>
           </template>
+          <!-- Bug found via live user report (2026-09-27): this column had
+               no branch at all for advance_payment_amount, so a row with
+               ONLY an advance payment registered (no retención/reembolso)
+               silently showed just final_amount — total_to_pay itself was
+               already correct server-side, this was purely a missing
+               display case. -->
+          <template
+            v-else-if="Number(item.refrend.advance_payment_amount) > 0"
+          >
+            <span class="text-caption text-deep-purple-darken-1">
+              + {{ fmt(item.refrend.advance_payment_amount) }} adelanto
+            </span>
+            <span class="text-caption font-weight-bold text-deep-purple-darken-2">
+              = {{ fmt(item.refrend.total_to_pay) }}
+            </span>
+          </template>
         </div>
       </template>
 
