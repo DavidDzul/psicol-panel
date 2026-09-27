@@ -31,7 +31,11 @@ const recordPaymentSituation = vi
   .mockResolvedValue({ status: "success", refrend: {} });
 const recordAdvancePayment = vi.fn().mockResolvedValue(undefined);
 const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
-const approveFullPayment = vi.fn().mockResolvedValue(undefined);
+// approveFullPayment resolves to a discriminated result too (design D4 fix
+// 2026-09-27 — see the dedicated "divergence-reason follow-up" describe
+// block below for the divergence_required/error branches), same reasoning
+// as recordPaymentSituation's default mock above.
+const approveFullPayment = vi.fn().mockResolvedValue({ status: "success", refrend: {} });
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
     incidenciasRows: [],
@@ -1366,5 +1370,66 @@ describe('AprobacionRefrendTable — "Final" column shows the advance-payment br
     expect(finalCell).toBeTruthy();
     expect(finalCell!.text()).toContain("adelanto");
     expect(finalCell!.text()).toContain("$4,800.00");
+  });
+});
+
+describe("AprobacionRefrendTable — divergence-reason follow-up via the quick approve-full path (live bug report 2026-09-27)", () => {
+  // The quick "Aprobar" menu item is staff's most natural way to approve at
+  // 100% — it calls a DIFFERENT store method (approveFullPayment, not
+  // recordPaymentSituation) that used to bypass advance-payment
+  // reconciliation entirely. It must now react to divergence_required the
+  // same way onSituationSubmit does, sharing the same dialog.
+
+  afterEach(() => {
+    approveFullPayment.mockReset();
+    approveFullPayment.mockResolvedValue({ status: "success", refrend: {} });
+  });
+
+  const confirmApproveFullDialog = async (wrapper: ReturnType<typeof mountTable>): Promise<void> => {
+    const btn = body()
+      .findAll("button")
+      .find((b) => b.text().trim() === "Confirmar");
+    if (!btn) throw new Error('Confirmar button not found');
+    await btn.trigger("click");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  };
+
+  it("opens AdvanceDivergenceReasonDialog when approve-full reports divergence_required", async () => {
+    approveFullPayment.mockResolvedValueOnce({ status: "divergence_required" });
+    const row = buildRow(70, "Karen Adelanto Aprobar", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    await confirmApproveFullDialog(wrapper);
+
+    expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(true);
+  });
+
+  it("resubmits via approveFullPayment with the entered reason, and closes the dialog on success", async () => {
+    approveFullPayment.mockResolvedValueOnce({ status: "divergence_required" });
+    approveFullPayment.mockResolvedValueOnce({ status: "success", refrend: {} });
+    const row = buildRow(71, "Luis Adelanto Aprobar", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    wrapper.findComponent(RefrendSituationBar).vm.$emit("approve-full");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    await confirmApproveFullDialog(wrapper);
+
+    await wrapper
+      .findComponent(AdvanceDivergenceReasonDialog)
+      .vm.$emit("submit", "Autorizado por dirección.");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(approveFullPayment).toHaveBeenLastCalledWith(71, "Autorizado por dirección.");
+    expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(false);
   });
 });

@@ -900,8 +900,17 @@ const onApproveFullPayment = async (item: BulkRefrendRow): Promise<void> => {
   if (!confirmed) return;
 
   situationLoadingId.value = item.refrend.id;
+  // Needed so onDivergenceReasonSubmit (shared with onSituationSubmit) knows
+  // which refrend to resubmit against if the server reports
+  // divergence_required — this path never opens a situation dialog itself,
+  // so activeRow would otherwise stay stale/unset.
+  activeRow.value = item;
   try {
-    await store.approveFullPayment(item.refrend.id);
+    const result = await store.approveFullPayment(item.refrend.id);
+    if (result.status === "divergence_required") {
+      pendingDivergenceAction.value = { kind: "approve-full" };
+      divergenceDialogOpen.value = true;
+    }
   } finally {
     situationLoadingId.value = null;
   }
@@ -917,14 +926,19 @@ const onClearResolution = async (item: BulkRefrendRow): Promise<void> => {
 };
 
 // Divergence-reason follow-up (sdd/pago-adelantado, design D4 fix
-// 2026-09-25). recordPaymentSituation() returns status "divergence_required"
-// when staff resolves an already-advance-paid month with a non-zero amount
-// and no reason yet — a real, previously-unimplemented dead end (sdd-verify
-// CRITICAL). A single shared dialog covers all 8 resolution types instead of
-// embedding a conditional field into each one; the original situation
-// dialog stays open underneath while this one is shown.
+// 2026-09-25, extended 2026-09-27 to cover approve-full too — see below).
+// recordPaymentSituation()/approveFullPayment() return status
+// "divergence_required" when staff resolves an already-advance-paid month
+// with a non-zero amount and no reason yet — a real, previously-
+// unimplemented dead end (sdd-verify CRITICAL). A single shared dialog
+// covers both entry points instead of embedding a conditional field into
+// each one; the original situation dialog (when there is one) stays open
+// underneath while this one is shown.
 const divergenceDialogOpen = ref(false);
-const pendingDivergenceForm = ref<RecordSituationForm | null>(null);
+type PendingDivergenceAction =
+  | { kind: "situation"; form: RecordSituationForm }
+  | { kind: "approve-full" };
+const pendingDivergenceAction = ref<PendingDivergenceAction | null>(null);
 
 const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   if (!activeRow.value) return;
@@ -932,7 +946,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
   try {
     const result = await store.recordPaymentSituation(activeRow.value.refrend.id, form);
     if (result.status === "divergence_required") {
-      pendingDivergenceForm.value = form;
+      pendingDivergenceAction.value = { kind: "situation", form };
       divergenceDialogOpen.value = true;
       return;
     }
@@ -953,16 +967,20 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
 };
 
 const onDivergenceReasonSubmit = async (reason: string): Promise<void> => {
-  if (!activeRow.value || !pendingDivergenceForm.value) return;
+  if (!activeRow.value || !pendingDivergenceAction.value) return;
+  const action = pendingDivergenceAction.value;
   situationSubmitLoading.value = true;
   try {
-    const result = await store.recordPaymentSituation(activeRow.value.refrend.id, {
-      ...pendingDivergenceForm.value,
-      advance_divergence_reason: reason,
-    });
+    const result =
+      action.kind === "situation"
+        ? await store.recordPaymentSituation(activeRow.value.refrend.id, {
+            ...action.form,
+            advance_divergence_reason: reason,
+          })
+        : await store.approveFullPayment(activeRow.value.refrend.id, reason);
     if (result.status === "success") {
       divergenceDialogOpen.value = false;
-      pendingDivergenceForm.value = null;
+      pendingDivergenceAction.value = null;
       if (activeSituationKey.value) {
         situationDialogs.value[activeSituationKey.value] = false;
         activeSituationKey.value = null;
@@ -976,7 +994,7 @@ const onDivergenceReasonSubmit = async (reason: string): Promise<void> => {
 };
 
 const onDivergenceReasonCancel = (): void => {
-  pendingDivergenceForm.value = null;
+  pendingDivergenceAction.value = null;
 };
 
 // Separate from onSituationSubmit: PAGO_ADELANTADO submits an

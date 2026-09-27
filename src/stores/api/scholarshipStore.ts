@@ -581,20 +581,41 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Approve actions ──────────────────────────────────────────────────────
 
-  const approveFullPayment = async (id: number): Promise<ScholarshipRefrend | undefined> => {
+  // Returns a discriminated result, same contract as recordPaymentSituation
+  // (sdd/pago-adelantado fix 2026-09-27): this is staff's most natural way
+  // to approve at 100%, and it went through a DIFFERENT backend action
+  // (ApproveFullPaymentAction) that used to bypass advance-payment
+  // reconciliation entirely — a live bug report (approving an arrived
+  // advance-paid month silently succeeded with no reason, no audit trail).
+  // The backend now shares the same ADVANCE_DIVERGENCE_REQUIRED code via
+  // AdvancePaymentReconciler, so this must surface it the same way.
+  const approveFullPayment = async (
+    id: number,
+    advanceDivergenceReason?: string,
+  ): Promise<RecordSituationResult> => {
     try {
       const res = await axios.post<ScholarshipRefrendResponse>(
         `api/admin/scholarship-refrends/${id}/approve-full`,
+        advanceDivergenceReason ? { advance_divergence_reason: advanceDivergenceReason } : {},
       );
       const refrend = _mergeRefrend(res.data.data);
       _mergeBulkRow(refrend, { has_retardos_discount: false, has_falta_discount: false });
       showAlert({ title: "Pago sin descuento por faltas aplicado.", status: "success" });
-      return refrend;
+      return { status: "success", refrend };
     } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { message?: string })?.message ?? "Error al aplicar el pago sin descuento por faltas.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
+      if (isAxiosError(error)) {
+        const data = error.response?.data as { message?: string; code?: string } | undefined;
+        if (data?.code === "ADVANCE_DIVERGENCE_REQUIRED") {
+          return { status: "divergence_required" };
+        }
+        showAlert({
+          title: data?.message ?? "Error al aplicar el pago sin descuento por faltas.",
+          status: "error",
+        });
+        return { status: "error" };
+      }
+      showAlert({ title: "Error de red.", status: "error" });
+      return { status: "error" };
     }
   };
 
