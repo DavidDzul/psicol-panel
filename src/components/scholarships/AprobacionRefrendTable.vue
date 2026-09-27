@@ -606,7 +606,8 @@ const displayRows = computed(() => {
             r.incidents_count > 0 ||
             r.pending_withholding_count > 0 ||
             r.has_falta_discount ||
-            r.has_retardos_discount,
+            r.has_retardos_discount ||
+            r.advance_paid,
         );
   if (advancePaymentOnly.value) {
     rows = rows.filter((r) => r.advance_payment_eligible);

@@ -207,11 +207,15 @@ const mountTable = (rows: BulkRefrendRow[]) =>
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
 // spec "Criterio de inclusión de filas en Aprobación": incidents_count > 0 OR
-// pending_withholding_count > 0 OR has_falta_discount OR has_retardos_discount.
-// The last two are deliberately the *already-applied* discount flags, not a
-// raw "1 retardo sin consumir todavía" signal — a single unconsumed retardo
-// isn't a chargeable event yet (needs 2 to fire the discount), so it must
-// stay invisible here (see AttendancePenaltyService::applyPenaltyIfDue).
+// pending_withholding_count > 0 OR has_falta_discount OR has_retardos_discount
+// OR advance_paid. The discount flags are deliberately the *already-applied*
+// ones, not a raw "1 retardo sin consumir todavía" signal — a single
+// unconsumed retardo isn't a chargeable event yet (needs 2 to fire the
+// discount), so it must stay invisible here (see
+// AttendancePenaltyService::applyPenaltyIfDue). advance_paid was added
+// 2026-09-27 (user request): an arrived advance-paid month needs the same
+// visibility as a pending withholding or a falta, or staff working from this
+// default view could miss resolving it.
 
 describe("AprobacionRefrendTable — row filter", () => {
   it("includes a row with an incidencia and no pending withholding (preexisting behavior)", async () => {
@@ -259,6 +263,19 @@ describe("AprobacionRefrendTable — row filter", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.text()).toContain("Gina Retardos");
+  });
+
+  // User request (2026-09-27): a refrend that IS one of the future advance-
+  // paid months, arrived, must surface here just like a pending withholding
+  // or a falta — otherwise staff working from the default "Con incidencias"
+  // view (this filter) would never see it and could miss resolving it.
+  it("includes a row with advance_paid=true and none of the other criteria (new behavior)", async () => {
+    const row = buildRow(63, "Ines Adelanto Llegado", 0, 0, false, { paid: true, amount: "1200.00", originYear: 2026, originMonth: 9 });
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Ines Adelanto Llegado");
   });
 
   it("excludes a row with a single unconsumed retardo — semester_lates_unconsumed=1 never fires the discount, so it must not surface here", async () => {
