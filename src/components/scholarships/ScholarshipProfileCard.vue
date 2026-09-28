@@ -200,52 +200,52 @@
     <!-- Formulario inline -->
     <v-form v-if="editing" ref="formRef" @submit.prevent="onSave">
       <v-row class="pa-2">
-        <!-- Datos de beca -->
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="form.scholarship_type"
-            :items="typeOptions"
-            label="Tipo de beca *"
-            variant="outlined"
-            density="compact"
-            :rules="[required]"
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-text-field
-            v-model.number="form.monthly_amount"
-            label="Monto mensual *"
-            type="number"
-            min="0"
-            step="0.01"
-            variant="outlined"
-            density="compact"
-            prefix="$"
-            :rules="[required, positiveNumber]"
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-text-field
-            v-model.number="form.monto_apoyo"
-            label="Apoyo adicional"
-            type="number"
-            min="0"
-            step="0.01"
-            variant="outlined"
-            density="compact"
-            prefix="$"
-            clearable
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-switch
-            v-model="form.advance_payment_eligible"
-            :label="advancePaymentLabel"
-            color="primary"
-            density="compact"
-            hide-details
-            inset
-          />
+        <!-- Configuración de beca (tipo, montos, elegibilidad CERT): ahora
+             administrada exclusivamente desde administration-panel — se
+             muestra aquí solo como texto de solo lectura, sin controles de
+             edición (ver PUT scholarship-profiles/{userId}/config). -->
+        <v-col v-if="profile" cols="12">
+          <div class="d-flex align-center ga-6 flex-wrap mb-2">
+            <div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Tipo de beca
+              </div>
+              <v-chip label color="primary" variant="tonal">
+                <v-icon start>mdi-school-outline</v-icon>
+                {{ profile.scholarship_type }}
+              </v-chip>
+            </div>
+            <div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                Monto mensual
+              </div>
+              <div class="text-body-1 font-weight-medium">
+                {{ fmt(profile.monthly_amount) }}
+              </div>
+            </div>
+            <div v-if="profile.monto_apoyo && Number(profile.monto_apoyo) > 0">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Apoyo adicional
+              </div>
+              <div class="text-body-1 font-weight-medium">
+                {{ fmt(profile.monto_apoyo) }}
+              </div>
+            </div>
+            <v-chip
+              v-if="profile.advance_payment_eligible"
+              label
+              color="secondary"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-check-circle-outline</v-icon>
+              {{ advancePaymentLabel }}
+            </v-chip>
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            La configuración de beca la administra el equipo de
+            Administración.
+          </div>
         </v-col>
         <v-col cols="12">
           <v-divider class="mb-1" />
@@ -396,7 +396,6 @@ import ScholarshipTemporaryIncreaseSection from "@/components/scholarships/Schol
 import type {
   ScholarshipProfile,
   ScholarshipProfileForm,
-  ScholarshipType,
 } from "@/interfaces/scholarship";
 import dayjs from "dayjs";
 
@@ -421,14 +420,12 @@ const reticulaUrl = computed(() =>
 // Single source of truth for the visible copy of `advance_payment_eligible` —
 // today's eligibility criterion is CERT university affiliation, but the
 // field itself is generic. Relabeling later means editing this one string.
-const advancePaymentLabel = computed(() => "¿Estudia en la universidad CERT?");
+const advancePaymentLabel = computed(
+  () => "¿Estudia en el CERT de Mérida o UNID Tizimín?",
+);
 
 const emptyForm = () => ({
   user_id: props.userId,
-  scholarship_type: "IU" as ScholarshipType,
-  monthly_amount: 0,
-  monto_apoyo: null as number | null,
-  advance_payment_eligible: false,
   active_discount_percentage: null as number | null,
   discount_reason: null as string | null,
   discount_valid_from: null as string | null,
@@ -477,13 +474,6 @@ onMounted(async () => {
 
 const startEdit = (): void => {
   if (profile.value) {
-    form.scholarship_type = profile.value.scholarship_type;
-    form.monthly_amount = Number(profile.value.monthly_amount);
-    form.monto_apoyo = profile.value.monto_apoyo
-      ? Number(profile.value.monto_apoyo)
-      : null;
-    form.advance_payment_eligible =
-      profile.value.advance_payment_eligible ?? false;
     form.active_discount_percentage = profile.value.active_discount_percentage
       ? Number(profile.value.active_discount_percentage)
       : null;
@@ -532,10 +522,6 @@ const buildProfilePayload = (
   withReplace: boolean,
 ): ScholarshipProfileForm => ({
   user_id: form.user_id,
-  scholarship_type: form.scholarship_type,
-  monthly_amount: form.monthly_amount,
-  monto_apoyo: form.monto_apoyo,
-  advance_payment_eligible: form.advance_payment_eligible,
   active_discount_percentage: form.active_discount_percentage,
   discount_reason: form.discount_reason,
   discount_valid_from: form.discount_valid_from,
@@ -612,9 +598,6 @@ const discountStartBeforeEnd = (v: string): boolean | string => {
   );
 };
 
-const positiveNumber = (v: number): boolean | string =>
-  v > 0 || "Debe ser mayor a 0.";
-
 const afterStart = (v: string): boolean | string => {
   if (!v || !form.reticula_start_date) return true;
   return v > form.reticula_start_date || "Debe ser posterior al inicio.";
@@ -630,8 +613,4 @@ const fmt = (value: string | number): string =>
     Number(value),
   );
 
-const typeOptions: { title: string; value: ScholarshipType }[] = [
-  { title: "IU", value: "IU" },
-  { title: "TELMEX", value: "TELMEX" },
-];
 </script>

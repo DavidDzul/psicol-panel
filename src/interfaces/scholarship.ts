@@ -470,10 +470,6 @@ export interface AttendanceSummary {
 
 export interface ScholarshipProfileForm {
   user_id: number
-  scholarship_type: ScholarshipType
-  monthly_amount: number
-  monto_apoyo?: number | null
-  advance_payment_eligible?: boolean
   active_discount_percentage?: number | null
   discount_reason?: string | null
   discount_valid_from?: string | null

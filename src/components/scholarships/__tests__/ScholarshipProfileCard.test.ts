@@ -100,10 +100,17 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
-  it("pre-fills the switch from the existing profile value when editing starts", async () => {
+describe("ScholarshipProfileCard — config fields are read-only", () => {
+  // Spec: "psicol-panel displays the 4 fields as read-only" — scholarship_type,
+  // monthly_amount, monto_apoyo, and advance_payment_eligible must render as
+  // read-only text (current values still visible) in edit mode too, with no
+  // input control of any kind for them.
+  it("renders the 4 config fields as plain read-only text in edit mode, not as inputs", async () => {
     fetchProfile.mockResolvedValueOnce({
       ...baseProfile,
+      scholarship_type: "TELMEX",
+      monthly_amount: "1500",
+      monto_apoyo: "200",
       advance_payment_eligible: true,
     });
     const wrapper = mountCard();
@@ -112,32 +119,35 @@ describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
     await wrapper.find("button").trigger("click"); // "Editar perfil"
     await wrapper.vm.$nextTick();
 
-    const checkbox = wrapper.find('input[type="checkbox"]');
-    expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    expect(
+      wrapper
+        .findAllComponents({ name: "VSelect" })
+        .find((s) => (s.props("label") as string | undefined)?.startsWith("Tipo de beca")),
+    ).toBeUndefined();
+    expect(fieldByLabel(wrapper, "Monto mensual")).toBeUndefined();
+    expect(fieldByLabel(wrapper, "Apoyo adicional")).toBeUndefined();
+    expect(wrapper.findAllComponents({ name: "VSwitch" }).length).toBe(0);
+
+    expect(wrapper.text()).toContain("TELMEX");
+    expect(wrapper.text()).toContain("$1,500.00");
+    expect(wrapper.text()).toContain("$200.00");
+    expect(wrapper.text()).toContain(
+      "¿Estudia en el CERT de Mérida o UNID Tizimín?",
+    );
   });
 
-  it("sends the toggled value in the saveProfile payload", async () => {
-    fetchProfile.mockResolvedValueOnce({
-      ...baseProfile,
-      advance_payment_eligible: false,
-    });
-    saveProfile.mockResolvedValueOnce({
-      ...baseProfile,
-      advance_payment_eligible: true,
-    });
-    uploadReticula.mockResolvedValueOnce({
-      ...baseProfile,
-      advance_payment_eligible: true,
-    });
+  // Load-bearing correction from design D4: the backend's new `prohibited`
+  // rule 422s if any of the 4 keys are present, on BOTH create and update.
+  it("does not send the 4 config fields in the saveProfile payload when updating an existing profile", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    saveProfile.mockResolvedValueOnce({ ...baseProfile });
+    uploadReticula.mockResolvedValueOnce({ ...baseProfile });
 
     const wrapper = mountCard();
     await flushPromises();
 
     await wrapper.find("button").trigger("click"); // "Editar perfil"
     await wrapper.vm.$nextTick();
-
-    const checkbox = wrapper.find('input[type="checkbox"]');
-    await checkbox.setValue(true);
 
     // DOM order of type="date" inputs: [0] "Descuento vigente desde", [1]
     // "Descuento vigente hasta", [2] "Vigente desde" (aumento temporal), [3]
@@ -151,14 +161,41 @@ describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
 
-    expect(saveProfile).toHaveBeenCalledWith(
-      expect.objectContaining<Partial<ScholarshipProfileForm>>({
-        advance_payment_eligible: true,
-      }),
-    );
+    expect(saveProfile).toHaveBeenCalledTimes(1);
+    const payload = saveProfile.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("scholarship_type");
+    expect(payload).not.toHaveProperty("monthly_amount");
+    expect(payload).not.toHaveProperty("monto_apoyo");
+    expect(payload).not.toHaveProperty("advance_payment_eligible");
   });
 
-  it("shows the CERT chip in the read view when the flag is true", async () => {
+  it("does not send the 4 config fields in the saveProfile payload when creating a new profile", async () => {
+    fetchProfile.mockResolvedValueOnce(null);
+    saveProfile.mockResolvedValueOnce({ ...baseProfile });
+    uploadReticula.mockResolvedValueOnce({ ...baseProfile });
+
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await wrapper.find("button").trigger("click"); // "Configurar"
+    await wrapper.vm.$nextTick();
+
+    const dateInputs = wrapper.findAll('input[type="date"]');
+    await dateInputs[4].setValue("2026-01-01");
+    await dateInputs[5].setValue("2026-06-01");
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(saveProfile).toHaveBeenCalledTimes(1);
+    const payload = saveProfile.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("scholarship_type");
+    expect(payload).not.toHaveProperty("monthly_amount");
+    expect(payload).not.toHaveProperty("monto_apoyo");
+    expect(payload).not.toHaveProperty("advance_payment_eligible");
+  });
+
+  it("shows the CERT label in the read view when the flag is true", async () => {
     fetchProfile.mockResolvedValueOnce({
       ...baseProfile,
       advance_payment_eligible: true,
@@ -166,10 +203,12 @@ describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
     const wrapper = mountCard();
     await flushPromises();
 
-    expect(wrapper.text()).toContain("¿Estudia en la universidad CERT?");
+    expect(wrapper.text()).toContain(
+      "¿Estudia en el CERT de Mérida o UNID Tizimín?",
+    );
   });
 
-  it("hides the CERT chip in the read view when the flag is false", async () => {
+  it("hides the CERT label in the read view when the flag is false", async () => {
     fetchProfile.mockResolvedValueOnce({
       ...baseProfile,
       advance_payment_eligible: false,
@@ -177,7 +216,9 @@ describe("ScholarshipProfileCard — advance_payment_eligible switch", () => {
     const wrapper = mountCard();
     await flushPromises();
 
-    expect(wrapper.text()).not.toContain("¿Estudia en la universidad CERT?");
+    expect(wrapper.text()).not.toContain(
+      "¿Estudia en el CERT de Mérida o UNID Tizimín?",
+    );
   });
 });
 
