@@ -1,6 +1,10 @@
 // ── Enums ──────────────────────────────────────────────────────────────────
 
-export type ScholarshipType = 'IU' | 'TELMEX'
+// `TELMEX_IU` added by sdd/scholarship-telmex-iu-split (spec "TELMEX_IU
+// scholarship type"). psicol-panel stays strictly read-only for this and
+// `iu_payment_amount` below — see ScholarshipProfileCard.vue's read-only
+// config block (sdd/scholarship-profile-config-to-admin).
+export type ScholarshipType = 'IU' | 'TELMEX' | 'TELMEX_IU'
 
 export type RefrendType = 'NORMAL' | 'RETENCION' | 'REEMBOLSO'
 
@@ -83,6 +87,13 @@ export interface ScholarshipProfile {
   scholarship_type: ScholarshipType
   monthly_amount: string
   monto_apoyo: string | null
+  // "Pago IU" — only meaningful when scholarship_type is TELMEX_IU, `null`
+  // otherwise (backend nulls it on switch-away, see
+  // ScholarshipProfileController::updateConfig()). A `decimal:2` cast,
+  // serializes as a STRING like monthly_amount/monto_apoyo. Read-only here —
+  // never part of ScholarshipProfileForm, this field is admin-managed only
+  // (see administration-panel's ScholarshipProfileConfig).
+  iu_payment_amount: string | null
   temporary_increase_amount: string | null
   temporary_increase_valid_from: string | null
   temporary_increase_valid_until: string | null
