@@ -994,6 +994,76 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(values[1]).toBe(1000);
   });
 
+  // sdd/scholarship-telmex-iu-split follow-up: "Monto mensual" only
+  // reconstructs a real value for IU, where gross = monthly + apoyo +
+  // increase. For TELMEX_IU, gross = iu_payment_amount + increase and
+  // monto_apoyo is Telmex-covered bookkeeping never part of gross — the old
+  // type-blind subtraction produced a number matching no real field
+  // (reported live: Pago IU 350, Apoyo 100 → showed "250", not derived from
+  // anything real). "Monto mensual" must show "—" for non-IU types instead.
+  it('shows "Monto mensual" as "—" for a TELMEX_IU refrend (the derivation only applies to IU)', async () => {
+    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['monthly_amount']))
+    const row = buildRow(50, 'Telmex IU Sin Monto Mensual', 1, 0)
+    row.refrend = {
+      ...row.refrend,
+      snapshot_scholarship_type: 'TELMEX_IU',
+      snapshot_gross_amount: '350',
+      snapshot_monto_apoyo: '100',
+      snapshot_temporary_increase_amount: null,
+      final_amount: '350',
+    }
+    const wrapper = mountTable([row])
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    const rowEl = findRowByText(wrapper, 'Telmex IU Sin Monto Mensual')
+    expect(rowEl.text()).toContain('—')
+    expect(rowEl.text()).not.toContain(fmt(250))
+  })
+
+  it('shows "Pago IU" as gross - aumento temporal for a TELMEX_IU refrend', async () => {
+    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['iu_payment_amount']))
+    const row = buildRow(51, 'Telmex IU Con Pago IU', 1, 0)
+    row.refrend = {
+      ...row.refrend,
+      snapshot_scholarship_type: 'TELMEX_IU',
+      snapshot_gross_amount: '550',
+      snapshot_monto_apoyo: '100',
+      snapshot_temporary_increase_amount: '200',
+      final_amount: '550',
+    }
+    const wrapper = mountTable([row])
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    // 550 - 200 = 350
+    expect(wrapper.text()).toContain(fmt(350))
+  })
+
+  it('shows both "Monto mensual" and "Pago IU" as "—" for a pure TELMEX refrend', async () => {
+    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['monthly_amount', 'iu_payment_amount']))
+    const row = buildRow(52, 'Telmex Puro', 1, 0)
+    row.refrend = {
+      ...row.refrend,
+      snapshot_scholarship_type: 'TELMEX',
+      snapshot_gross_amount: '0',
+      snapshot_monto_apoyo: '200',
+      snapshot_temporary_increase_amount: null,
+      final_amount: '0',
+    }
+    const wrapper = mountTable([row])
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    const rowEl = findRowByText(wrapper, 'Telmex Puro')
+    // Row has other unrelated "—" cells (e.g. resolution_cause) outside the
+    // two toggled optional columns, so this asserts at least those two
+    // render "—" rather than a wrong derived amount — not an exact count.
+    const dashCount = (rowEl.text().match(/—/g) ?? []).length
+    expect(dashCount).toBeGreaterThanOrEqual(2)
+    expect(rowEl.text()).not.toContain(fmt(200))
+  })
+
   it('shows the 3 optional columns together, in order (Monto mensual, Apoyo, Aum. temporal), before "Base"', async () => {
     const rows = [buildRow(49, "Con Las Tres", 1, 0)];
     const wrapper = mountTable(rows);

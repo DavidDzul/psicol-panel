@@ -21,7 +21,7 @@
               </div>
               <v-chip label color="primary" variant="tonal">
                 <v-icon start>mdi-school-outline</v-icon>
-                {{ profile.scholarship_type }}
+                {{ scholarshipTypeLabel(profile.scholarship_type) }}
               </v-chip>
             </div>
             <div>
@@ -36,6 +36,14 @@
               <div class="text-caption text-medium-emphasis mb-1">Apoyo</div>
               <div class="text-h6 font-weight-bold">
                 {{ fmt(profile.monto_apoyo) }}
+              </div>
+            </div>
+            <div v-if="profile.scholarship_type === 'TELMEX_IU'">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Pago IU
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ fmt(profile.iu_payment_amount ?? 0) }}
               </div>
             </div>
             <v-chip
@@ -212,7 +220,7 @@
               </div>
               <v-chip label color="primary" variant="tonal">
                 <v-icon start>mdi-school-outline</v-icon>
-                {{ profile.scholarship_type }}
+                {{ scholarshipTypeLabel(profile.scholarship_type) }}
               </v-chip>
             </div>
             <div>
@@ -229,6 +237,14 @@
               </div>
               <div class="text-body-1 font-weight-medium">
                 {{ fmt(profile.monto_apoyo) }}
+              </div>
+            </div>
+            <div v-if="profile.scholarship_type === 'TELMEX_IU'">
+              <div class="text-caption text-medium-emphasis mb-1">
+                Pago IU
+              </div>
+              <div class="text-body-1 font-weight-medium">
+                {{ fmt(profile.iu_payment_amount ?? 0) }}
               </div>
             </div>
             <v-chip
@@ -396,8 +412,21 @@ import ScholarshipTemporaryIncreaseSection from "@/components/scholarships/Schol
 import type {
   ScholarshipProfile,
   ScholarshipProfileForm,
+  ScholarshipType,
 } from "@/interfaces/scholarship";
 import dayjs from "dayjs";
+
+// Mirrors administration-panel's PaymentDataCard label map (sdd/
+// scholarship-telmex-iu-split) so both panels show the same copy for the
+// raw enum values coming from the API.
+const SCHOLARSHIP_TYPE_LABELS: Record<ScholarshipType, string> = {
+  IU: "IU",
+  TELMEX: "TELMEX",
+  TELMEX_IU: "Telmex - IU",
+};
+
+const scholarshipTypeLabel = (type: ScholarshipType): string =>
+  SCHOLARSHIP_TYPE_LABELS[type] ?? type;
 
 const props = defineProps<{
   userId: number;

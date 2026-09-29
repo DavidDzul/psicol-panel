@@ -247,6 +247,12 @@
         }}</span>
       </template>
 
+      <template #item.iu_payment_amount="{ item }">
+        <span class="text-caption text-medium-emphasis">{{
+          amountOrDash(iuPaymentAmount(item.refrend))
+        }}</span>
+      </template>
+
       <template #item.snapshot_monto_apoyo="{ item }">
         <span class="text-caption text-medium-emphasis">{{
           amountOrDash(item.refrend.snapshot_monto_apoyo)
@@ -662,11 +668,11 @@ const APROBACION_REVIEW_HEADERS = [
   { title: "Respuesta", key: "aprobacion", width: 180, sortable: false },
 ];
 
-// sortable: false on all three — "monthly_amount" is a derived value with no
-// backing field at all, and the other two keys do not resolve against
-// BulkRefrendRow (the field lives under `.refrend`); the explicit #item.*
-// slot renders each fine, but Vuetify's internal sort would use the raw path
-// and sort by `undefined`.
+// sortable: false on all — these are derived/informational values with no
+// backing field to sort against at all (monthly_amount, iu_payment_amount)
+// or keys that do not resolve against BulkRefrendRow (the field lives under
+// `.refrend`); the explicit #item.* slot renders each fine, but Vuetify's
+// internal sort would use the raw path and sort by `undefined`.
 const OPTIONAL_HEADERS = [
   { title: "Monto mensual", key: "monthly_amount", width: 120, sortable: false },
   { title: "Apoyo", key: "snapshot_monto_apoyo", width: 90, sortable: false },
@@ -676,6 +682,12 @@ const OPTIONAL_HEADERS = [
     width: 115,
     sortable: false,
   },
+  // sdd/scholarship-telmex-iu-split follow-up: "Monto mensual" only means
+  // "monto base recurrente" for IU (gross - apoyo - increase). For TELMEX_IU
+  // that same subtraction is meaningless (apoyo there is Telmex-covered
+  // bookkeeping, never part of gross) — the actual payable base is Pago IU
+  // itself, so it gets its own column rather than overloading "Monto mensual".
+  { title: "Pago IU", key: "iu_payment_amount", width: 100, sortable: false },
 ] as const;
 
 const APROBACION_AMOUNT_HEADERS = [
@@ -733,24 +745,42 @@ const headers = computed(() => [
 const amountOrDash = (value: string | null): string =>
   value !== null && Number(value) > 0 ? fmt(value) : "—";
 
-// Derived "Monto mensual": snapshot_gross_amount, snapshot_monto_apoyo, and
-// snapshot_temporary_increase_amount are all frozen at the same instant for a
-// given period, so subtracting the other two components out of the gross
-// always reconstructs the exact monthly base — the sum of the 3 optional
-// columns is mathematically guaranteed to equal "Base" without a dedicated
-// backend field, and without risk of drift if the calculation formula
-// changes later.
+// Derived "Monto mensual" — IU ONLY (sdd/scholarship-telmex-iu-split
+// follow-up). Before that change, snapshot_gross_amount always composed as
+// monthly_amount + monto_apoyo + increase, so subtracting the other two
+// components out of gross reconstructed the exact monthly base for every
+// refrend. That composition is now type-conditional (design D2): for
+// TELMEX_IU, gross = iu_payment_amount + increase, and monto_apoyo is
+// Telmex-covered bookkeeping that was never part of gross — subtracting it
+// here would produce a number that matches no real field. So this column is
+// IU-only; TELMEX_IU's payable base has its own column (see
+// iuPaymentAmount() below), and TELMEX has no such concept at all (its gross
+// is the temporary increase alone, sdd/scholarship-telmex-iu-split design D2).
 //
 // Edge case: older/incomplete refrends without a frozen snapshot_gross_amount
 // fall back to base_amount in the "Base" cell (see #item.base_amount below),
 // but there is nothing to derive Monto mensual from in that case — it renders
 // "—" rather than a value that could silently disagree with "Base".
 const monthlyAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
+  if (refrend.snapshot_scholarship_type !== "IU") return null;
   if (refrend.snapshot_gross_amount === null) return null;
   const gross = Number(refrend.snapshot_gross_amount);
   const apoyo = Number(refrend.snapshot_monto_apoyo ?? 0);
   const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
   return String(gross - apoyo - increase);
+};
+
+// Derived "Pago IU" — TELMEX_IU ONLY. gross = iu_payment_amount + increase
+// for this type (design D2), so subtracting the increase back out
+// reconstructs the exact per-becario IU complement without a dedicated
+// snapshot column, same reconstruction principle as monthlyAmount() above,
+// just for the one component TELMEX_IU's gross is actually built from.
+const iuPaymentAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
+  if (refrend.snapshot_scholarship_type !== "TELMEX_IU") return null;
+  if (refrend.snapshot_gross_amount === null) return null;
+  const gross = Number(refrend.snapshot_gross_amount);
+  const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
+  return String(gross - increase);
 };
 
 // ── Table title ────────────────────────────────────────────────────────────

@@ -33,6 +33,7 @@ const baseProfile: ScholarshipProfile = {
   reticula_file_path: null,
   reticula_original_name: null,
   egreso_administrativo: null,
+  iu_payment_amount: null,
   created_at: "2026-01-01",
   updated_at: "2026-01-01",
 };
@@ -219,6 +220,75 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
     expect(wrapper.text()).not.toContain(
       "¿Estudia en el CERT de Mérida o UNID Tizimín?",
     );
+  });
+});
+
+// Covers sdd/scholarship-telmex-iu-split (spec "TELMEX_IU scholarship type",
+// "iu_payment_amount field"; design's psicol-panel file-changes row: extend
+// BOTH read-only blocks — view mode and edit mode's read-only config
+// section — with the new type label and the Pago IU field). psicol-panel
+// stays strictly read-only for these fields (no input control), same
+// constraint enforced by the "config fields are read-only" suite above.
+describe("ScholarshipProfileCard — Telmex/IU split display (read-only)", () => {
+  it("shows the scholarship type label 'Telmex - IU' instead of the raw enum value (read view)", async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      scholarship_type: "TELMEX_IU",
+      iu_payment_amount: "300.00",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Telmex - IU");
+  });
+
+  it("shows the Pago IU amount in the read view when scholarship_type is TELMEX_IU", async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      scholarship_type: "TELMEX_IU",
+      iu_payment_amount: "300.00",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Pago IU");
+    expect(wrapper.text()).toContain("$300.00");
+  });
+
+  it("hides the Pago IU field in the read view for IU profiles", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("Pago IU");
+  });
+
+  it("hides the Pago IU field in the read view for TELMEX profiles", async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      scholarship_type: "TELMEX",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("Pago IU");
+  });
+
+  it("shows the type label and the Pago IU amount in edit mode's read-only config block too", async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      scholarship_type: "TELMEX_IU",
+      iu_payment_amount: "300.00",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await wrapper.find("button").trigger("click"); // "Editar perfil"
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Telmex - IU");
+    expect(wrapper.text()).toContain("Pago IU");
+    expect(wrapper.text()).toContain("$300.00");
   });
 });
 
