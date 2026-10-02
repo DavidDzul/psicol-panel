@@ -225,6 +225,20 @@ export const BASE_HEADERS = [
     align: "center" as const,
     sortable: false,
   },
+  // sdd/temporary-increase-visibility (P2c): always-visible column, NOT an
+  // optional one — replaces AprobacionRefrendTable's old OPTIONAL_HEADERS
+  // "Aum. temporal" entry, which this key used to resolve against. Shared
+  // via BASE_HEADERS so VerificacionRefrendTable gets it automatically too.
+  // sortable: false for the same reason as the removed optional entry: the
+  // key doesn't resolve against BulkRefrendRow directly (the field lives
+  // under `.refrend`), so Vuetify's internal sort would sort by `undefined`.
+  {
+    title: "Aum. temporal",
+    key: "snapshot_temporary_increase_amount",
+    width: 115,
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // ── Table title (campus / generation / period) ────────────────────────────────
@@ -311,6 +325,44 @@ export const advancePaymentRegisteredChip = (
   return {
     label: "Pago adelantado registrado",
     tooltip: `+${amount} · Se sumará al monto de esta decisión`,
+  };
+};
+
+// ── Temporary increase chip (always-visible column, sdd/temporary-increase-
+// visibility P2c) ────────────────────────────────────────────────────────
+//
+// Purely informational, same convention as advancePaymentChip/
+// pendingWithholdingChip: label with the formatted amount, tooltip with the
+// reason (when present) plus a fixed suffix absorbing what the removed
+// optional column's list-subheader used to convey ("Desglose informativo —
+// ya incluido en Base").
+//
+// Reads row.refrend.snapshot_temporary_increase_amount/_reason, NOT a
+// top-level row field — like advance_payment_amount (see
+// advancePaymentRegisteredChip above), these are real scholarship_refrends
+// columns nested inside RefrendBulkQueryService::buildTable()'s `refrend`
+// sub-array (design D4). Reading them top-level is the exact bug class
+// already fixed once for advancePaymentRegisteredChip (always undefined ->
+// NaN); be deliberate here.
+//
+// The backend already computes this snapshot per-period, so "0.00"/null
+// here correctly means "not active THIS period" — independent from
+// administration-panel's P1 surface, which shows the increase's historical
+// vigencia regardless of the current period.
+
+export const temporaryIncreaseChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  const amountRaw = row.refrend.snapshot_temporary_increase_amount;
+  const raw = Number(amountRaw ?? 0);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  const amount = fmt(amountRaw as string);
+  const reason = row.refrend.snapshot_temporary_increase_reason;
+  return {
+    label: amount,
+    tooltip: reason
+      ? `Aumento temporal · Motivo: ${reason} · Ya incluido en Base`
+      : `Aumento temporal · ${amount} · Ya incluido en Base`,
   };
 };
 
