@@ -805,7 +805,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
   const headerTexts = (wrapper: ReturnType<typeof mountTable>): string[] =>
     wrapper.findAll("th").map((th) => th.text().trim());
 
-  it("hides all three optional columns by default when no preference is stored", async () => {
+  it("hides the two remaining optional columns by default when no preference is stored, while the temporary-increase chip column is always visible", async () => {
     const rows = [buildRow(40, "Sin Preferencia", 1, 0)];
     const wrapper = mountTable(rows);
     await wrapper.vm.$nextTick();
@@ -814,10 +814,13 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     const headers = headerTexts(wrapper);
     expect(headers.some((t) => t.includes("Monto mensual"))).toBe(false);
     expect(headers.some((t) => t.includes("Apoyo"))).toBe(false);
-    expect(headers.some((t) => t.includes("Aum. temporal"))).toBe(false);
+    // "Aum. temporal" is no longer an optional column — it is now a
+    // permanent BASE_HEADERS column shared with VerificacionRefrendTable
+    // (sdd/temporary-increase-visibility design D4/spec P2c).
+    expect(headers.some((t) => t.includes("Aum. temporal"))).toBe(true);
   });
 
-  it('shows "Apoyo" in the correct position (before "Base") after toggling it via the columns menu, while "Aum. temporal" stays hidden', async () => {
+  it('shows "Apoyo" in the correct position (before "Base") after toggling it via the columns menu', async () => {
     const rows = [buildRow(41, "Con Apoyo", 1, 0)];
     const wrapper = mountTable(rows);
     await wrapper.vm.$nextTick();
@@ -833,29 +836,6 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     const baseIndex = headers.findIndex((t) => t === "Base");
     expect(apoyoIndex).toBeGreaterThanOrEqual(0);
     expect(apoyoIndex).toBeLessThan(baseIndex);
-    expect(headers.some((t) => t.includes("Aum. temporal"))).toBe(false);
-  });
-
-  it('shows both optional columns, in declaration order (Apoyo, Aum. temporal), before "Base", after toggling both', async () => {
-    const rows = [buildRow(42, "Con Ambas", 1, 0)];
-    const wrapper = mountTable(rows);
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
-
-    await openColumnsMenu(wrapper);
-    await clickColumnMenuItem("Aum. temporal");
-    await clickColumnMenuItem("Apoyo");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
-
-    const headers = headerTexts(wrapper);
-    const apoyoIndex = headers.findIndex((t) => t.includes("Apoyo"));
-    const aumentoIndex = headers.findIndex((t) => t.includes("Aum. temporal"));
-    const baseIndex = headers.findIndex((t) => t === "Base");
-    expect(apoyoIndex).toBeGreaterThanOrEqual(0);
-    expect(aumentoIndex).toBeGreaterThanOrEqual(0);
-    expect(apoyoIndex).toBeLessThan(aumentoIndex);
-    expect(aumentoIndex).toBeLessThan(baseIndex);
   });
 
   it("persists the toggled column visibility across a simulated reload (unmount + remount)", async () => {
@@ -877,40 +857,75 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(headerTexts(remounted).some((t) => t.includes("Apoyo"))).toBe(true);
   });
 
-  it('renders "—" for a monto_apoyo=0 row and for a temporary_increase_amount=null row — never "0"', async () => {
+  // localStorage migration safety (design D5/spec "localStorage preference
+  // migration safety for removed optional key"): a stale preference
+  // containing the now-removed "snapshot_temporary_increase_amount" key,
+  // alongside other still-valid keys, must keep the valid keys toggled ON —
+  // NOT reset the whole array to [] the way the old all-or-nothing
+  // `raw.every(...)` type-guard did.
+  it("keeps valid keys toggled ON and silently drops only the removed key from a stale preference array (never resets to [])", async () => {
     localStorage.setItem(
       OPTIONAL_COLUMNS_KEY,
       JSON.stringify([
+        "monthly_amount",
         "snapshot_monto_apoyo",
         "snapshot_temporary_increase_amount",
       ]),
+    );
+    const rows = [buildRow(53, "Migracion Stale", 1, 0)];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = headerTexts(wrapper);
+    expect(headers.some((t) => t.includes("Monto mensual"))).toBe(true);
+    expect(headers.some((t) => t.includes("Apoyo"))).toBe(true);
+
+    // The pruned preference (without the removed key) must be the one
+    // actually persisted, so a later reload doesn't need to re-prune.
+    const stored = JSON.parse(localStorage.getItem(OPTIONAL_COLUMNS_KEY) ?? "[]");
+    expect(stored).toEqual(["monthly_amount", "snapshot_monto_apoyo"]);
+  });
+
+  it('renders "—" for a monto_apoyo=0 row — never "0"', async () => {
+    localStorage.setItem(
+      OPTIONAL_COLUMNS_KEY,
+      JSON.stringify(["snapshot_monto_apoyo"]),
     );
     const rowZeroApoyo = buildRow(44, "Cero Apoyo", 1, 0);
     rowZeroApoyo.refrend = {
       ...rowZeroApoyo.refrend,
       snapshot_monto_apoyo: "0",
     };
-    const rowNoIncrease = buildRow(45, "Sin Aumento", 1, 0);
-    // snapshot_temporary_increase_amount is already null in baseRefrend.
 
-    const wrapper = mountTable([rowZeroApoyo, rowNoIncrease]);
+    const wrapper = mountTable([rowZeroApoyo]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    const rows = wrapper.findAll("tbody tr");
-    const apoyoRow = rows.find((tr) => tr.text().includes("Cero Apoyo"));
-    const incrementoRow = rows.find((tr) => tr.text().includes("Sin Aumento"));
+    const apoyoRow = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("Cero Apoyo"));
 
     expect(apoyoRow?.text()).toContain("—");
-    expect(incrementoRow?.text()).toContain("—");
     expect(wrapper.text()).not.toMatch(/\$0\.00/);
   });
 
-  it("shows the formatted amount and the reason as a tooltip for a real temporary increase", async () => {
-    localStorage.setItem(
-      OPTIONAL_COLUMNS_KEY,
-      JSON.stringify(["snapshot_temporary_increase_amount"]),
-    );
+  // The temporary-increase chip column is now always visible (BASE_HEADERS,
+  // not OPTIONAL_HEADERS) — no localStorage preference is needed to see it.
+  it('renders "—" (TemporaryIncreaseChip fallback) for a row with no active temporary increase', async () => {
+    const row = buildRow(45, "Sin Aumento", 1, 0);
+    // snapshot_temporary_increase_amount is already null in baseRefrend.
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const rowEl = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("Sin Aumento"));
+    expect(rowEl?.text()).toContain("—");
+  });
+
+  it("shows the formatted amount and the reason in the tooltip for a real temporary increase", async () => {
     const row = buildRow(46, "Con Aumento", 1, 0);
     row.refrend = {
       ...row.refrend,
@@ -925,7 +940,11 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
 
     const tooltip = wrapper
       .findAllComponents({ name: "VTooltip" })
-      .find((t) => t.props("text") === "Ajuste especial");
+      .find(
+        (t) =>
+          t.props("text") ===
+          "Aumento temporal · Motivo: Ajuste especial · Ya incluido en Base",
+      );
     expect(tooltip).toBeTruthy();
   });
 
@@ -1064,14 +1083,13 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(rowEl.text()).not.toContain(fmt(200))
   })
 
-  it('shows the 3 optional columns together, in order (Monto mensual, Apoyo, Aum. temporal), before "Base"', async () => {
+  it('shows the 2 remaining optional columns together, in order (Monto mensual, Apoyo), before "Base" — "Aum. temporal" is no longer in this menu, and is positioned before them as a permanent column', async () => {
     const rows = [buildRow(49, "Con Las Tres", 1, 0)];
     const wrapper = mountTable(rows);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
     await openColumnsMenu(wrapper);
-    await clickColumnMenuItem("Aum. temporal");
     await clickColumnMenuItem("Apoyo");
     await clickColumnMenuItem("Monto mensual");
     await wrapper.vm.$nextTick();
@@ -1080,13 +1098,18 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     const headers = headerTexts(wrapper);
     const monthlyIndex = headers.findIndex((t) => t.includes("Monto mensual"));
     const apoyoIndex = headers.findIndex((t) => t.includes("Apoyo"));
-    const aumentoIndex = headers.findIndex((t) => t.includes("Aum. temporal"));
     const baseIndex = headers.findIndex((t) => t === "Base");
 
     expect(monthlyIndex).toBeGreaterThanOrEqual(0);
     expect(apoyoIndex).toBeGreaterThan(monthlyIndex);
-    expect(aumentoIndex).toBeGreaterThan(apoyoIndex);
-    expect(baseIndex).toBeGreaterThan(aumentoIndex);
+    expect(baseIndex).toBeGreaterThan(apoyoIndex);
+
+    // "Aum. temporal" is a BASE_HEADERS column now — always visible, and
+    // positioned BEFORE the optional columns (not between Apoyo and Base
+    // anymore).
+    const aumentoIndex = headers.findIndex((t) => t.includes("Aum. temporal"));
+    expect(aumentoIndex).toBeGreaterThanOrEqual(0);
+    expect(aumentoIndex).toBeLessThan(monthlyIndex);
   });
 
   // Core business rule requested by the user: the sum of the 3 optional
@@ -1096,11 +1119,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
   it("sums Monto mensual + Apoyo + Aum. temporal (treating — as 0) and matches \"Base\" exactly", async () => {
     localStorage.setItem(
       OPTIONAL_COLUMNS_KEY,
-      JSON.stringify([
-        "monthly_amount",
-        "snapshot_monto_apoyo",
-        "snapshot_temporary_increase_amount",
-      ]),
+      JSON.stringify(["monthly_amount", "snapshot_monto_apoyo"]),
     );
     const row = buildRow(50, "Suma Completa", 1, 0);
     row.refrend = {
@@ -1117,13 +1136,15 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
 
     const rowEl = findRowByText(wrapper, "Suma Completa");
     const values = currencyValuesInRow(rowEl);
-    // Declaration order (OPTIONAL_HEADERS) with all 3 visible, followed by
-    // Base and Final: [Monto mensual, Apoyo, Aum. temporal, Base, Final].
-    const [monthly, apoyo, aumento, base] = values;
+    // "Aum. temporal" is now a BASE_HEADERS column, so it appears FIRST in
+    // row order (right after "Pago adelantado", before the Incidencia/
+    // Respuesta/optional columns) — NOT adjacent to Base anymore:
+    // [Aum. temporal, Monto mensual, Apoyo, Base, Final].
+    const [aumento, monthly, apoyo, base] = values;
 
+    expect(aumento).toBe(200);
     expect(monthly).toBe(700); // 1200 - 300 - 200
     expect(apoyo).toBe(300);
-    expect(aumento).toBe(200);
     expect(base).toBe(1200);
     expect(monthly + apoyo + aumento).toBe(base);
   });
