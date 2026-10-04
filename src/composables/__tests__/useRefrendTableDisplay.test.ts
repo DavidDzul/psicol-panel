@@ -9,6 +9,7 @@ import {
   pendingWithholdingChip,
   rowClass,
   statusChip,
+  temporaryIncreaseChip,
 } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -248,6 +249,66 @@ describe("useRefrendTableDisplay — advancePaymentRegisteredChip (PR8, origin-r
     // despite the type saying it can't be.
     delete row.refrend.advance_payment_amount;
     expect(advancePaymentRegisteredChip(row)).toBeNull();
+  });
+});
+
+describe("useRefrendTableDisplay — temporaryIncreaseChip (sdd/temporary-increase-visibility P2c)", () => {
+  // The new column is always visible — unlike the removed "Aum. temporal"
+  // optional column, so it must live in BASE_HEADERS, appended right after
+  // "advance_paid_amount" (design D4/spec P2c).
+  it('appears exactly once in BASE_HEADERS, keyed "snapshot_temporary_increase_amount"', () => {
+    const matches = BASE_HEADERS.filter(
+      (h) => h.key === "snapshot_temporary_increase_amount",
+    );
+    expect(matches).toHaveLength(1);
+  });
+
+  it("returns null when the amount is null", () => {
+    const row = buildRow({ snapshot_temporary_increase_amount: null });
+    expect(temporaryIncreaseChip(row)).toBeNull();
+  });
+
+  it('returns null when the amount is "0.00" (no active increase this period)', () => {
+    const row = buildRow({ snapshot_temporary_increase_amount: "0.00" });
+    expect(temporaryIncreaseChip(row)).toBeNull();
+  });
+
+  it("returns the formatted amount and a tooltip with the reason when present", () => {
+    const row = buildRow({
+      snapshot_temporary_increase_amount: "500.00",
+      snapshot_temporary_increase_reason: "Ajuste de beca",
+    });
+    const chip = temporaryIncreaseChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.label).toBe("$500.00");
+    expect(chip?.tooltip).toBe(
+      "Aumento temporal · Motivo: Ajuste de beca · Ya incluido en Base",
+    );
+  });
+
+  it("falls back to a tooltip without the reason when none is set", () => {
+    const row = buildRow({
+      snapshot_temporary_increase_amount: "150.50",
+      snapshot_temporary_increase_reason: null,
+    });
+    const chip = temporaryIncreaseChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.tooltip).toBe("Aumento temporal · $150.50 · Ya incluido en Base");
+  });
+
+  // Regression lock (design D4): snapshot_temporary_increase_amount/_reason
+  // are real scholarship_refrends columns, so RefrendBulkQueryService nests
+  // them inside `row.refrend`, NOT top-level — the exact bug class already
+  // fixed once for advancePaymentRegisteredChip (always-undefined top-level
+  // read). A top-level-only fixture must yield null, never read through.
+  it("reads row.refrend.snapshot_temporary_increase_amount, NOT a top-level field (regression lock)", () => {
+    const row = buildRow({ snapshot_temporary_increase_amount: null });
+    // Simulate a fixture that only has the field at the (wrong) top level —
+    // the helper must still see nothing, because it never reads row.* for
+    // this data.
+    const polluted = { ...row, snapshot_temporary_increase_amount: "999.00" } as typeof row &
+      Record<string, unknown>;
+    expect(temporaryIncreaseChip(polluted)).toBeNull();
   });
 });
 

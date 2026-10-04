@@ -282,6 +282,75 @@ describe("VerificacionRefrendTable — advance-paid row indicator (sdd/pago-adel
   });
 });
 
+describe("VerificacionRefrendTable — temporary increase chip (sdd/temporary-increase-visibility P2c)", () => {
+  // The chip column is shared via BASE_HEADERS with AprobacionRefrendTable —
+  // this block confirms the column header AND the chip rendering also
+  // propagate here automatically, not just in Aprobacion.
+
+  it('renders the "Aum. temporal" column header', async () => {
+    const row = buildRow(35, "Normal", 0);
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers.some((t) => t.includes("Aum. temporal"))).toBe(true);
+  });
+
+  it("renders the chip with the formatted amount when the row has an active temporary increase", async () => {
+    const row = buildRow(36, "Con Aumento", 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_temporary_increase_amount: "500.00",
+      snapshot_temporary_increase_reason: "Ajuste de beca",
+    };
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("$500.00");
+    const tooltip = wrapper
+      .findAllComponents({ name: "VTooltip" })
+      .find(
+        (t) =>
+          t.props("text") ===
+          "Aumento temporal · Motivo: Ajuste de beca · Ya incluido en Base",
+      );
+    expect(tooltip).toBeTruthy();
+  });
+
+  it('renders "—" for a row with no active temporary increase (expired or never configured)', async () => {
+    const row = buildRow(37, "Sin Aumento", 0);
+    const wrapper = mountTable([row], "completa");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const rowEl = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("Sin Aumento"));
+    expect(rowEl?.text()).toContain("—");
+  });
+
+  // Regression: an unrelated academic-discount chip (next to the becario
+  // name) must coexist with the temporary-increase chip on the same row —
+  // neither indicator displaces the other.
+  it("coexists with an unrelated academic-discount chip on the same row", async () => {
+    const row = buildRow(38, "Con Descuento Y Aumento", 1);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_discount_percentage: "10",
+      snapshot_temporary_increase_amount: "300.00",
+      snapshot_temporary_increase_reason: "Beca extendida",
+    };
+    const wrapper = mountTable([row], "incidencias");
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("10%");
+    expect(wrapper.text()).toContain("$300.00");
+  });
+});
+
 describe("VerificacionRefrendTable — origin advance-payment-registered indicator (sdd/pago-adelantado PR8/PR9)", () => {
   // OPPOSITE direction from the PR7a block above: this row is the ORIGIN
   // refrend that a batch was registered FROM, not a future month settled by

@@ -242,6 +242,13 @@
         <AdvancePaymentChip :row="item" />
       </template>
 
+      <!-- sdd/temporary-increase-visibility (P2c): shared BASE_HEADERS
+           column, propagated automatically from AprobacionRefrendTable's
+           same slot name. -->
+      <template #item.snapshot_temporary_increase_amount="{ item }">
+        <TemporaryIncreaseChip :row="item" />
+      </template>
+
       <template #item.verificacion="{ item }">
         <div class="d-flex align-center ga-2">
           <!-- PR9: relocated from its own "Adelanto registrado" column
@@ -397,6 +404,7 @@ import RefrendDetailDrawer from "@/components/scholarships/RefrendDetailDrawer.v
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
+import TemporaryIncreaseChip from "@/components/scholarships/TemporaryIncreaseChip.vue";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";

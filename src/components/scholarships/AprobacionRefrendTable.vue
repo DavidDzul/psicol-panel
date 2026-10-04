@@ -260,20 +260,7 @@
       </template>
 
       <template #item.snapshot_temporary_increase_amount="{ item }">
-        <v-tooltip
-          v-if="item.refrend.snapshot_temporary_increase_reason"
-          :text="item.refrend.snapshot_temporary_increase_reason"
-          location="top"
-        >
-          <template #activator="{ props: tipProps }">
-            <span v-bind="tipProps" class="text-caption text-medium-emphasis">
-              {{ amountOrDash(item.refrend.snapshot_temporary_increase_amount) }}
-            </span>
-          </template>
-        </v-tooltip>
-        <span v-else class="text-caption text-medium-emphasis">
-          {{ amountOrDash(item.refrend.snapshot_temporary_increase_amount) }}
-        </span>
+        <TemporaryIncreaseChip :row="item" />
       </template>
 
       <template #item.base_amount="{ item }">
@@ -521,6 +508,7 @@ import RefrendSituationBar from "@/components/scholarships/RefrendSituationBar.v
 import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue";
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
+import TemporaryIncreaseChip from "@/components/scholarships/TemporaryIncreaseChip.vue";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
@@ -676,12 +664,10 @@ const APROBACION_REVIEW_HEADERS = [
 const OPTIONAL_HEADERS = [
   { title: "Monto mensual", key: "monthly_amount", width: 120, sortable: false },
   { title: "Apoyo", key: "snapshot_monto_apoyo", width: 90, sortable: false },
-  {
-    title: "Aum. temporal",
-    key: "snapshot_temporary_increase_amount",
-    width: 115,
-    sortable: false,
-  },
+  // "Aum. temporal" was removed from here (sdd/temporary-increase-visibility
+  // P2c): it is now an always-visible BASE_HEADERS column shared with
+  // VerificacionRefrendTable, rendered via TemporaryIncreaseChip.vue instead
+  // of the old plain-value + bare-reason-tooltip template.
   // sdd/scholarship-telmex-iu-split follow-up: "Monto mensual" only means
   // "monto base recurrente" for IU (gross - apoyo - increase). For TELMEX_IU
   // that same subtraction is meaningless (apoyo there is Telmex-covered
@@ -706,18 +692,33 @@ const APROBACION_AMOUNT_HEADERS = [
 
 type OptionalColumnKey = (typeof OPTIONAL_HEADERS)[number]["key"];
 
-// JSON.parse succeeding is not the same as the parsed value matching the
-// expected shape (e.g. a legacy pair of booleans from a previous version) —
-// this guard is the composable's isValid parameter.
+// Shape-only guard (sdd/temporary-increase-visibility design D5). Membership
+// is deliberately NOT asserted here anymore: a key that was valid in a
+// previous version (e.g. the removed "snapshot_temporary_increase_amount"
+// optional column, now a permanent BASE_HEADERS column) must not nuke the
+// user's OTHER selections. The old `raw.every(key => OPTIONAL_HEADERS.some
+// (...))` was all-or-nothing — one stale key reset Monto mensual / Apoyo /
+// Pago IU to []. Unknown keys are dropped by the prune below instead, since
+// a type-guard can validate shape but cannot transform the data.
 const isOptionalColumnKeyList = (raw: unknown): raw is OptionalColumnKey[] =>
-  Array.isArray(raw) &&
-  raw.every((k) => OPTIONAL_HEADERS.some((h) => h.key === k));
+  Array.isArray(raw) && raw.every((k) => typeof k === "string");
 
 const visibleOptionalColumns = useStoredPreference<OptionalColumnKey[]>(
   uiPreferenceKey("pedagogia-refrend-table", "optional-columns"),
   [],
   isOptionalColumnKeyList,
 );
+
+// One-time self-healing migration: drop keys no longer in OPTIONAL_HEADERS
+// and persist the pruned list. Length-guarded so a clean preference never
+// triggers a redundant localStorage write (useStoredPreference's watcher is
+// identity-based, not content-based, on the array reference change).
+const prunedOptionalColumns = visibleOptionalColumns.value.filter(
+  (k): k is OptionalColumnKey => OPTIONAL_HEADERS.some((h) => h.key === k),
+);
+if (prunedOptionalColumns.length !== visibleOptionalColumns.value.length) {
+  visibleOptionalColumns.value = prunedOptionalColumns;
+}
 
 const toggleColumn = (key: OptionalColumnKey): void => {
   visibleOptionalColumns.value = visibleOptionalColumns.value.includes(key)
