@@ -44,6 +44,12 @@ const _resolutionTypeMeta = (
     return { label: "Descuento definitivo", color: "purple-darken-2", icon: "mdi-cash-minus" };
   if (r === "EGRESADO")
     return { label: "Egresado", color: "blue-grey", icon: "mdi-account-check-outline" };
+  // sdd/egresado-status-timing (design D7/R1): server-only value, written
+  // automatically by GenerateMonthlyRefrendsService for a becario's
+  // retícula month+2 $0 refrendo — distinct icon AND color from the manual
+  // "EGRESADO" above so the two can never be visually confused.
+  if (r === "EGRESO_RETICULA")
+    return { label: "Egresado (retícula)", color: "indigo", icon: "mdi-account-clock-outline" };
   if (r === "BAJA_DEFINITIVA")
     return { label: "Baja definitiva", color: "red-darken-3", icon: "mdi-account-remove-outline" };
   if (r === "REEMBOLSO_PARCIAL")
@@ -70,6 +76,14 @@ export const statusChip = (
     return { label: "Con incidencia", color: "orange", icon: "mdi-alert-decagram-outline" };
   if (s === "PENDIENTE_NOTIFICACION")
     return { label: "Pend. notif.", color: "blue", icon: "mdi-bell-outline" };
+  // sdd/egresado-status-timing (design R1, HIGH severity): without this
+  // override, the branch below short-circuits BEFORE the resolution-type
+  // branch and a never-paid $0 egreso row would read "Pagado"/teal. Every
+  // OTHER CLOSED row (including the manual EGRESADO resolution_type) must
+  // keep reading "Pagado" byte-identically — only this exact combination
+  // is special-cased.
+  if (s === "CLOSED" && refrend.resolution_type === "EGRESO_RETICULA")
+    return _resolutionTypeMeta(refrend)!;
   if (s === "CLOSED")
     return { label: "Pagado", color: "teal", icon: "mdi-cash-check" };
   if (refrend.status === "CANCELLED")

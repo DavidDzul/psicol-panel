@@ -366,6 +366,19 @@ describe("useRefrendTableDisplay — finalResolutionChip", () => {
     });
     expect(finalResolutionChip(row.refrend)?.label).toBe("Suspendido 50%");
   });
+
+  // sdd/egresado-status-timing (design D7/R1): server-only auto-generated
+  // resolution_type for the retícula month+2 $0 egreso refrendo. Must be
+  // distinct from the manual EGRESADO chip (icon AND color) so a future
+  // maintainer can't confuse the two in either UI or code.
+  it("covers EGRESO_RETICULA with a distinct label from the manual EGRESADO chip", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESO_RETICULA" });
+    expect(finalResolutionChip(row.refrend)).toEqual({
+      label: "Egresado (retícula)",
+      color: "indigo",
+      icon: "mdi-account-clock-outline",
+    });
+  });
 });
 
 describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)", () => {
@@ -412,5 +425,73 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
     expect(chip.icon).toBe("mdi-cash-minus");
     expect(chip.label).not.toBe("Retenida");
     expect(chip.color).not.toBe("amber-darken-2");
+  });
+});
+
+// sdd/egresado-status-timing (design R1, HIGH severity): statusChip()'s
+// `workflow_status === "CLOSED"` branch short-circuits BEFORE the resolution
+// branch, so fixing only `_resolutionTypeMeta` (finalResolutionChip's chip)
+// is NOT enough — the Estado column would still read the generic "Pagado"
+// for a never-paid $0 egreso row unless statusChip() gets its own override.
+describe("useRefrendTableDisplay — statusChip CLOSED override for EGRESO_RETICULA (sdd/egresado-status-timing, design R1)", () => {
+  it("renders the distinct egreso-retícula chip instead of the generic Pagado label", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESO_RETICULA" });
+    const chip = statusChip(row.refrend);
+    expect(chip).toEqual({
+      label: "Egresado (retícula)",
+      color: "indigo",
+      icon: "mdi-account-clock-outline",
+    });
+    expect(chip.label).not.toBe("Pagado");
+  });
+
+  it("regression guard: a CLOSED row with the manual EGRESADO resolution_type still reads Pagado, byte-identically", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESADO" });
+    expect(statusChip(row.refrend)).toEqual({
+      label: "Pagado",
+      color: "teal",
+      icon: "mdi-cash-check",
+    });
+  });
+
+  it("regression guard: every other CLOSED row keeps the generic Pagado label byte-identically", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "RETENIDA" });
+    expect(statusChip(row.refrend)).toEqual({
+      label: "Pagado",
+      color: "teal",
+      icon: "mdi-cash-check",
+    });
+  });
+
+  it("the EGRESO_RETICULA chip is visually distinct (icon AND color) from the manual EGRESADO chip, on both chip paths, side by side", () => {
+    const egresoReticulaRow = buildRow({
+      workflow_status: "CLOSED",
+      resolution_type: "EGRESO_RETICULA",
+    });
+    const egresadoManualRow = buildRow({
+      workflow_status: "CLOSED",
+      resolution_type: "EGRESADO",
+    });
+
+    // Path 1: statusChip (Estado column)
+    const statusEgresoReticula = statusChip(egresoReticulaRow.refrend);
+    const statusEgresadoManual = statusChip(egresadoManualRow.refrend);
+    expect(statusEgresoReticula.label).not.toBe(statusEgresadoManual.label);
+    expect(statusEgresoReticula.icon).not.toBe(statusEgresadoManual.icon);
+    expect(statusEgresoReticula.color).not.toBe(statusEgresadoManual.color);
+
+    // Path 2: finalResolutionChip (Estado final column) — a distinct code
+    // path from statusChip, exercised independently so a broken
+    // _resolutionTypeMeta entry can't hide behind a passing statusChip test.
+    const finalEgresoReticula = finalResolutionChip(egresoReticulaRow.refrend);
+    const finalEgresadoManual = finalResolutionChip(egresadoManualRow.refrend);
+    expect(finalEgresoReticula).not.toBeNull();
+    expect(finalEgresadoManual).not.toBeNull();
+    expect(finalEgresoReticula?.icon).not.toBe(finalEgresadoManual?.icon);
+    expect(finalEgresoReticula?.color).not.toBe(finalEgresadoManual?.color);
+
+    // Both chip paths agree with each other for the same resolution_type —
+    // the two rendering code paths must look the same to a user.
+    expect(statusEgresoReticula).toEqual(finalEgresoReticula);
   });
 });

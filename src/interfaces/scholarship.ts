@@ -34,6 +34,16 @@ export type ResolutionType =
   | 'EGRESADO'
   | 'REEMBOLSO_PARCIAL'
 
+// Server-only resolution_type values that are deliberately NEVER part of
+// the staff-selectable ResolutionType union above (same precedent as
+// 'BAJA'). 'EGRESO_RETICULA' (sdd/egresado-status-timing) is auto-written
+// by GenerateMonthlyRefrendsService for a becario's retícula month+2 $0
+// refrendo — it must stay a distinct stored value from the manual
+// 'EGRESADO', never conflated. RecordSituationForm.resolution_type and
+// ScholarshipAdvancePaymentMonth.settled_resolution_type stay narrowed to
+// ResolutionType — those are staff-selected only, never server-assigned.
+export type ServerResolutionType = ResolutionType | 'BAJA' | 'EGRESO_RETICULA'
+
 export type DiscountType =
   | 'RETARDOS'
   | 'FALTA_INJUSTIFICADA'
@@ -155,7 +165,7 @@ export interface ScholarshipRefrend {
   refrend_type: RefrendType
   status: RefrendStatus
   workflow_status: WorkflowStatus | null
-  resolution_type: ResolutionType | null
+  resolution_type: ServerResolutionType | null
   resolution_cause: string | null
   resolution_notes: string | null
   suspension_percentage: string | null
