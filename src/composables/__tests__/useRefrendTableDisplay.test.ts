@@ -9,6 +9,7 @@ import {
   pendingWithholdingChip,
   rowClass,
   statusChip,
+  telmexCoverageChip,
   temporaryIncreaseChip,
 } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
@@ -309,6 +310,57 @@ describe("useRefrendTableDisplay — temporaryIncreaseChip (sdd/temporary-increa
     const polluted = { ...row, snapshot_temporary_increase_amount: "999.00" } as typeof row &
       Record<string, unknown>;
     expect(temporaryIncreaseChip(polluted)).toBeNull();
+  });
+});
+
+describe("useRefrendTableDisplay — telmexCoverageChip (sdd/telmex-cobertura-iu PR6)", () => {
+  // snapshot_telmex_coverage_id is the SOLE payability/display gate (design
+  // D1/D2, verified against ScholarshipCalculationService::buildSnapshot:
+  // 168-193). snapshot_telmex_covered_amount is a bookkeeping value
+  // populated for every TELMEX/TELMEX_IU refrend REGARDLESS of coverage, so
+  // a null/missing FK must hide the chip even when the amount is a real
+  // positive number.
+  it("returns null when snapshot_telmex_coverage_id is null (not covered)", () => {
+    const row = buildRow({
+      snapshot_telmex_coverage_id: null,
+      snapshot_telmex_covered_amount: "3500.00",
+    });
+    expect(telmexCoverageChip(row)).toBeNull();
+  });
+
+  it("returns null when snapshot_telmex_coverage_id is missing (field not yet present at runtime)", () => {
+    const row = buildRow();
+    // Field is optional on ScholarshipRefrend (PR2's backend contract isn't
+    // frozen yet) — deleting it simulates a backend response from before
+    // PR2 ships the field, same defensive precedent as
+    // advancePaymentRegisteredChip's missing-field guard.
+    delete row.refrend.snapshot_telmex_coverage_id;
+    expect(telmexCoverageChip(row)).toBeNull();
+  });
+
+  it("returns the chip with a fixed label and the formatted covered amount in the tooltip when the FK is set", () => {
+    const row = buildRow({
+      snapshot_telmex_coverage_id: 7,
+      snapshot_telmex_covered_amount: "3500.00",
+    });
+    const chip = telmexCoverageChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.label).toBe("Cobertura IU");
+    expect(chip?.tooltip).toBe(
+      "Cobertura Telmex por IU vigente · $3,500.00 cubierto este mes",
+    );
+  });
+
+  it("still returns the chip even if the covered amount is unexpectedly null while the FK is set (gate is always the FK, never the amount)", () => {
+    const row = buildRow({
+      snapshot_telmex_coverage_id: 7,
+      snapshot_telmex_covered_amount: null,
+    });
+    const chip = telmexCoverageChip(row);
+    expect(chip).not.toBeNull();
+    expect(chip?.tooltip).toBe(
+      "Cobertura Telmex por IU vigente · $0.00 cubierto este mes",
+    );
   });
 });
 
