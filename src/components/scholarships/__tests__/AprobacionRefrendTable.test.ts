@@ -1150,6 +1150,122 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
   });
 });
 
+describe("AprobacionRefrendTable — Telmex coverage chip + optional 'Cob. Telmex' column (sdd/telmex-cobertura-iu PR6)", () => {
+  // Own localStorage key constant (same literal the "optional columns"
+  // describe block above uses) — kept local to this block since that one's
+  // consts are scoped to its own describe, not reusable here.
+  const OPTIONAL_COLUMNS_KEY =
+    "impulsou.ui.pedagogia-refrend-table.optional-columns";
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  const findRowByText = (
+    wrapper: ReturnType<typeof mountTable>,
+    text: string,
+  ): DOMWrapper<Element> => {
+    const row = wrapper.findAll("tbody tr").find((tr) => tr.text().includes(text));
+    if (!row) throw new Error(`Row containing "${text}" not found`);
+    return row;
+  };
+
+  it('renders the "Cobertura IU" chip (always-visible column) for a covered refrend', async () => {
+    const row = buildRow(80, "Carlos Cubierto", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_scholarship_type: "TELMEX",
+      snapshot_telmex_coverage_id: 7,
+      snapshot_telmex_covered_amount: "3500.00",
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Cobertura IU");
+
+    const tooltip = wrapper
+      .findAllComponents({ name: "VTooltip" })
+      .find(
+        (t) =>
+          t.props("text") ===
+          "Cobertura Telmex por IU vigente · $3,500.00 cubierto este mes",
+      );
+    expect(tooltip).toBeTruthy();
+  });
+
+  it('renders "—" (no chip) for an uncovered TELMEX refrend', async () => {
+    const row = buildRow(81, "Dana Sin Cobertura", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_scholarship_type: "TELMEX",
+      snapshot_telmex_coverage_id: null,
+      snapshot_telmex_covered_amount: "3500.00",
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Cobertura IU");
+    const rowEl = findRowByText(wrapper, "Dana Sin Cobertura");
+    expect(rowEl.text()).toContain("—");
+  });
+
+  it('renders "—" (no chip) for a plain IU refrend (coverage fields absent)', async () => {
+    const row = buildRow(82, "Elisa IU Normal", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).not.toContain("Cobertura IU");
+  });
+
+  it('hides the "Cob. Telmex" optional column by default (no stored preference)', async () => {
+    const row = buildRow(83, "Fernando Sin Preferencia", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers.some((t) => t.includes("Cob. Telmex"))).toBe(false);
+  });
+
+  it('shows the covered amount in "Cob. Telmex" only for covered rows, once the column is toggled on', async () => {
+    localStorage.setItem(
+      OPTIONAL_COLUMNS_KEY,
+      JSON.stringify(["telmex_covered_amount"]),
+    );
+    const coveredRow = buildRow(84, "Gaby Cubierta", 1, 0);
+    coveredRow.refrend = {
+      ...coveredRow.refrend,
+      snapshot_scholarship_type: "TELMEX",
+      snapshot_telmex_coverage_id: 9,
+      snapshot_telmex_covered_amount: "2100.00",
+    };
+    const uncoveredRow = buildRow(85, "Hugo Sin Cobertura", 1, 0);
+    uncoveredRow.refrend = {
+      ...uncoveredRow.refrend,
+      snapshot_scholarship_type: "TELMEX",
+      snapshot_telmex_coverage_id: null,
+      snapshot_telmex_covered_amount: "2100.00",
+    };
+    const wrapper = mountTable([coveredRow, uncoveredRow]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const headers = wrapper.findAll("th").map((th) => th.text().trim());
+    expect(headers.some((t) => t.includes("Cob. Telmex"))).toBe(true);
+
+    const coveredRowEl = findRowByText(wrapper, "Gaby Cubierta");
+    expect(coveredRowEl.text()).toContain(fmt(2100));
+
+    const uncoveredRowEl = findRowByText(wrapper, "Hugo Sin Cobertura");
+    // The bookkeeping amount (2100.00) must NOT leak into the uncovered
+    // row's cell — only the FK gate decides, never the raw amount.
+    expect(uncoveredRowEl.text()).not.toContain(fmt(2100));
+  });
+});
+
 describe('AprobacionRefrendTable — "Estado" motivo caption (removed only once Pagado)', () => {
   it("keeps the motivo caption visible for a non-paid row with a resolution_cause", async () => {
     const row = buildRow(51, "No Pagado", 1, 0);

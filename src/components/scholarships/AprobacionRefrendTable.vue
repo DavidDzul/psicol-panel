@@ -203,6 +203,10 @@
         <PendingWithholdingChip :row="item" />
       </template>
 
+      <template #item.telmex_coverage="{ item }">
+        <TelmexCoverageChip :row="item" />
+      </template>
+
       <template #item.advance_paid_amount="{ item }">
         <AdvancePaymentChip :row="item" />
       </template>
@@ -250,6 +254,12 @@
       <template #item.iu_payment_amount="{ item }">
         <span class="text-caption text-medium-emphasis">{{
           amountOrDash(iuPaymentAmount(item.refrend))
+        }}</span>
+      </template>
+
+      <template #item.telmex_covered_amount="{ item }">
+        <span class="text-caption text-medium-emphasis">{{
+          amountOrDash(telmexCoverageAmount(item.refrend))
         }}</span>
       </template>
 
@@ -509,6 +519,7 @@ import IncidentDetailIcon from "@/components/scholarships/IncidentDetailIcon.vue
 import PendingWithholdingChip from "@/components/scholarships/PendingWithholdingChip.vue";
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
 import TemporaryIncreaseChip from "@/components/scholarships/TemporaryIncreaseChip.vue";
+import TelmexCoverageChip from "@/components/scholarships/TelmexCoverageChip.vue";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
@@ -656,6 +667,22 @@ const APROBACION_REVIEW_HEADERS = [
   { title: "Respuesta", key: "aprobacion", width: 180, sortable: false },
 ];
 
+// Always-visible chip column (sdd/telmex-cobertura-iu PR6, design: "chip
+// 'Cobertura IU' + optional column 'Cob. Telmex'" — scoped to
+// AprobacionRefrendTable only, NOT BASE_HEADERS, so VerificacionRefrendTable
+// stays untouched by this change). sortable: false for the same reason as
+// every other derived/chip column here: the key does not resolve against a
+// real BulkRefrendRow path (the backing fields live under `.refrend`).
+const APROBACION_TELMEX_HEADERS = [
+  {
+    title: "Cobertura",
+    key: "telmex_coverage",
+    width: 110,
+    align: "center" as const,
+    sortable: false,
+  },
+];
+
 // sortable: false on all — these are derived/informational values with no
 // backing field to sort against at all (monthly_amount, iu_payment_amount)
 // or keys that do not resolve against BulkRefrendRow (the field lives under
@@ -674,6 +701,12 @@ const OPTIONAL_HEADERS = [
   // bookkeeping, never part of gross) — the actual payable base is Pago IU
   // itself, so it gets its own column rather than overloading "Monto mensual".
   { title: "Pago IU", key: "iu_payment_amount", width: 100, sortable: false },
+  // sdd/telmex-cobertura-iu PR6: covered-amount breakdown, same "informativo
+  // — ya incluido en Base" convention as Monto mensual/Apoyo/Pago IU above
+  // (the Telmex-covered part is added to final_amount OUTSIDE the discount
+  // base — see telmexCoverageAmount() below — but it is still part of what
+  // the becario receives, same spirit as the other 3 breakdown columns).
+  { title: "Cob. Telmex", key: "telmex_covered_amount", width: 100, sortable: false },
 ] as const;
 
 const APROBACION_AMOUNT_HEADERS = [
@@ -731,6 +764,7 @@ const toggleColumn = (key: OptionalColumnKey): void => {
 // them in, and silently discards unknown keys even if isValid were bypassed.
 const headers = computed(() => [
   ...BASE_HEADERS,
+  ...APROBACION_TELMEX_HEADERS,
   ...APROBACION_REVIEW_HEADERS,
   ...OPTIONAL_HEADERS.filter((h) =>
     visibleOptionalColumns.value.includes(h.key),
@@ -782,6 +816,21 @@ const iuPaymentAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
   const gross = Number(refrend.snapshot_gross_amount);
   const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
   return String(gross - increase);
+};
+
+// Derived "Cob. Telmex" — gated on snapshot_telmex_coverage_id, NOT on
+// snapshot_telmex_covered_amount alone (sdd/telmex-cobertura-iu PR6, same
+// gate as telmexCoverageChip() in useRefrendTableDisplay.ts). Verified
+// against the backend's ScholarshipCalculationService::buildSnapshot:
+// 168-193 — the amount is a bookkeeping value populated for EVERY TELMEX/
+// TELMEX_IU refrend regardless of coverage, so reading it without the FK
+// gate would leak the uncovered bookkeeping value into this column.
+const telmexCoverageAmount = (
+  refrend: BulkRefrendRow["refrend"],
+): string | null => {
+  const coverageId = refrend.snapshot_telmex_coverage_id ?? null;
+  if (coverageId === null) return null;
+  return refrend.snapshot_telmex_covered_amount ?? null;
 };
 
 // ── Table title ────────────────────────────────────────────────────────────
