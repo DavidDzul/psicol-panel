@@ -380,6 +380,36 @@ export const temporaryIncreaseChip = (
   };
 };
 
+// ── Telmex coverage chip (sdd/telmex-cobertura-iu PR6, read-only) ─────────
+//
+// snapshot_telmex_coverage_id is the SOLE gate — verified against the
+// backend's own ScholarshipCalculationService::buildSnapshot:168-193:
+// snapshot_telmex_covered_amount is a bookkeeping value (monthly_amount +
+// monto_apoyo) populated for EVERY TELMEX/TELMEX_IU refrend regardless of
+// whether a coverage is active that period ("NUNCA son pagables ni quedan
+// sujetos a descuentos/retenciones" until the FK is set). Gating on the
+// amount alone would show the chip for an uncovered TELMEX/TELMEX_IU row
+// that merely has a non-zero bookkeeping value — always gate on the FK.
+// Both fields are typed optional on ScholarshipRefrend (PR2's backend
+// contract isn't merged yet at the time of this PR6 implementation), so a
+// missing field at runtime is treated the same as null (same defensive
+// precedent as advancePaymentRegisteredChip's NaN guard).
+//
+// Purely informational, same non-interactive convention as every other chip
+// in this module: no @click, no emitted event, read-only per spec
+// "psicol-panel approval visibility".
+export const telmexCoverageChip = (
+  row: BulkRefrendRow,
+): { label: string; tooltip: string } | null => {
+  const coverageId = row.refrend.snapshot_telmex_coverage_id ?? null;
+  if (coverageId === null) return null;
+  const amount = fmt(row.refrend.snapshot_telmex_covered_amount ?? "0");
+  return {
+    label: "Cobertura IU",
+    tooltip: `Cobertura Telmex por IU vigente · ${amount} cubierto este mes`,
+  };
+};
+
 export const buildTableInfo = (
   rows: BulkRefrendRow[],
   year: number,

@@ -177,6 +177,22 @@ export interface ScholarshipRefrend {
   snapshot_monto_apoyo: string | null
   snapshot_temporary_increase_amount: string | null
   snapshot_temporary_increase_reason: string | null
+  // Telmex coverage snapshot (sdd/telmex-cobertura-iu, design D1/D2;
+  // verified against ScholarshipCalculationService::buildSnapshot:168-193).
+  // snapshot_telmex_coverage_id is the SOLE payability gate — null for IU
+  // always, and ALSO null for TELMEX/TELMEX_IU whenever no coverage is
+  // active that period. snapshot_telmex_covered_amount is a bookkeeping
+  // value (monthly_amount + monto_apoyo) populated for every TELMEX/
+  // TELMEX_IU refrend REGARDLESS of coverage — "never payable, never
+  // discounted" until the FK is set, per the backend's own comment. Always
+  // gate display/payability on the FK, never on this amount alone.
+  // Optional (not required) because the backend field (PR2, not yet merged
+  // at the time of this PR6 implementation) isn't frozen and this avoids
+  // forcing every other ScholarshipRefrend test fixture in the repo to add
+  // two more properties outside this change's scope — see PR6 apply-progress
+  // for the full reasoning.
+  snapshot_telmex_coverage_id?: number | null
+  snapshot_telmex_covered_amount?: string | null
   base_amount: string
   snapshot_discount_percentage: string | null
   snapshot_discount_reason: string | null
