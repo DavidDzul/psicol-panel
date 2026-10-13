@@ -40,17 +40,6 @@
     >
       <template #top>
         <div class="px-3 pt-3 pb-2 d-flex align-center ga-2 flex-wrap">
-          <v-text-field
-            v-model="searchQuery"
-            placeholder="Buscar por nombre becario..."
-            prepend-inner-icon="mdi-magnify"
-            variant="filled"
-            density="compact"
-            hide-details
-            clearable
-            class="flex-1-1-auto"
-            style="min-width: 220px"
-          />
           <!-- sdd/verificacion-incidencias-ux PR2: replaces the removed
                CONSULTA POR GENERACIONES / CONSULTA POR INCIDENCIAS tabs.
                Drives both the row filter (hasIncidencia) AND which column
@@ -63,13 +52,24 @@
             hide-details
             class="flex-0-0-auto"
           />
+          <v-text-field
+            v-model="searchQuery"
+            placeholder="Buscar por nombre becario..."
+            prepend-inner-icon="mdi-magnify"
+            variant="filled"
+            density="compact"
+            hide-details
+            clearable
+            class="flex-1-1-auto"
+            style="min-width: 220px"
+          />
           <!-- Orthogonal to the toggle above: a becario can have both,
                either, or neither "con incidencia" and "CERT-UNID", so this
                ANDs into displayRows instead of replacing the toggle. -->
           <v-select
             v-model="advancePaymentOnly"
             :items="ADVANCE_PAYMENT_OPTIONS"
-            label="CERT-UNID"
+            label="Tipo de pago"
             variant="filled"
             density="compact"
             hide-details

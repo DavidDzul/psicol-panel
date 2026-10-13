@@ -526,13 +526,27 @@ describe('VerificacionRefrendTable — "Notificado" checkbox gating (toggle ON o
   });
 });
 
-describe('VerificacionRefrendTable — "CERT-UNID" selector (renamed from "Pago adelantado"/"Solo pago adelantado", amendment #1956)', () => {
-  it('labels the selector "CERT-UNID"', async () => {
+describe('VerificacionRefrendTable — "Tipo de pago" selector (CERT-UNID filter, amendment #1956)', () => {
+  it('labels the selector "Tipo de pago"', async () => {
     const wrapper = mountTable([buildRow(60, "Uno", 0)]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.findComponent(VSelect).props("label")).toBe("CERT-UNID");
+    expect(wrapper.findComponent(VSelect).props("label")).toBe("Tipo de pago");
+  });
+
+  it("orders the toolbar as switch, name search, then Tipo de pago", async () => {
+    const wrapper = mountTable([buildRow(62, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const html = wrapper.html();
+    const switchAt = html.indexOf("Solo con incidencias");
+    const searchAt = html.indexOf("Buscar por nombre becario");
+    const selectAt = html.indexOf("Tipo de pago");
+    expect(switchAt).toBeGreaterThan(-1);
+    expect(switchAt).toBeLessThan(searchAt);
+    expect(searchAt).toBeLessThan(selectAt);
   });
 
   it('offers "Solo CERT-UNID" as the filtered option', async () => {
