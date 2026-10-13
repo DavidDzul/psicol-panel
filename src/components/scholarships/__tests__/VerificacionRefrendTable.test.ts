@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VBtn, VCheckbox, VSelect } from "vuetify/components";
+import { VBtn, VCheckbox, VSelect, VSwitch } from "vuetify/components";
 import VerificacionRefrendTable from "@/components/scholarships/VerificacionRefrendTable.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendVerificacionDialog from "@/components/scholarships/RefrendVerificacionDialog.vue";
@@ -11,8 +11,8 @@ import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarshi
 
 // atencionFlag/clearFlag/patchInline/recalculateRefrend hit axios directly
 // (no repository seam) — mocked at the module boundary. None of these are
-// exercised by the "Solo pago adelantado" filter tests below, but the
-// component calls useScholarshipStore() unconditionally on setup.
+// exercised by the toggle/filter tests below, but the component calls
+// useScholarshipStore() unconditionally on setup.
 vi.mock("@/stores/api/scholarshipStore", () => ({
   useScholarshipStore: () => ({
     atencionFlag: vi.fn(),
@@ -140,19 +140,25 @@ const buildRow = (
   advance_paid_origin_month: advancePaid.originMonth ?? null,
 });
 
-const mountTable = (
-  rows: BulkRefrendRow[],
-  viewVariant: "completa" | "incidencias" = "completa",
-) =>
+const mountTable = (rows: BulkRefrendRow[]) =>
   mount(VerificacionRefrendTable, {
-    props: { rows, year: 2026, month: 5, viewVariant },
+    props: { rows, year: 2026, month: 5 },
     global: {
       plugins: [createPinia(), vuetify],
       stubs: STUBS,
     },
   });
 
-const toggleAdvancePaymentOnly = async (
+const toggleOnlyWithIncidencias = async (
+  wrapper: ReturnType<typeof mountTable>,
+  value: boolean,
+) => {
+  await wrapper.findComponent(VSwitch).vm.$emit("update:modelValue", value);
+  await wrapper.vm.$nextTick();
+  await wrapper.vm.$nextTick();
+};
+
+const toggleCertUnidOnly = async (
   wrapper: ReturnType<typeof mountTable>,
   value: boolean,
 ) => {
@@ -163,98 +169,188 @@ const toggleAdvancePaymentOnly = async (
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 //
-// "Solo pago adelantado" mirrors AprobacionRefrendTable's selector: orthogonal
-// to viewVariant, ANDs into displayRows instead of replacing it.
+// sdd/verificacion-incidencias-ux PR2: the two tabs (CONSULTA POR
+// GENERACIONES / CONSULTA POR INCIDENCIAS) are gone. VerificacionRefrendTable
+// no longer receives a `viewVariant` prop — it owns a local "Solo con
+// incidencias" toggle (default off) that drives both the row filter (via
+// the shared hasIncidencia predicate) AND which column set renders
+// (amendment #1956: columns follow the toggle, not a union).
 
-describe('VerificacionRefrendTable — "Incidencias" row filter', () => {
-  // Mirrors AprobacionRefrendTable's row-inclusion criterion: a becario who
-  // lost the whole month's pay to an attendance discount (falta or 2
-  // accumulated retardos) never gets an incidencia record, so the
-  // incidents_count-only filter silently hid them here too.
+describe('VerificacionRefrendTable — "Solo con incidencias" toggle (row filter)', () => {
+  it("shows all rows (including clean ones) when the toggle is off (default)", async () => {
+    const rows = [buildRow(1, "Limpio", 0), buildRow(2, "Con Incidencia", 1)];
+    const wrapper = mountTable(rows);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
 
-  it("includes a row with has_falta_discount=true and incidents_count=0 (new behavior)", async () => {
+    expect(wrapper.text()).toContain("Limpio");
+    expect(wrapper.text()).toContain("Con Incidencia");
+  });
+
+  it("includes a row with has_falta_discount=true and incidents_count=0 when the toggle is on", async () => {
     const row = buildRow(20, "Falta Sin Incidencia", 0);
     row.has_falta_discount = true;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.text()).toContain("Falta Sin Incidencia");
   });
 
-  it("includes a row with has_retardos_discount=true and incidents_count=0 (new behavior)", async () => {
+  it("includes a row with has_retardos_discount=true and incidents_count=0 when the toggle is on", async () => {
     const row = buildRow(21, "Retardos Sin Incidencia", 0);
     row.has_retardos_discount = true;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.text()).toContain("Retardos Sin Incidencia");
   });
 
-  it("excludes a row with neither an incidencia nor an active attendance discount (preexisting behavior)", async () => {
+  it("excludes a row with neither an incidencia nor an active attendance discount when the toggle is on", async () => {
     const row = buildRow(22, "Limpio", 0);
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.text()).not.toContain("Limpio");
   });
 });
 
-describe("VerificacionRefrendTable — attendance-discount reason icon", () => {
-  it('shows the reason icon in "incidencias" mode when there\'s an attendance discount but no incidencia', async () => {
-    const row = buildRow(23, "Solo Falta", 0);
-    row.has_falta_discount = true;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+describe(
+  "VerificacionRefrendTable — attendance-discount reason icon (amendment #1956: shown in BOTH toggle states)",
+  () => {
+    it('shows the reason icon when the toggle is OFF but there\'s an attendance discount and no incidencia', async () => {
+      const row = buildRow(26, "Solo Falta Completa", 0);
+      row.has_falta_discount = true;
+      const wrapper = mountTable([row]);
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick();
 
-    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(true);
-  });
+      expect(
+        wrapper.find('[data-testid="attendance-discount-reason"]').exists(),
+      ).toBe(true);
+    });
 
-  it('hides the reason icon in "completa" mode even with an attendance discount and no incidencia', async () => {
-    const row = buildRow(26, "Solo Falta Completa", 0);
-    row.has_falta_discount = true;
-    const wrapper = mountTable([row], "completa");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    it('shows the reason icon when the toggle is ON and there\'s an attendance discount but no incidencia', async () => {
+      const row = buildRow(23, "Solo Falta", 0);
+      row.has_falta_discount = true;
+      const wrapper = mountTable([row]);
+      await toggleOnlyWithIncidencias(wrapper, true);
 
-    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
-  });
+      expect(
+        wrapper.find('[data-testid="attendance-discount-reason"]').exists(),
+      ).toBe(true);
+    });
 
-  it('hides the reason icon in "incidencias" mode when a real incidencia already exists, even with an attendance discount', async () => {
-    const row = buildRow(24, "Con Incidencia Y Falta", 1);
-    row.has_falta_discount = true;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    it("hides the reason icon when a real incidencia already exists, even with an attendance discount (toggle ON)", async () => {
+      const row = buildRow(24, "Con Incidencia Y Falta", 1);
+      row.has_falta_discount = true;
+      const wrapper = mountTable([row]);
+      await toggleOnlyWithIncidencias(wrapper, true);
 
-    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
-  });
+      expect(
+        wrapper.find('[data-testid="attendance-discount-reason"]').exists(),
+      ).toBe(false);
+    });
 
-  it('hides the reason icon in "incidencias" mode when there\'s neither an incidencia nor an attendance discount', async () => {
-    const row = buildRow(25, "Limpio", 0);
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    it("hides the reason icon when there's neither an incidencia nor an attendance discount (toggle ON)", async () => {
+      const row = buildRow(25, "Limpio", 0);
+      const wrapper = mountTable([row]);
+      await toggleOnlyWithIncidencias(wrapper, true);
 
-    expect(wrapper.find('[data-testid="attendance-discount-reason"]').exists()).toBe(false);
-  });
+      expect(
+        wrapper.find('[data-testid="attendance-discount-reason"]').exists(),
+      ).toBe(false);
+    });
 
-  it('uses the fixed tooltip text "Falta registrada" regardless of falta vs retardos', async () => {
-    const row = buildRow(27, "Solo Retardos", 0);
-    row.has_retardos_discount = true;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    it('uses the fixed tooltip text "Falta registrada" regardless of falta vs retardos', async () => {
+      const row = buildRow(27, "Solo Retardos", 0);
+      row.has_retardos_discount = true;
+      const wrapper = mountTable([row]);
+      await toggleOnlyWithIncidencias(wrapper, true);
 
-    const icon = wrapper.find('[data-testid="attendance-discount-reason"]');
-    expect(icon.attributes("aria-describedby") ?? icon.exists()).toBeTruthy();
-    const tooltip = wrapper.findComponent({ name: "VTooltip" });
-    expect(tooltip.props("text")).toBe("Falta registrada");
-  });
-});
+      const icon = wrapper.find('[data-testid="attendance-discount-reason"]');
+      expect(icon.attributes("aria-describedby") ?? icon.exists()).toBeTruthy();
+      const tooltip = wrapper.findComponent({ name: "VTooltip" });
+      expect(tooltip.props("text")).toBe("Falta registrada");
+    });
+  },
+);
+
+describe(
+  "VerificacionRefrendTable — grouping (always grouped by snapshot_generation, regardless of toggle)",
+  () => {
+    it("groups rows under a generación header when the toggle is off (default)", async () => {
+      const rows = [buildRow(40, "Uno", 0), buildRow(41, "Dos", 0)];
+      const wrapper = mountTable(rows);
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.text()).toContain("Gen Única");
+    });
+
+    it("groups rows under a generación header when the toggle is on", async () => {
+      const row = buildRow(42, "Con Incidencia", 1);
+      const wrapper = mountTable([row]);
+      await toggleOnlyWithIncidencias(wrapper, true);
+
+      expect(wrapper.text()).toContain("Gen Única");
+    });
+  },
+);
+
+describe(
+  "VerificacionRefrendTable — columns follow the toggle (amendment #1956)",
+  () => {
+    it("shows the Completa column set (Clases/F.mes/Ret.acum./Recalcular) when the toggle is off (default)", async () => {
+      const wrapper = mountTable([buildRow(50, "Uno", 0)]);
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick();
+
+      const headers = wrapper.findAll("th").map((th) => th.text().trim());
+      expect(headers).toContain("Clases");
+      expect(headers).toContain("F.mes");
+      expect(headers).toContain("Ret.acum.");
+      expect(headers).toContain("Recalcular");
+      expect(headers).not.toContain("Respuesta");
+      expect(headers).not.toContain("¿Notificado?");
+    });
+
+    it("shows the Incidencias column set (Respuesta/¿Notificado?) when the toggle is on", async () => {
+      const wrapper = mountTable([buildRow(51, "Uno", 0)]);
+      await toggleOnlyWithIncidencias(wrapper, true);
+
+      const headers = wrapper.findAll("th").map((th) => th.text().trim());
+      expect(headers).toContain("Respuesta");
+      expect(headers).toContain("¿Notificado?");
+      expect(headers).not.toContain("Clases");
+      expect(headers).not.toContain("F.mes");
+      expect(headers).not.toContain("Ret.acum.");
+      expect(headers).not.toContain("Recalcular");
+    });
+
+    it('keeps the "Incidencia" column in both states', async () => {
+      const wrapperOff = mountTable([buildRow(52, "Uno", 0)]);
+      await wrapperOff.vm.$nextTick();
+      await wrapperOff.vm.$nextTick();
+      expect(
+        wrapperOff.findAll("th").map((th) => th.text().trim()),
+      ).toContain("Incidencia");
+
+      const wrapperOn = mountTable([buildRow(53, "Dos", 0)]);
+      await toggleOnlyWithIncidencias(wrapperOn, true);
+      expect(wrapperOn.findAll("th").map((th) => th.text().trim())).toContain(
+        "Incidencia",
+      );
+    });
+
+    it('keeps the "" (Estado final) column in both states', async () => {
+      const wrapperOff = mountTable([buildRow(54, "Uno", 0)]);
+      await wrapperOff.vm.$nextTick();
+      await wrapperOff.vm.$nextTick();
+      const offCells = wrapperOff.findAll("th").map((th) => th.text().trim());
+      expect(offCells.filter((t) => t === "").length).toBeGreaterThan(0);
+    });
+  },
+);
 
 describe("VerificacionRefrendTable — advance-paid row indicator (sdd/pago-adelantado PR7a)", () => {
   it("renders the AdvancePaymentChip amount when the row is advance_paid", async () => {
@@ -264,7 +360,7 @@ describe("VerificacionRefrendTable — advance-paid row indicator (sdd/pago-adel
       originYear: 2026,
       originMonth: 7,
     });
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -273,7 +369,7 @@ describe("VerificacionRefrendTable — advance-paid row indicator (sdd/pago-adel
 
   it("renders the — fallback for a row that was not advance-paid", async () => {
     const row = buildRow(31, "Normal", 0);
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -289,7 +385,7 @@ describe("VerificacionRefrendTable — temporary increase chip (sdd/temporary-in
 
   it('renders the "Aum. temporal" column header', async () => {
     const row = buildRow(35, "Normal", 0);
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -304,7 +400,7 @@ describe("VerificacionRefrendTable — temporary increase chip (sdd/temporary-in
       snapshot_temporary_increase_amount: "500.00",
       snapshot_temporary_increase_reason: "Ajuste de beca",
     };
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -321,7 +417,7 @@ describe("VerificacionRefrendTable — temporary increase chip (sdd/temporary-in
 
   it('renders "—" for a row with no active temporary increase (expired or never configured)', async () => {
     const row = buildRow(37, "Sin Aumento", 0);
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -342,9 +438,8 @@ describe("VerificacionRefrendTable — temporary increase chip (sdd/temporary-in
       snapshot_temporary_increase_amount: "300.00",
       snapshot_temporary_increase_reason: "Beca extendida",
     };
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.text()).toContain("10%");
     expect(wrapper.text()).toContain("$300.00");
@@ -369,7 +464,7 @@ describe("VerificacionRefrendTable — origin advance-payment-registered indicat
 
   it('does not render a dedicated "Adelanto registrado" column header', async () => {
     const row = buildRow(33, "Normal", 0);
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -379,7 +474,7 @@ describe("VerificacionRefrendTable — origin advance-payment-registered indicat
 
   it("renders the registered-advance chip inside the actions cell, next to the action button, when advance_payment_amount is non-zero", async () => {
     const row = buildRow(32, "Origen", 0, false, {}, "500.00");
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -389,7 +484,7 @@ describe("VerificacionRefrendTable — origin advance-payment-registered indicat
 
   it("omits the chip from the actions cell for a row without a registered batch", async () => {
     const row = buildRow(34, "Sin Batch", 0);
-    const wrapper = mountTable([row], "completa");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
@@ -398,11 +493,10 @@ describe("VerificacionRefrendTable — origin advance-payment-registered indicat
   });
 });
 
-describe('VerificacionRefrendTable — "Respuesta" column (renamed from "R. Aprobación")', () => {
-  it('titles the column "Respuesta"', async () => {
-    const wrapper = mountTable([buildRow(28, "Uno", 0)], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+describe('VerificacionRefrendTable — "Respuesta" column (renamed from "R. Aprobación", toggle ON only)', () => {
+  it('titles the column "Respuesta" when the toggle is on', async () => {
+    const wrapper = mountTable([buildRow(28, "Uno", 0)]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     const headers = wrapper.findAll("th").map((th) => th.text().trim());
     expect(headers).toContain("Respuesta");
@@ -410,16 +504,13 @@ describe('VerificacionRefrendTable — "Respuesta" column (renamed from "R. Apro
   });
 });
 
-describe('VerificacionRefrendTable — "Notificado" checkbox gating', () => {
+describe('VerificacionRefrendTable — "Notificado" checkbox gating (toggle ON only)', () => {
   it("is disabled when there is no aprobación response yet, even if workflow_status is LISTO_PARA_PAGO", async () => {
-    // incidentsCount=1 so the row passes the "Incidencias" row filter —
-    // unrelated to what this test actually checks (the checkbox gating).
     const row = buildRow(29, "Sin Respuesta", 1);
     row.refrend.workflow_status = "LISTO_PARA_PAGO";
     row.refrend.pedagogia_observations = null;
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.findComponent(VCheckbox).props("disabled")).toBe(true);
   });
@@ -428,15 +519,56 @@ describe('VerificacionRefrendTable — "Notificado" checkbox gating', () => {
     const row = buildRow(30, "Con Respuesta", 1);
     row.refrend.workflow_status = "CON_INCIDENCIA";
     row.refrend.pedagogia_observations = "Aprobado con condiciones.";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.findComponent(VCheckbox).props("disabled")).toBe(false);
   });
 });
 
-describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
+describe('VerificacionRefrendTable — "Tipo de pago" selector (CERT-UNID filter, amendment #1956)', () => {
+  it('labels the selector "Tipo de pago"', async () => {
+    const wrapper = mountTable([buildRow(60, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(VSelect).props("label")).toBe("Tipo de pago");
+  });
+
+  it('labels the incidencias switch "Con incidencia"', async () => {
+    const wrapper = mountTable([buildRow(63, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(VSwitch).props("label")).toBe("Con incidencia");
+  });
+
+  it("orders the toolbar as switch, name search, then Tipo de pago", async () => {
+    const wrapper = mountTable([buildRow(62, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const html = wrapper.html();
+    const switchAt = html.indexOf("Con incidencia");
+    const searchAt = html.indexOf("Buscar por nombre becario");
+    const selectAt = html.indexOf("Tipo de pago");
+    expect(switchAt).toBeGreaterThan(-1);
+    expect(switchAt).toBeLessThan(searchAt);
+    expect(searchAt).toBeLessThan(selectAt);
+  });
+
+  it('offers "Solo CERT-UNID" as the filtered option', async () => {
+    const wrapper = mountTable([buildRow(61, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const items = wrapper.findComponent(VSelect).props("items") as {
+      title: string;
+    }[];
+    expect(items.map((i) => i.title)).toContain("Solo CERT-UNID");
+    expect(items.map((i) => i.title)).not.toContain("Solo pago adelantado");
+  });
+
   it("leaves all rows visible when left on Todos (default, unaffected)", async () => {
     const rows = [
       buildRow(1, "No Elegible", 0, false),
@@ -459,22 +591,20 @@ describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    await toggleAdvancePaymentOnly(wrapper, true);
+    await toggleCertUnidOnly(wrapper, true);
 
     expect(wrapper.text()).not.toContain("No Elegible");
     expect(wrapper.text()).toContain("Elegible");
   });
 
-  it('combines (AND) with viewVariant="incidencias" — excludes an eligible row with no incidencia', async () => {
+  it('combines (AND) with the "Solo con incidencias" toggle — excludes an eligible row with no incidencia', async () => {
     const rows = [
       buildRow(5, "Elegible Sin Incidencia", 0, true),
       buildRow(6, "Elegible Con Incidencia", 1, true),
     ];
-    const wrapper = mountTable(rows, "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
-
-    await toggleAdvancePaymentOnly(wrapper, true);
+    const wrapper = mountTable(rows);
+    await toggleOnlyWithIncidencias(wrapper, true);
+    await toggleCertUnidOnly(wrapper, true);
 
     expect(wrapper.text()).not.toContain("Elegible Sin Incidencia");
     expect(wrapper.text()).toContain("Elegible Con Incidencia");
@@ -489,7 +619,7 @@ describe('VerificacionRefrendTable — "Pago adelantado" selector', () => {
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    await toggleAdvancePaymentOnly(wrapper, true);
+    await toggleCertUnidOnly(wrapper, true);
     await wrapper
       .find('input[placeholder="Buscar por nombre becario..."]')
       .setValue("Karla");
@@ -507,9 +637,8 @@ describe('VerificacionRefrendTable — "Estado" motivo caption (removed only onc
     row.refrend.workflow_status = "LISTO_PARA_PAGO";
     row.refrend.resolution_type = "RETENIDA";
     row.refrend.resolution_cause = "FALTAS_FI";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     expect(wrapper.text()).toContain("Faltas a F.I.");
   });
@@ -519,9 +648,8 @@ describe('VerificacionRefrendTable — "Estado" motivo caption (removed only onc
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = "RETENIDA";
     row.refrend.resolution_cause = "FALTAS_FI";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     // Under the Estado icon specifically (not the new Estado final column,
     // which does show the label as its own chip text).
@@ -530,27 +658,26 @@ describe('VerificacionRefrendTable — "Estado" motivo caption (removed only onc
   });
 });
 
-describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only)', () => {
-  it("shows the resolution chip (icon + visible label) once the row is Pagado (CLOSED)", async () => {
+describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only, present in both toggle states)', () => {
+  it("shows the resolution chip (icon + visible label) once the row is Pagado (CLOSED), toggle off", async () => {
     const row = buildRow(33, "Pagado Retenida", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = "RETENIDA";
     row.refrend.resolution_cause = null;
-    const wrapper = mountTable([row], "incidencias");
+    const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
     expect(wrapper.text()).toContain("Retenida");
   });
 
-  it("shows the motivo via tooltip on the chip when resolution_cause is present", async () => {
+  it("shows the motivo via tooltip on the chip when resolution_cause is present, toggle on", async () => {
     const row = buildRow(34, "Pagado Con Motivo", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = "RETENIDA";
     row.refrend.resolution_cause = "FALTAS_FI";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
     const tooltip = wrapper.findComponent({ name: "VTooltip" });
     expect(tooltip.exists()).toBe(true);
@@ -562,46 +689,48 @@ describe('VerificacionRefrendTable — "Estado final" chip (Pagado rows only)', 
   // forgiven) is NOT nothing to show — it's a real outcome, derived from
   // discount_percentage instead of assuming 100% (see
   // finalResolutionChip's fallback in useRefrendTableDisplay.ts).
-  it('shows "Pago sin penalización" for a Pagado row with no resolution_type and no discount', async () => {
+  it('shows "Pago sin penalización" for a Pagado row with no resolution_type and no discount, toggle on', async () => {
     const row = buildRow(35, "Pagado Sin Resolucion", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = null;
     row.refrend.discount_percentage = "0";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
-    // findAll("tbody tr")[0] is the collapsible group-header row in
-    // "incidencias" mode (single <td colspan> with the generación name) —
-    // find the actual data row by its content instead.
-    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("Pagado Sin Resolucion"));
+    // findAll("tbody tr")[0] is the collapsible group-header row — find the
+    // actual data row by its content instead.
+    const dataRow = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("Pagado Sin Resolucion"));
     const cells = dataRow!.findAll("td");
     expect(cells[cells.length - 1].text()).toBe("Pago sin penalización");
   });
 
-  it('shows the academic-discount chip for a Pagado row with no resolution_type but a kept academic discount', async () => {
+  it('shows the academic-discount chip for a Pagado row with no resolution_type but a kept academic discount, toggle on', async () => {
     const row = buildRow(37, "Pagado Con Descuento Academico", 1);
     row.refrend.workflow_status = "CLOSED";
     row.refrend.resolution_type = null;
     row.refrend.discount_percentage = "20";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
-    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("Pagado Con Descuento Academico"));
+    const dataRow = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("Pagado Con Descuento Academico"));
     const cells = dataRow!.findAll("td");
     expect(cells[cells.length - 1].text()).toBe("Descuento académico 20%");
   });
 
-  it("shows nothing (dash) for a non-paid row, even with a resolution_type set", async () => {
+  it("shows nothing (dash) for a non-paid row, even with a resolution_type set, toggle on", async () => {
     const row = buildRow(36, "No Pagado Aun", 1);
     row.refrend.workflow_status = "LISTO_PARA_PAGO";
     row.refrend.resolution_type = "RETENIDA";
-    const wrapper = mountTable([row], "incidencias");
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
+    const wrapper = mountTable([row]);
+    await toggleOnlyWithIncidencias(wrapper, true);
 
-    const dataRow = wrapper.findAll("tbody tr").find((tr) => tr.text().includes("No Pagado Aun"));
+    const dataRow = wrapper
+      .findAll("tbody tr")
+      .find((tr) => tr.text().includes("No Pagado Aun"));
     const cells = dataRow!.findAll("td");
     expect(cells[cells.length - 1].text()).toBe("—");
   });

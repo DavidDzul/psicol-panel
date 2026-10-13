@@ -4,6 +4,7 @@ import {
   advancePaymentRegisteredChip,
   BASE_HEADERS,
   finalResolutionChip,
+  hasIncidencia,
   isLocked,
   LOCKED_STATUSES,
   pendingWithholdingChip,
@@ -545,5 +546,50 @@ describe("useRefrendTableDisplay — statusChip CLOSED override for EGRESO_RETIC
     // Both chip paths agree with each other for the same resolution_type —
     // the two rendering code paths must look the same to a user.
     expect(statusEgresoReticula).toEqual(finalEgresoReticula);
+  });
+});
+
+// ── hasIncidencia (sdd/verificacion-incidencias-ux PR2) ─────────────────────
+//
+// Extracted so VerificacionRefrendTable's "Solo con incidencias" toggle and
+// any other consumer share one predicate. Per amendment #1 (obs #1952):
+// resolved/cleared incidencias are never persisted with a "resolved" marker
+// in this codebase — the predicate counts ANY row matching, regardless of
+// workflow_status, with no resolved-exclusion branch.
+
+describe("useRefrendTableDisplay — hasIncidencia", () => {
+  it("is true when incidents_count > 0", () => {
+    const row = { ...buildRow(), incidents_count: 1 };
+    expect(hasIncidencia(row)).toBe(true);
+  });
+
+  it("is true when has_falta_discount is true, even with incidents_count 0", () => {
+    const row = { ...buildRow(), incidents_count: 0, has_falta_discount: true };
+    expect(hasIncidencia(row)).toBe(true);
+  });
+
+  it("is true when has_retardos_discount is true, even with incidents_count 0", () => {
+    const row = {
+      ...buildRow(),
+      incidents_count: 0,
+      has_retardos_discount: true,
+    };
+    expect(hasIncidencia(row)).toBe(true);
+  });
+
+  it("is false when there is neither an incidencia nor an attendance discount", () => {
+    const row = {
+      ...buildRow(),
+      incidents_count: 0,
+      has_falta_discount: false,
+      has_retardos_discount: false,
+    };
+    expect(hasIncidencia(row)).toBe(false);
+  });
+
+  it("is true for a CLOSED (paid) row with an incidencia — any workflow_status counts, no resolved exclusion", () => {
+    const row = buildRow({ workflow_status: "CLOSED" });
+    const withIncidencia = { ...row, incidents_count: 2 };
+    expect(hasIncidencia(withIncidencia)).toBe(true);
   });
 });

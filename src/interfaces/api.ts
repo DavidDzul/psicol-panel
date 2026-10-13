@@ -92,6 +92,7 @@ import type {
   ScholarshipSemesterGrade,
   ScholarshipWithholding,
   ScholarshipAdvancePayment,
+  GenerateRefrendsResult,
 } from './scholarship'
 
 export interface ScholarshipProfileResponse { data: ScholarshipProfile }
@@ -110,7 +111,7 @@ export interface ScholarshipWithholdingsResponse {
 }
 export interface ScholarshipDocumentsResponse { data: StudentDocument[] }
 export interface ScholarshipDocumentResponse { data: StudentDocument }
-export interface GenerateRefrendsResponse { data: { created: number; skipped: number; errors: number } }
+export interface GenerateRefrendsResponse { data: GenerateRefrendsResult }
 export interface AttendanceSummaryResponse { res: boolean; data: AttendanceSummary }
 export interface SemesterGradesResponse { res: boolean; data: ScholarshipSemesterGrade[] }
 export interface SemesterGradeResponse { res: boolean; data: ScholarshipSemesterGrade }
