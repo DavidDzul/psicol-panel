@@ -46,7 +46,7 @@
                set renders (amendment #1956: columns follow the toggle). -->
           <v-switch
             v-model="onlyWithIncidencias"
-            label="Solo con incidencias"
+            label="Con incidencia"
             color="primary"
             density="compact"
             hide-details

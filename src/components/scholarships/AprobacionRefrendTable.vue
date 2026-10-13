@@ -64,7 +64,7 @@
                of the old "Mostrar" select. -->
           <v-switch
             v-model="onlyWithIncidencias"
-            label="Solo con incidencias o retención"
+            label="Con incidencia"
             color="primary"
             density="compact"
             hide-details

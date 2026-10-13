@@ -425,7 +425,7 @@ describe("AprobacionRefrendTable — toolbar matches Verificación", () => {
 
     const sw = wrapper.findComponent(VSwitch);
     expect(sw.exists()).toBe(true);
-    expect(sw.props("label")).toBe("Solo con incidencias o retención");
+    expect(sw.props("label")).toBe("Con incidencia");
     expect(sw.props("modelValue")).toBe(true);
   });
 
@@ -446,7 +446,7 @@ describe("AprobacionRefrendTable — toolbar matches Verificación", () => {
     await wrapper.vm.$nextTick();
 
     const html = wrapper.html();
-    const switchAt = html.indexOf("Solo con incidencias o retención");
+    const switchAt = html.indexOf("Con incidencia");
     const searchAt = html.indexOf("Buscar por nombre becario");
     const selectAt = html.indexOf("Tipo de pago");
     expect(switchAt).toBeGreaterThan(-1);
