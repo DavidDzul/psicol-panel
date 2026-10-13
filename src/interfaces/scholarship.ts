@@ -527,6 +527,43 @@ export interface GeneratePeriodForm {
   generation_id: number
 }
 
+// ── Per-sede sequential generation (sdd/verificacion-incidencias-ux PR3) ────
+//
+// generateForPeriod's response (one call per generación, per
+// GeneratePeriodForm above). `skipped` keeps its historical meaning — the
+// becario already had a refrendo for this period — while
+// `skipped_out_of_reticula` is new and counts becarios whose period falls
+// outside their retícula window; both are reported as skips, never as
+// errors. `errors` counts only genuine failures.
+export type GenerateFailureKind = 'skipped_out_of_reticula' | 'error'
+
+export interface GenerateRefrendFailure {
+  user_id: number
+  name: string
+  reason: string
+  kind: GenerateFailureKind
+}
+
+export interface GenerateRefrendsResult {
+  created: number
+  skipped: number
+  skipped_out_of_reticula: number
+  errors: number
+  failures: GenerateRefrendFailure[]
+}
+
+// One entry per generación processed by useSedeRefrendGeneration's
+// sequential loop. `result` is present on success; `requestError` is set
+// instead when the HTTP call itself failed (network/server error) — the
+// loop continues to the next generación either way, so a run can end with
+// a mix of both across its summaries.
+export interface GenerationRunSummary {
+  generationId: number
+  generationName: string
+  result?: GenerateRefrendsResult
+  requestError?: string
+}
+
 export interface ReviewForm {
   observations?: string | null
   labels?: string[] | null

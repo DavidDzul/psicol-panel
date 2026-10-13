@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createVuetify } from "vuetify";
-import { VBtn, VSelect } from "vuetify/components";
+import { VBtn, VSelect, VSwitch } from "vuetify/components";
 import AprobacionRefrendTable from "@/components/scholarships/AprobacionRefrendTable.vue";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
@@ -320,21 +320,21 @@ describe("AprobacionRefrendTable — row filter", () => {
 });
 
 describe('AprobacionRefrendTable — "todos" mode', () => {
-  // Vuetify's real v-select menu doesn't reliably open/select in jsdom;
-  // switching mode is driven directly through the VSelect's v-model emit,
-  // same approach the design doc calls out.
+  // sdd/verificacion-incidencias-ux: the "Mostrar" select became a
+  // "Solo con incidencias o retención" switch (same toolbar format as
+  // Verificación). Driven through the VSwitch's v-model emit.
   const switchToTodos = async (wrapper: ReturnType<typeof mountTable>) => {
     await wrapper
-      .findComponent(VSelect)
-      .vm.$emit("update:modelValue", "todos");
+      .findComponent(VSwitch)
+      .vm.$emit("update:modelValue", false);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
   };
 
   const switchToIncidencias = async (wrapper: ReturnType<typeof mountTable>) => {
     await wrapper
-      .findComponent(VSelect)
-      .vm.$emit("update:modelValue", "incidencias");
+      .findComponent(VSwitch)
+      .vm.$emit("update:modelValue", true);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
   };
@@ -417,17 +417,54 @@ describe('AprobacionRefrendTable — "todos" mode', () => {
   });
 });
 
-describe('AprobacionRefrendTable — "Pago adelantado" selector', () => {
-  // Orthogonal to rowFilterMode (ANDs into displayRows), not a third
-  // mutually-exclusive rowFilterMode value — a becario can have both,
-  // either, or neither criterion. Second VSelect in template order (the
-  // first is rowFilterMode's "Mostrar" selector).
+describe("AprobacionRefrendTable — toolbar matches Verificación", () => {
+  it("renders the incidencias switch on by default, labeled with what it filters", async () => {
+    const wrapper = mountTable([buildRow(90, "Uno", 1, 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const sw = wrapper.findComponent(VSwitch);
+    expect(sw.exists()).toBe(true);
+    expect(sw.props("label")).toBe("Con incidencia");
+    expect(sw.props("modelValue")).toBe(true);
+  });
+
+  it('labels the CERT-UNID selector "Tipo de pago" with Todos / Solo CERT-UNID', async () => {
+    const wrapper = mountTable([buildRow(91, "Uno", 1, 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const select = wrapper.findComponent(VSelect);
+    expect(select.props("label")).toBe("Tipo de pago");
+    const items = select.props("items") as Array<{ title: string }>;
+    expect(items.map((i) => i.title)).toEqual(["Todos", "Solo CERT-UNID"]);
+  });
+
+  it("orders the toolbar as switch, name search, then Tipo de pago", async () => {
+    const wrapper = mountTable([buildRow(92, "Uno", 1, 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const html = wrapper.html();
+    const switchAt = html.indexOf("Con incidencia");
+    const searchAt = html.indexOf("Buscar por nombre becario");
+    const selectAt = html.indexOf("Tipo de pago");
+    expect(switchAt).toBeGreaterThan(-1);
+    expect(switchAt).toBeLessThan(searchAt);
+    expect(searchAt).toBeLessThan(selectAt);
+  });
+});
+
+describe('AprobacionRefrendTable — "Tipo de pago" selector (CERT-UNID)', () => {
+  // Orthogonal to the incidencias switch (ANDs into displayRows) — a becario
+  // can have both, either, or neither criterion. Only VSelect in the toolbar
+  // now that "Mostrar" became a switch.
   const toggleAdvancePaymentOnly = async (
     wrapper: ReturnType<typeof mountTable>,
     value: boolean,
   ) => {
     await wrapper
-      .findAllComponents(VSelect)[1]
+      .findComponent(VSelect)
       .vm.$emit("update:modelValue", value);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();

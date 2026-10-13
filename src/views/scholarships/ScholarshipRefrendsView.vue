@@ -21,8 +21,8 @@
             <v-btn
               color="primary"
               prepend-icon="mdi-refresh"
-              :loading="generating"
-              :disabled="!selectedCampus || !selectedGenerationId"
+              :loading="sedeRunning"
+              :disabled="!selectedCampus"
               @click="generateDialog = true"
             >
               Generar ref.
@@ -79,35 +79,49 @@
     </v-col>
   </v-row>
 
-  <!-- Generate period confirmation -->
-  <v-dialog v-model="generateDialog" max-width="440">
+  <!-- Generate period confirmation (sdd/verificacion-incidencias-ux PR3:
+       sede-wide sequential generation, once per generación of the sede —
+       no single generación selection, no atomic all-or-nothing claim). -->
+  <v-dialog v-model="generateDialog" max-width="460" :persistent="sedeRunning">
     <v-card>
       <v-card-title class="pa-4">Generar refrendos</v-card-title>
       <v-card-text>
-        <p>
-          Esto generará refrendos en estado <strong>Borrador</strong> para todos
-          los becarios activos
-          <template v-if="selectedCampus">
-            de la sede <strong>{{ campusLabel }}</strong>
-          </template>
-          del periodo seleccionado. Los que ya existan serán omitidos.
+        <p v-if="!sedeRunning">
+          Se generarán refrendos en estado <strong>Borrador</strong> para
+          todos los becarios activos de cada generación de la sede
+          <strong>{{ campusLabel }}</strong>
+          <template v-if="generationCountLabel"> ({{ generationCountLabel }})</template>,
+          una por una. Los becarios que ya tengan refrendo para este periodo
+          serán omitidos. Si una generación falla, el proceso continúa con
+          las demás y se muestra un resumen por generación al finalizar.
         </p>
+        <template v-else>
+          <p>{{ sedeProgressText }}</p>
+          <v-progress-linear indeterminate color="primary" />
+        </template>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
-        <v-btn variant="text" @click="generateDialog = false">Cancelar</v-btn>
+        <v-btn variant="text" :disabled="sedeRunning" @click="generateDialog = false">
+          Cancelar
+        </v-btn>
         <v-btn
           color="primary"
           variant="elevated"
-          :loading="generating"
-          :disabled="!selectedCampus || !selectedGenerationId"
-          @click="onGeneratePeriod"
+          :loading="sedeRunning"
+          :disabled="!selectedCampus"
+          @click="onConfirmGenerate"
         >
           Confirmar
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <RefrendGenerationSummaryDialog
+    v-model="summaryDialog"
+    :summaries="sedeSummaries"
+  />
 </template>
 
 <script setup lang="ts">
@@ -116,6 +130,7 @@ import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
 import ScholarshipFilters from "@/components/scholarships/ScholarshipFilters.vue";
+import RefrendGenerationSummaryDialog from "@/components/scholarships/RefrendGenerationSummaryDialog.vue";
 import type { LinkInterface } from "@/interfaces";
 
 const props = defineProps<{
@@ -148,9 +163,13 @@ const {
   selectedCampus,
   selectedGenerationId,
   filteredCampus,
-  generating,
   generateDialog,
-  onGeneratePeriod,
+  summaryDialog,
+  sedeRunning,
+  sedeProgressText,
+  sedeSummaries,
+  generationsForCampus,
+  runSedeGeneration,
 } = useScholarshipPage();
 
 // ── Store ──────────────────────────────────────────────────────────────────
@@ -179,6 +198,15 @@ const campusLabel = computed<string>(() => {
   return found?.text ?? selectedCampus.value ?? "";
 });
 
+// sdd/verificacion-incidencias-ux PR3: the confirm dialog states exactly how
+// many generaciones will be processed, sequentially, before staff commit.
+const generationCountLabel = computed<string>(() => {
+  if (!selectedCampus.value) return "";
+  const count = generationsForCampus(selectedCampus.value).length;
+  if (count === 0) return "0 generaciones";
+  return count === 1 ? "1 generación" : `${count} generaciones`;
+});
+
 // ── Period change ──────────────────────────────────────────────────────────
 // sdd/verificacion-incidencias-ux PR2: generación is no longer required to
 // query in either mode — sede (campus) + period are enough, and the table
@@ -193,5 +221,16 @@ const onPeriodChange = async (): Promise<void> => {
     generation_id: null,
     per_page: 500,
   });
+};
+
+// ── Generate (per-sede sequential, PR3) ─────────────────────────────────────
+// After the loop finishes (runSedeGeneration closes generateDialog and opens
+// summaryDialog), re-run the table search so Verificación reflects the newly
+// created refrends — fixes the pre-PR3 bug where only the legacy
+// fetchRefrends pair reloaded, not this table.
+
+const onConfirmGenerate = async (): Promise<void> => {
+  await runSedeGeneration();
+  await onPeriodChange();
 };
 </script>

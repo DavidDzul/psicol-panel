@@ -535,13 +535,21 @@ describe('VerificacionRefrendTable — "Tipo de pago" selector (CERT-UNID filter
     expect(wrapper.findComponent(VSelect).props("label")).toBe("Tipo de pago");
   });
 
+  it('labels the incidencias switch "Con incidencia"', async () => {
+    const wrapper = mountTable([buildRow(63, "Uno", 0)]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(VSwitch).props("label")).toBe("Con incidencia");
+  });
+
   it("orders the toolbar as switch, name search, then Tipo de pago", async () => {
     const wrapper = mountTable([buildRow(62, "Uno", 0)]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
     const html = wrapper.html();
-    const switchAt = html.indexOf("Solo con incidencias");
+    const switchAt = html.indexOf("Con incidencia");
     const searchAt = html.indexOf("Buscar por nombre becario");
     const selectAt = html.indexOf("Tipo de pago");
     expect(switchAt).toBeGreaterThan(-1);
