@@ -35,84 +35,6 @@
           {{ props.rows.length }} becarios
         </v-chip>
       </div>
-
-      <div class="d-flex align-center ga-2 flex-wrap mt-2">
-        <v-select
-          v-model="rowFilterMode"
-          :items="ROW_FILTER_OPTIONS"
-          label="Mostrar"
-          variant="filled"
-          density="compact"
-          hide-details
-          class="flex-0-0-auto"
-          style="max-width: 200px"
-        />
-        <!-- Orthogonal to rowFilterMode: a becario can have both, either, or
-             neither "con incidencia/retención" and "pago adelantado", so this
-             is a separate selector that ANDs into displayRows instead of a
-             third rowFilterMode value. -->
-        <v-select
-          v-model="advancePaymentOnly"
-          :items="ADVANCE_PAYMENT_OPTIONS"
-          label="Pago adelantado"
-          variant="filled"
-          density="compact"
-          hide-details
-          class="flex-0-0-auto"
-          style="max-width: 200px"
-        />
-        <v-text-field
-          v-model="searchQuery"
-          placeholder="Buscar por nombre becario..."
-          prepend-inner-icon="mdi-magnify"
-          variant="filled"
-          density="compact"
-          hide-details
-          clearable
-          class="flex-1-1-auto"
-          style="min-width: 220px"
-        />
-
-        <!-- Toggle de columnas opcionales (Monto mensual / Apoyo / Aumento
-             temporal): las 3 ocultas por default, preferencia persistida en
-             localStorage. -->
-        <v-menu :close-on-content-click="false">
-          <template #activator="{ props: menuProps }">
-            <v-btn
-              v-bind="menuProps"
-              icon="mdi-table-column"
-              variant="text"
-              density="comfortable"
-              size="small"
-              title="Columnas"
-            />
-          </template>
-          <v-list density="compact" min-width="260">
-            <v-list-subheader class="text-caption">
-              Desglose informativo — ya incluido en Base
-            </v-list-subheader>
-            <v-list-item
-              v-for="h in OPTIONAL_HEADERS"
-              :key="h.key"
-              @click="toggleColumn(h.key)"
-            >
-              <template #prepend>
-                <v-checkbox-btn
-                  :model-value="visibleOptionalColumns.includes(h.key)"
-                  density="compact"
-                />
-              </template>
-              <v-list-item-title class="text-body-2">{{
-                h.title
-              }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </div>
-    </div>
-
-    <div v-if="displayRows.length === 0 && !loading" class="text-center text-medium-emphasis pa-6">
-      {{ emptyStateText }}
     </div>
 
     <!-- User feedback round 3: "prefiero que este como antes, ya que puedo ir
@@ -122,7 +44,6 @@
          Incidencias variant), replacing the always-expanded
          one-table-per-generación layout from round 2. -->
     <v-data-table
-      v-else
       :headers="headers"
       :items="displayRows"
       :loading="loading"
@@ -133,6 +54,91 @@
       item-value="refrend.id"
       :row-props="({ item }) => ({ class: rowClass(item) })"
     >
+      <!-- Toolbar lives inside the table (#top), same as
+           VerificacionRefrendTable, so it shares the table's white surface
+           and stays visible when no rows match. -->
+      <template #top>
+        <div class="px-3 pt-3 pb-2 d-flex align-center ga-2 flex-wrap">
+          <!-- Same toolbar format and order as VerificacionRefrendTable.
+               The switch is on by default, matching the original default
+               of the old "Mostrar" select. -->
+          <v-switch
+            v-model="onlyWithIncidencias"
+            label="Solo con incidencias o retención"
+            color="primary"
+            density="compact"
+            hide-details
+            class="flex-0-0-auto"
+          />
+          <v-text-field
+            v-model="searchQuery"
+            placeholder="Buscar por nombre becario..."
+            prepend-inner-icon="mdi-magnify"
+            variant="filled"
+            density="compact"
+            hide-details
+            clearable
+            class="flex-1-1-auto"
+            style="min-width: 220px"
+          />
+          <!-- Orthogonal to the switch: a becario can have both, either, or
+               neither "con incidencia/retención" and "CERT-UNID", so this is a
+               separate selector that ANDs into displayRows. -->
+          <v-select
+            v-model="advancePaymentOnly"
+            :items="ADVANCE_PAYMENT_OPTIONS"
+            label="Tipo de pago"
+            variant="filled"
+            density="compact"
+            hide-details
+            class="flex-0-0-auto"
+            style="max-width: 200px"
+          />
+
+          <!-- Toggle de columnas opcionales (Monto mensual / Apoyo / Aumento
+               temporal): las 3 ocultas por default, preferencia persistida en
+               localStorage. -->
+          <v-menu :close-on-content-click="false">
+            <template #activator="{ props: menuProps }">
+              <v-btn
+                v-bind="menuProps"
+                icon="mdi-table-column"
+                variant="text"
+                density="comfortable"
+                size="small"
+                title="Columnas"
+              />
+            </template>
+            <v-list density="compact" min-width="260">
+              <v-list-subheader class="text-caption">
+                Desglose informativo — ya incluido en Base
+              </v-list-subheader>
+              <v-list-item
+                v-for="h in OPTIONAL_HEADERS"
+                :key="h.key"
+                @click="toggleColumn(h.key)"
+              >
+                <template #prepend>
+                  <v-checkbox-btn
+                    :model-value="visibleOptionalColumns.includes(h.key)"
+                    density="compact"
+                  />
+                </template>
+                <v-list-item-title class="text-body-2">{{
+                  h.title
+                }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
+      </template>
+
+      <template #no-data>
+        <div class="text-center text-medium-emphasis pa-6">
+          {{ emptyStateText }}
+        </div>
+      </template>
+
       <template #group-header="{ item, columns, toggleGroup, isGroupOpen }">
         <tr
           @vue:mounted="
@@ -586,18 +592,23 @@ const searchQuery = ref("");
 
 type RowFilterMode = "incidencias" | "todos";
 
-const ROW_FILTER_OPTIONS = [
-  { value: "incidencias", title: "Con incidencias" },
-  { value: "todos", title: "Todos" },
-] as const;
-
 const rowFilterMode = ref<RowFilterMode>("incidencias");
 
+// The toolbar exposes rowFilterMode as an on/off switch (same format as
+// Verificación); "incidencias" stays the default.
+const onlyWithIncidencias = computed<boolean>({
+  get: () => rowFilterMode.value === "incidencias",
+  set: (value) => {
+    rowFilterMode.value = value ? "incidencias" : "todos";
+  },
+});
+
 // Orthogonal filter (see toolbar comment): defaults off, combines with
-// rowFilterMode via AND, independent of the name search.
+// rowFilterMode via AND, independent of the name search. Labeled
+// "Tipo de pago" / "Solo CERT-UNID", same as VerificacionRefrendTable.
 const ADVANCE_PAYMENT_OPTIONS = [
   { value: false, title: "Todos" },
-  { value: true, title: "Solo pago adelantado" },
+  { value: true, title: "Solo CERT-UNID" },
 ] as const;
 
 const advancePaymentOnly = ref(false);
