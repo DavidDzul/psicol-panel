@@ -560,11 +560,11 @@ import {
 } from "@/composables/useStoredPreference";
 import type {
   BulkRefrendRow,
-  ResolutionType,
   PedagogiaResolveForm,
   RecordSituationForm,
   AdvancePaymentForm,
 } from "@/interfaces/scholarship";
+import type { SituationKey } from "@/composables/useSituationMenuItems";
 
 // ── Props ──────────────────────────────────────────────────────────────────
 //
@@ -907,8 +907,6 @@ const onClearAprobacionFromDialog = async (): Promise<void> => {
 };
 
 // ── Situation dialogs ─────────────────────────────────────────────────────
-
-type SituationKey = ResolutionType | "PAGO_MESES" | "PAGO_ADELANTADO";
 
 const situationDialogs = ref<Record<SituationKey, boolean>>({
   BECA_MES: false,
