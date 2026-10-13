@@ -198,6 +198,20 @@ export const pendingWithholdingChip = (
   };
 };
 
+// ── Incidencia predicate (sdd/verificacion-incidencias-ux PR2) ─────────────
+//
+// Shared by VerificacionRefrendTable's "Solo con incidencias" toggle.
+// Amendment #1 (obs #1952): incidencias are never left in a "resolved" state
+// in this codebase — Verificación either creates one (CON_INCIDENCIA) or
+// deletes it outright (atencionClearFlag). So this predicate counts ANY row
+// matching, independent of workflow_status — there is no resolved/unresolved
+// branch to exclude.
+
+export const hasIncidencia = (row: BulkRefrendRow): boolean =>
+  row.incidents_count > 0 ||
+  row.has_falta_discount ||
+  row.has_retardos_discount;
+
 // ── Row CSS class ───────────────────────────────────────────────────────────
 
 export const rowClass = (item: BulkRefrendRow): string => {

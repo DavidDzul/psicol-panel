@@ -4,22 +4,6 @@
   <v-row>
     <v-col cols="12">
       <v-card v-if="props.mode === 'verificacion'" color="white" variant="flat">
-        <v-tabs
-          v-model="viewVariant"
-          align-tabs="center"
-          color="primary"
-          bg-color="grey-lighten-3"
-        >
-          <v-tab value="completa">
-            <v-icon size="small" class="mr-1">mdi-table</v-icon>
-            <b>CONSULTA POR GENERACIONES</b>
-          </v-tab>
-          <v-tab value="incidencias">
-            <v-icon size="small" class="mr-1">mdi-flag-outline</v-icon>
-            <b>CONSULTA POR INCIDENCIAS</b>
-          </v-tab>
-        </v-tabs>
-
         <v-card-text>
           <ScholarshipFilters
             :year="selectedYear"
@@ -27,7 +11,7 @@
             :campuses="filteredCampus"
             :campus="selectedCampus"
             :generation-id="selectedGenerationId"
-            :require-generation="requireGeneration"
+            :require-generation="false"
             @update:year="selectedYear = $event"
             @update:month="selectedMonth = $event"
             @update:campus="selectedCampus = $event"
@@ -35,7 +19,6 @@
             @search="onPeriodChange"
           >
             <v-btn
-              v-if="viewVariant === 'completa'"
               color="primary"
               prepend-icon="mdi-refresh"
               :loading="generating"
@@ -56,7 +39,7 @@
             :campuses="filteredCampus"
             :campus="selectedCampus"
             :generation-id="selectedGenerationId"
-            :require-generation="requireGeneration"
+            :require-generation="false"
             @update:year="selectedYear = $event"
             @update:month="selectedMonth = $event"
             @update:campus="selectedCampus = $event"
@@ -85,7 +68,6 @@
         :loading="activeLoading"
         :year="selectedYear"
         :month="selectedMonth"
-        :view-variant="viewVariant"
       />
       <AprobacionRefrendTable
         v-else
@@ -129,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onUnmounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onUnmounted } from "vue";
 import { useScholarshipPage } from "@/composables/useScholarshipPage";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
@@ -139,24 +121,6 @@ import type { LinkInterface } from "@/interfaces";
 const props = defineProps<{
   mode: "verificacion" | "aprobacion";
 }>();
-
-// ── View variant (Completa | Incidencias) ───────────────────────────────────
-// Solo Verificación puede alternar (ver v-tabs arriba, oculto para Aprobación).
-// Aprobación queda fija en "incidencias", sin UI para cambiarla.
-const viewVariant = ref<"completa" | "incidencias">(
-  props.mode === "aprobacion" ? "incidencias" : "completa",
-);
-
-// When the router reuses this component across verificacion/aprobacion routes,
-// the ref above keeps its previous value. Reset it whenever mode changes.
-watch(
-  () => props.mode,
-  (mode) => {
-    viewVariant.value = mode === "aprobacion" ? "incidencias" : "completa";
-  },
-);
-
-const requireGeneration = computed(() => viewVariant.value === "completa");
 
 const VerificacionRefrendTable = defineAsyncComponent(
   () => import("@/components/scholarships/VerificacionRefrendTable.vue"),
@@ -190,26 +154,16 @@ const {
 } = useScholarshipPage();
 
 // ── Store ──────────────────────────────────────────────────────────────────
-// Completa e Incidencias son queries independientes (ver scholarshipStore) —
-// se lee/resetea el par de estado que corresponde a la variante activa.
+// sdd/verificacion-incidencias-ux PR2: both modes now read the SAME
+// incidencias* pair (design: "Verificación reads the incidencias* pair, the
+// same as Aprobación already does"). The bulk* pair is left in the store,
+// unused by this view — removing it is a follow-up (design note).
 
 const scholarshipStore = useScholarshipStore();
 
-const activeRows = computed(() =>
-  viewVariant.value === "incidencias"
-    ? scholarshipStore.incidenciasRows
-    : scholarshipStore.bulkRows,
-);
-const activeLoading = computed(() =>
-  viewVariant.value === "incidencias"
-    ? scholarshipStore.incidenciasLoading
-    : scholarshipStore.bulkLoading,
-);
-const activeError = computed(() =>
-  viewVariant.value === "incidencias"
-    ? scholarshipStore.incidenciasError
-    : scholarshipStore.bulkError,
-);
+const activeRows = computed(() => scholarshipStore.incidenciasRows);
+const activeLoading = computed(() => scholarshipStore.incidenciasLoading);
+const activeError = computed(() => scholarshipStore.incidenciasError);
 
 onUnmounted(() => {
   scholarshipStore.resetBulkTable();
@@ -226,24 +180,18 @@ const campusLabel = computed<string>(() => {
 });
 
 // ── Period change ──────────────────────────────────────────────────────────
+// sdd/verificacion-incidencias-ux PR2: generación is no longer required to
+// query in either mode — sede (campus) + period are enough, and the table
+// groups the results by `refrend.snapshot_generation` client-side.
 
 const onPeriodChange = async (): Promise<void> => {
-  if (
-    !selectedCampus.value ||
-    (requireGeneration.value && !selectedGenerationId.value)
-  )
-    return;
-  const params = {
+  if (!selectedCampus.value) return;
+  await scholarshipStore.fetchIncidenciasTable({
     year: selectedYear.value,
     month: selectedMonth.value,
     campus: selectedCampus.value!,
-    generation_id: requireGeneration.value ? selectedGenerationId.value! : null,
+    generation_id: null,
     per_page: 500,
-  };
-  if (viewVariant.value === "incidencias") {
-    await scholarshipStore.fetchIncidenciasTable(params);
-  } else {
-    await scholarshipStore.fetchBulkTable(params);
-  }
+  });
 };
 </script>

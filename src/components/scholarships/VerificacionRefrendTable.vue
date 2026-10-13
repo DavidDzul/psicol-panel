@@ -51,14 +51,25 @@
             class="flex-1-1-auto"
             style="min-width: 220px"
           />
-          <!-- Orthogonal to viewVariant (Completa/Incidencias, controlled by
-               the parent tabs): a becario can have both, either, or neither
-               "con incidencia" and "pago adelantado", so this ANDs into
-               displayRows instead of replacing viewVariant. -->
+          <!-- sdd/verificacion-incidencias-ux PR2: replaces the removed
+               CONSULTA POR GENERACIONES / CONSULTA POR INCIDENCIAS tabs.
+               Drives both the row filter (hasIncidencia) AND which column
+               set renders (amendment #1956: columns follow the toggle). -->
+          <v-switch
+            v-model="onlyWithIncidencias"
+            label="Solo con incidencias"
+            color="primary"
+            density="compact"
+            hide-details
+            class="flex-0-0-auto"
+          />
+          <!-- Orthogonal to the toggle above: a becario can have both,
+               either, or neither "con incidencia" and "CERT-UNID", so this
+               ANDs into displayRows instead of replacing the toggle. -->
           <v-select
             v-model="advancePaymentOnly"
             :items="ADVANCE_PAYMENT_OPTIONS"
-            label="Pago adelantado"
+            label="CERT-UNID"
             variant="filled"
             density="compact"
             hide-details
@@ -69,7 +80,6 @@
       </template>
 
       <template
-        v-if="viewVariant === 'incidencias'"
         #group-header="{ item, columns, toggleGroup, isGroupOpen }"
       >
         <tr
@@ -292,7 +302,6 @@
           </v-btn>
           <v-tooltip
             v-if="
-              viewVariant === 'incidencias' &&
               item.incidents_count === 0 &&
               (item.has_falta_discount || item.has_retardos_discount)
             "
@@ -413,6 +422,7 @@ import {
   buildTableInfo,
   filterRowsByName,
   finalResolutionChip,
+  hasIncidencia,
   resolutionCauseLabel,
   rowClass,
   scholarshipTypeColor,
@@ -422,33 +432,40 @@ import { canVerificacion, canRecordSituation } from "@/utils/refrendActionabilit
 import type { BulkRefrendRow, AtencionFlagForm } from "@/interfaces/scholarship";
 
 // ── Props ──────────────────────────────────────────────────────────────────
+// sdd/verificacion-incidencias-ux PR2: the CONSULTA POR GENERACIONES /
+// CONSULTA POR INCIDENCIAS tabs (and the `viewVariant` prop that drove them)
+// are gone. This component now owns its own "Solo con incidencias" toggle
+// (see `onlyWithIncidencias` below) and always groups by generación.
 
 const props = defineProps<{
   rows: BulkRefrendRow[];
   loading?: boolean;
   year: number;
   month: number;
-  viewVariant?: "completa" | "incidencias";
 }>();
-
-const viewVariant = computed(() => props.viewVariant ?? "completa");
 
 const searchQuery = ref("");
 
-// Orthogonal filter, independent of viewVariant/search (see #top comment).
+// ── "Solo con incidencias" toggle (replaces the removed tabs) ──────────────
+// Default off: shows every becario of the selected sede/period. Drives both
+// the row filter (hasIncidencia) and which column set renders (amendment
+// #1956 — columns follow the toggle, not a union of both).
+const onlyWithIncidencias = ref(false);
+
+// Orthogonal filter, independent of the toggle/search (see #top comment).
+// Amendment #1956: renamed from "Pago adelantado"/"Solo pago adelantado" to
+// "CERT-UNID"/"Solo CERT-UNID" for consistency with administration-panel.
 const ADVANCE_PAYMENT_OPTIONS = [
   { value: false, title: "Todos" },
-  { value: true, title: "Solo pago adelantado" },
+  { value: true, title: "Solo CERT-UNID" },
 ] as const;
 
 const advancePaymentOnly = ref(false);
 
 const displayRows = computed(() => {
   let rows = props.rows;
-  if (viewVariant.value === "incidencias") {
-    rows = rows.filter(
-      (r) => r.incidents_count > 0 || r.has_falta_discount || r.has_retardos_discount,
-    );
+  if (onlyWithIncidencias.value) {
+    rows = rows.filter(hasIncidencia);
   }
   if (advancePaymentOnly.value) {
     rows = rows.filter((r) => r.advance_payment_eligible);
@@ -456,14 +473,12 @@ const displayRows = computed(() => {
   return filterRowsByName(rows, searchQuery.value);
 });
 
-// ── Grouping (Incidencias variant only) ─────────────────────────────────────
+// ── Grouping (always on, both toggle states) ────────────────────────────────
 // Agrupa por la generación SNAPSHOTEADA en el refrendo de ese periodo,
 // no por la generación actual del becario.
-const groupBy = computed(() =>
-  viewVariant.value === "incidencias"
-    ? [{ key: "refrend.snapshot_generation", order: "asc" as const }]
-    : [],
-);
+const groupBy = computed(() => [
+  { key: "refrend.snapshot_generation", order: "asc" as const },
+]);
 
 // ── Group expand/collapse (variante Incidencias) ────────────────────────────
 // Vuetify arranca su Set interno de grupos abiertos vacío (todo colapsado).
@@ -539,7 +554,7 @@ const VERIFICACION_INCIDENCIAS_HEADERS = [
 
 const headers = computed(() => [
   ...BASE_HEADERS,
-  ...(viewVariant.value === "incidencias"
+  ...(onlyWithIncidencias.value
     ? VERIFICACION_INCIDENCIAS_HEADERS
     : VERIFICACION_COMPLETA_HEADERS),
 ]);
