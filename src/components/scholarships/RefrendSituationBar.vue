@@ -85,14 +85,16 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { ResolutionType, WorkflowStatus } from "@/interfaces/scholarship";
+import type { ServerResolutionType, WorkflowStatus } from "@/interfaces/scholarship";
 import {
   visibleSituationMenuItems,
   type SituationKey,
 } from "@/composables/useSituationMenuItems";
 
 const props = defineProps<{
-  currentResolution: ResolutionType | null;
+  // A value READ from the refrend, so it can also be a server-only value
+  // (BAJA, EGRESO_RETICULA), not just a staff-selectable ResolutionType.
+  currentResolution: ServerResolutionType | null;
   // Precomputed by the parent via statusChip(refrend) — the label needs
   // suspension_percentage, which currentResolution alone cannot supply, and
   // the mapping already lives in useRefrendTableDisplay.ts. Do not duplicate
