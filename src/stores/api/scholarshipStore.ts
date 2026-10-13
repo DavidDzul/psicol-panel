@@ -25,6 +25,7 @@ import type {
   ScholarshipWithholding,
   AdvancePaymentForm,
   ScholarshipAdvancePayment,
+  GenerateRefrendsResult,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -172,19 +173,19 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   // ── Refrends — generation ─────────────────────────────────────────────────
 
+  // sdd/verificacion-incidencias-ux PR3: useSedeRefrendGeneration calls this
+  // SEQUENTIALLY, once per generación of a sede. A per-call alert (the prior
+  // behavior) would spam one toast per generación, so this returns the typed
+  // result and RETHROWS on failure with NO alert of its own — the composable
+  // owns aggregating outcomes and reporting one summary at the end.
   const generatePeriod = async (
     form: GeneratePeriodForm
-  ): Promise<{ created: number; skipped: number; errors: number } | undefined> => {
-    try {
-      const res = await axios.post<GenerateRefrendsResponse>(
-        "api/admin/scholarship-refrends/generate",
-        form
-      );
-      showAlert({ title: "Refrendos generados exitosamente.", status: "success" });
-      return res.data.data;
-    } catch {
-      showAlert({ title: "Error al generar refrendos.", status: "error" });
-    }
+  ): Promise<GenerateRefrendsResult> => {
+    const res = await axios.post<GenerateRefrendsResponse>(
+      "api/admin/scholarship-refrends/generate",
+      form
+    );
+    return res.data.data;
   };
 
   const generateForUser = async (
