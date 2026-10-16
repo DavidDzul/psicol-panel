@@ -296,7 +296,7 @@ describe("SituationPagoMesesDialog — eligibility empty-state messaging", () =>
   });
 });
 
-describe("SituationPagoMesesDialog � attendance discount default", () => {
+describe("SituationPagoMesesDialog — attendance discount default", () => {
   const ALERT = "Pagar el mes en curso perdona el descuento por faltas de este mes.";
   const currentMonthBox = () => {
     const boxes = body().findAll('input[type="checkbox"]');

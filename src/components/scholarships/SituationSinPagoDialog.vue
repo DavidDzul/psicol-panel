@@ -8,7 +8,7 @@
 
       <v-card-text class="pt-0">
         <div v-if="telmexAmount > 0" class="text-body-1 font-weight-bold mb-3">
-          Parte Impulso: $0.00 · Parte Telmex: {{ fmt(telmexAmount) }} (se deposita)
+          Parte Impulso: $0.00 Â· Parte Telmex: {{ fmt(telmexAmount) }} (se deposita)
         </div>
         <div v-else class="text-body-1 font-weight-bold mb-3">Monto a pagar: $0.00</div>
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>

@@ -50,7 +50,7 @@ describe("SituationSinPagoDialog — resulting amount", () => {
   });
 });
 
-describe("SituationSinPagoDialog � Telmex split", () => {
+describe("SituationSinPagoDialog — Telmex split", () => {
   const open = async (telmexCoveredAmount?: string | number | null) => {
     wrapper = mount(SituationSinPagoDialog, {
       props: { modelValue: true, loading: false, telmexCoveredAmount },

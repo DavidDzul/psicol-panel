@@ -95,7 +95,7 @@ export interface SituationMenuContext {
 // The API rejects RETENIDA on months paid in advance (use Sin pago 0%).
 const ADVANCE_PAID_EXCLUDED_KEYS: SituationKey[] = ["RETENIDA"];
 
-/** Entries to render in the "Acciones" menu — excludes `hidden` ones. */
+/** Entries to render in the "Acciones" menu â€” excludes `hidden` ones. */
 export const visibleSituationMenuItems = (
   items: SituationMenuItem[] = SITUATION_MENU_ITEMS,
   ctx: SituationMenuContext = {},
