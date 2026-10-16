@@ -7,7 +7,10 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
-        <div class="text-body-1 font-weight-bold mb-3">Monto a pagar: $0.00</div>
+        <div v-if="telmexAmount > 0" class="text-body-1 font-weight-bold mb-3">
+          Parte Impulso: $0.00 · Parte Telmex: {{ fmt(telmexAmount) }} (se deposita)
+        </div>
+        <div v-else class="text-body-1 font-weight-bold mb-3">Monto a pagar: $0.00</div>
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
         <v-radio-group v-model="form.resolution_cause" class="mt-0 mb-3" hide-details>
           <v-radio label="Faltas a F.I." value="FALTAS_FI" color="grey-darken-2" />
@@ -42,9 +45,17 @@
 import { computed, reactive, watch } from "vue";
 import type { RecordSituationForm } from "@/interfaces/scholarship";
 
-const props = defineProps<{ loading?: boolean }>();
+const props = defineProps<{
+  loading?: boolean;
+  // Amount Telmex covers for this month (null/0 when no coverage applies).
+  telmexCoveredAmount?: string | number | null;
+}>();
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
+
+const telmexAmount = computed(() => Number(props.telmexCoveredAmount ?? 0) || 0);
+const fmt = (value: number): string =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(value);
 
 const form = reactive({ resolution_cause: null as string | null, resolution_notes: null as string | null });
 
