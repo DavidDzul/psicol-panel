@@ -26,6 +26,8 @@ import type {
   AdvancePaymentForm,
   ScholarshipAdvancePayment,
   GenerateRefrendsResult,
+  CutBlockingMonth,
+  CutPendingWithholding,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -664,11 +666,52 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       return { status: "success", refrend };
     } catch (error: unknown) {
       if (isAxiosError(error)) {
-        const data = error.response?.data as { msg?: string; code?: string } | undefined;
-        if (data?.code === "ADVANCE_DIVERGENCE_REQUIRED") {
+        const body = error.response?.data as
+          | {
+              msg?: string;
+              code?: string;
+              data?: {
+                blocking_months?: CutBlockingMonth[];
+                coverage_id?: number;
+                status?: string;
+                start_period?: string;
+                withholdings?: CutPendingWithholding[];
+              };
+            }
+          | undefined;
+        if (body?.code === "ADVANCE_DIVERGENCE_REQUIRED") {
           return { status: "divergence_required" };
         }
-        showAlert({ title: data?.msg ?? "Error al registrar situación.", status: "error" });
+        // sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): the cut
+        // guards carry a structured `data` payload the situation dialogs
+        // render inline — no generic toast here, same precedent as
+        // ADVANCE_DIVERGENCE_REQUIRED above.
+        if (body?.code === "CYCLE_CUT_BLOCKED") {
+          return {
+            status: "cut_blocked",
+            msg: body.msg ?? "El cierre de ciclo está bloqueado.",
+            blocking_months: body.data?.blocking_months ?? [],
+          };
+        }
+        if (body?.code === "CYCLE_CUT_ACTIVE_TELMEX_COVERAGE") {
+          return {
+            status: "cut_blocked",
+            msg: body.msg ?? "El becario tiene una cobertura Telmex activa.",
+            telmex_coverage: {
+              coverage_id: body.data?.coverage_id ?? 0,
+              status: body.data?.status ?? "",
+              start_period: body.data?.start_period ?? "",
+            },
+          };
+        }
+        if (body?.code === "CYCLE_CUT_PENDING_WITHHOLDINGS") {
+          return {
+            status: "pending_withholdings_required",
+            msg: body.msg ?? "El becario tiene retenciones pendientes.",
+            withholdings: body.data?.withholdings ?? [],
+          };
+        }
+        showAlert({ title: body?.msg ?? "Error al registrar situación.", status: "error" });
         return { status: "error" };
       }
       showAlert({ title: "Error de red.", status: "error" });

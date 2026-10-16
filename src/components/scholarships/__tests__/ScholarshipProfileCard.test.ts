@@ -34,6 +34,8 @@ const baseProfile: ScholarshipProfile = {
   reticula_original_name: null,
   egreso_administrativo: null,
   iu_payment_amount: null,
+  cycle_closed_period: null,
+  cycle_closure_reason: null,
   created_at: "2026-01-01",
   updated_at: "2026-01-01",
 };
@@ -448,6 +450,63 @@ describe("ScholarshipProfileCard — Aumento temporal de beca (edición)", () =>
         temporary_increase_reason: "Apoyo transporte",
       }),
     );
+  });
+});
+
+// sdd/egresado-baja-definitiva PR3 (design "Stop marker visibility" /
+// amendment #1982 item 3): the stop marker is data on scholarship_profiles,
+// but MUST be shown in the becario profile as a chip. cycle_closed_period
+// arrives as a full ISO-8601 timestamp (e.g. "2026-10-01T06:00:00.000000Z"),
+// never a plain date — confirmed against the backend's own pinned test
+// (PR2c). MM/YYYY must be derived by slicing the string directly, with NO
+// Date/dayjs parsing (that applies a local timezone conversion the backend
+// note explicitly warns against).
+describe("ScholarshipProfileCard — Ciclo cerrado chip (sdd/egresado-baja-definitiva)", () => {
+  it('shows "Ciclo cerrado: 10/2026 · Egresado" when cycle_closed_period/reason are set to EGRESADO', async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      cycle_closed_period: "2026-10-01T06:00:00.000000Z",
+      cycle_closure_reason: "EGRESADO",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Ciclo cerrado: 10/2026 · Egresado");
+  });
+
+  it('shows "Ciclo cerrado: 01/2027 · Baja definitiva" when cycle_closure_reason is BAJA_DEFINITIVA', async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      cycle_closed_period: "2027-01-01T06:00:00.000000Z",
+      cycle_closure_reason: "BAJA_DEFINITIVA",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Ciclo cerrado: 01/2027 · Baja definitiva");
+  });
+
+  it("does not show the chip when cycle_closed_period is null", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("Ciclo cerrado");
+  });
+
+  it("shows the chip in the edit-mode read-only config block too", async () => {
+    fetchProfile.mockResolvedValueOnce({
+      ...baseProfile,
+      cycle_closed_period: "2026-10-01T06:00:00.000000Z",
+      cycle_closure_reason: "EGRESADO",
+    });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await wrapper.find("button").trigger("click"); // "Editar perfil"
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Ciclo cerrado: 10/2026 · Egresado");
   });
 });
 

@@ -456,11 +456,13 @@
     <SituationBajaDialog
       v-model="situationDialogs.BAJA_DEFINITIVA"
       :loading="situationSubmitLoading"
+      :block-result="cutBlockResult"
       @submit="onSituationSubmit"
     />
     <SituationEgresadoDialog
       v-model="situationDialogs.EGRESADO"
       :loading="situationSubmitLoading"
+      :block-result="cutBlockResult"
       @submit="onSituationSubmit"
     />
     <SituationPagoAdelantadoDialog
@@ -562,6 +564,7 @@ import type {
   BulkRefrendRow,
   PedagogiaResolveForm,
   RecordSituationForm,
+  CutBlockResult,
   AdvancePaymentForm,
 } from "@/interfaces/scholarship";
 import type { SituationKey } from "@/composables/useSituationMenuItems";
@@ -930,12 +933,21 @@ const situationLoadingId = ref<number | null>(null);
 // and SIN_PAGO is also its own standalone dialog's key).
 const activeSituationKey = ref<SituationKey | null>(null);
 
+// sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): EGRESADO/
+// BAJA_DEFINITIVA cut guards (blocking later months, ACTIVA Telmex coverage,
+// pending withholdings) return a structured result instead of a generic
+// toast — SituationEgresadoDialog/SituationBajaDialog render it inline. Reset
+// on every fresh open so a stale block from a PREVIOUS attempt never leaks
+// into a new one.
+const cutBlockResult = ref<CutBlockResult | null>(null);
+
 const openSituationDialog = (
   item: BulkRefrendRow,
   type: SituationKey,
 ): void => {
   activeRow.value = item;
   activeSituationKey.value = type;
+  cutBlockResult.value = null;
   situationDialogs.value[type] = true;
 };
 
@@ -1037,6 +1049,14 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
     if (result.status === "divergence_required") {
       pendingDivergenceAction.value = { kind: "situation", form };
       divergenceDialogOpen.value = true;
+      return;
+    }
+    // sdd/egresado-baja-definitiva PR3: a cut guard blocked the EGRESADO/
+    // BAJA_DEFINITIVA resolution — store the structured result so the open
+    // dialog can render it, and keep the dialog open (no optimistic
+    // state change, design spec "Blocking-months error surfaced").
+    if (result.status === "cut_blocked" || result.status === "pending_withholdings_required") {
+      cutBlockResult.value = result;
       return;
     }
     if (result.status === "success") {

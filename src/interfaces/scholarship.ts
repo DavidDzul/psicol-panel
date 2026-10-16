@@ -119,6 +119,18 @@ export interface ScholarshipProfile {
   reticula_file_path: string | null
   reticula_original_name: string | null
   egreso_administrativo: string | null
+  // sdd/egresado-baja-definitiva (design D1): the stop marker. Set once by
+  // CloseScholarshipCycleAction when staff records EGRESADO or
+  // BAJA_DEFINITIVA on a refrend — every later generation path (bulk, single
+  // user, advance) is guarded against it. Serializes as a full ISO-8601
+  // timestamp (e.g. "2026-10-01T06:00:00.000000Z"), NOT a plain date —
+  // confirmed against the backend's own pinned test (PR2c,
+  // AdminPanelBajaVisibilityTest) and the same quirk already documented for
+  // TelmexCoverageController's start_period/end_period. Never derive MM/YYYY
+  // via Date/dayjs parsing (that applies a local timezone conversion) — slice
+  // the string directly, same as every other display of this field.
+  cycle_closed_period: string | null
+  cycle_closure_reason: 'EGRESADO' | 'BAJA_DEFINITIVA' | null
   created_at: string
   updated_at: string
   // relation (loaded via `grantedBy:id,first_name,last_name` in show()/update())
@@ -364,6 +376,40 @@ export interface RecordSituationForm {
   advance_divergence_reason?: string | null
 }
 
+// ── Cycle-cut guard payloads (sdd/egresado-baja-definitiva, amendments
+// #1982/#1983/#1987/#1988) ───────────────────────────────────────────────
+//
+// EGRESADO/BAJA_DEFINITIVA are terminal cycle closures guarded, in order, by:
+// already-closed (CYCLE_ALREADY_CLOSED, msg only — generic error toast, no
+// structured data) -> own-abonos (plain DomainException, generic error
+// toast) -> blocking later months (CYCLE_CUT_BLOCKED) -> ACTIVA Telmex
+// coverage (CYCLE_CUT_ACTIVE_TELMEX_COVERAGE) -> pending withholdings
+// (CYCLE_CUT_PENDING_WITHHOLDINGS). The last 3 carry a structured `data`
+// payload the situation dialogs render inline instead of a generic toast
+// (amendment #1988: NO acknowledge flag — any pending withholding BLOCKS
+// outright, same as the other two guards).
+
+export interface CutBlockingMonth {
+  period_year: number
+  period_month: number
+  reason: 'ADVANCE_PAID' | 'PAID' | 'ABONOS_APPLIED'
+}
+
+export interface CutActiveTelmexCoverage {
+  coverage_id: number
+  status: string
+  start_period: string
+}
+
+export interface CutPendingWithholding {
+  id: number
+  period_year: number
+  period_month: number
+  withheld_amount: string
+  paid_amount: string
+  remaining_amount: string
+}
+
 // Discriminated result for scholarshipStore.recordPaymentSituation() (sdd/
 // pago-adelantado, design D4 fix 2026-09-25). Previously this method just
 // toasted a generic error and returned undefined on ANY failure — including
@@ -372,10 +418,35 @@ export interface RecordSituationForm {
 // dead end, caught by sdd-verify). "divergence_required" lets the caller
 // react by showing AdvanceDivergenceReasonDialog and resubmitting the same
 // form with advance_divergence_reason filled in, instead of dead-ending.
+//
+// "cut_blocked" (sdd/egresado-baja-definitiva PR3) covers BOTH
+// CYCLE_CUT_BLOCKED (`blocking_months` set) and
+// CYCLE_CUT_ACTIVE_TELMEX_COVERAGE (`telmex_coverage` set, amendment #1987)
+// — exactly one of the two is ever populated on a given result, never both.
+// "pending_withholdings_required" is its own status (CYCLE_CUT_PENDING_
+// WITHHOLDINGS, amendment #1988) since it always carries its own list and is
+// rendered as its own section in the dialog.
 export type RecordSituationResult =
   | { status: 'success'; refrend: ScholarshipRefrend }
   | { status: 'divergence_required' }
+  | {
+      status: 'cut_blocked'
+      msg: string
+      blocking_months?: CutBlockingMonth[]
+      telmex_coverage?: CutActiveTelmexCoverage
+    }
+  | { status: 'pending_withholdings_required'; msg: string; withholdings: CutPendingWithholding[] }
   | { status: 'error' }
+
+// Narrowed view used by SituationEgresadoDialog.vue/SituationBajaDialog.vue's
+// `blockResult` prop — only the 2 variants that actually carry a `msg` to
+// render. Keeping the prop typed this narrow (instead of the full
+// RecordSituationResult) lets template access like `blockResult.msg` type-check
+// without an extra discriminant check beyond the existing `v-if="blockResult"`.
+export type CutBlockResult = Extract<
+  RecordSituationResult,
+  { status: 'cut_blocked' | 'pending_withholdings_required' }
+>
 
 // ── Advance payment (pago adelantado) ──────────────────────────────────────
 

@@ -13,6 +13,8 @@ import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDi
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
+import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
+import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
@@ -1582,6 +1584,107 @@ describe("AprobacionRefrendTable — divergence-reason follow-up (sdd/pago-adela
 
     expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(true);
     expect(wrapper.findComponent(SituationSinPagoDialog).props("modelValue")).toBe(true);
+  });
+});
+
+describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-baja-definitiva PR3, amendments #1987/#1988)", () => {
+  // EGRESADO/BAJA_DEFINITIVA cut guards return a structured "cut_blocked" /
+  // "pending_withholdings_required" result (no generic toast, same precedent
+  // as divergence_required) — the parent must forward it to the dialog as a
+  // prop AND keep the dialog open (no situationDialogs[key] = false), so
+  // staff can read the blocking detail inline.
+
+  afterEach(() => {
+    recordPaymentSituation.mockReset();
+    recordPaymentSituation.mockResolvedValue({ status: "success", refrend: {} });
+  });
+
+  it("forwards the cut_blocked result to SituationEgresadoDialog and keeps it open", async () => {
+    const blockResult = {
+      status: "cut_blocked",
+      msg: "Tiene noviembre 2026 pagado por adelantado.",
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" }],
+    };
+    recordPaymentSituation.mockResolvedValueOnce(blockResult);
+    const row = buildRow(30, "Egresado Bloqueado", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "EGRESADO");
+    await wrapper.vm.$nextTick();
+    await wrapper.findComponent(SituationEgresadoDialog).vm.$emit("submit", {
+      resolution_type: "EGRESADO",
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationEgresadoDialog).props("modelValue")).toBe(true);
+    expect(wrapper.findComponent(SituationEgresadoDialog).props("blockResult")).toEqual(blockResult);
+  });
+
+  it("forwards the pending_withholdings_required result to SituationBajaDialog and keeps it open", async () => {
+    const blockResult = {
+      status: "pending_withholdings_required",
+      msg: "Tiene retenciones pendientes.",
+      withholdings: [
+        {
+          id: 1,
+          period_year: 2026,
+          period_month: 7,
+          withheld_amount: "500.00",
+          paid_amount: "0.00",
+          remaining_amount: "500.00",
+        },
+      ],
+    };
+    recordPaymentSituation.mockResolvedValueOnce(blockResult);
+    const row = buildRow(31, "Baja Bloqueada", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "BAJA_DEFINITIVA");
+    await wrapper.vm.$nextTick();
+    await wrapper.findComponent(SituationBajaDialog).vm.$emit("submit", {
+      resolution_type: "BAJA_DEFINITIVA",
+      resolution_cause: "BAJO_PROMEDIO",
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationBajaDialog).props("modelValue")).toBe(true);
+    expect(wrapper.findComponent(SituationBajaDialog).props("blockResult")).toEqual(blockResult);
+  });
+
+  it("clears a stale blockResult when the dialog is reopened for a fresh attempt", async () => {
+    recordPaymentSituation.mockResolvedValueOnce({
+      status: "cut_blocked",
+      msg: "Bloqueado.",
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" }],
+    });
+    const row = buildRow(32, "Reintento", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "EGRESADO");
+    await wrapper.vm.$nextTick();
+    await wrapper.findComponent(SituationEgresadoDialog).vm.$emit("submit", {
+      resolution_type: "EGRESADO",
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent(SituationEgresadoDialog).props("blockResult")).toEqual(
+      expect.objectContaining({ status: "cut_blocked" }),
+    );
+
+    // Staff closes and reopens the dialog to try again after resolving the
+    // blocking issue elsewhere — the stale block info must not linger.
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "EGRESADO");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(SituationEgresadoDialog).props("blockResult")).toBeFalsy();
   });
 });
 

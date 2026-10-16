@@ -7,6 +7,49 @@
       </v-card-title>
 
       <v-card-text class="pt-0">
+        <!-- sdd/egresado-baja-definitiva: BAJA_DEFINITIVA is now a terminal
+             cycle closure too (CloseScholarshipCycleAction) — $0 this month,
+             cycle stopped, account deactivated, irreversible. -->
+        <v-alert type="warning" variant="tonal" density="compact" class="mb-3">
+          El becario causa baja definitiva: este mes no se paga ($0), se
+          cierra su ciclo, no se generarán más refrendos y su cuenta se
+          desactiva. Esta acción no se puede deshacer.
+        </v-alert>
+
+        <!-- sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): same
+             blocking display as SituationEgresadoDialog.vue — NO acknowledge
+             checkbox, NO "se marcarán como Perdidas" copy (FORFEITED is out
+             of scope). Any pending withholding BLOCKS outright. -->
+        <v-alert v-if="blockResult" type="error" variant="tonal" density="compact" class="mb-3">
+          <div class="font-weight-medium mb-1">{{ blockResult.msg }}</div>
+
+          <template v-if="blockResult.status === 'cut_blocked' && blockResult.blocking_months?.length">
+            <ul class="pl-4 mb-0">
+              <li v-for="(m, i) in blockResult.blocking_months" :key="i">
+                {{ monthLabel(m.period_month, m.period_year) }} — {{ CUT_BLOCK_REASON_LABELS[m.reason] ?? m.reason }}
+              </li>
+            </ul>
+          </template>
+
+          <template v-else-if="blockResult.status === 'cut_blocked' && blockResult.telmex_coverage">
+            <div class="text-body-2">
+              Cancelá la cobertura Telmex en Becas Telmex (administration-panel) y
+              reintentá.
+            </div>
+          </template>
+
+          <template v-else-if="blockResult.status === 'pending_withholdings_required'">
+            <ul class="pl-4 mb-0">
+              <li v-for="w in blockResult.withholdings" :key="w.id">
+                {{ monthLabel(w.period_month, w.period_year) }} — {{ fmt(w.remaining_amount) }}
+              </li>
+            </ul>
+            <div class="text-caption mt-1">
+              Resuélvelas desde "Pago de meses retenidos" antes de continuar.
+            </div>
+          </template>
+        </v-alert>
+
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
         <v-radio-group v-model="form.resolution_cause" class="mt-0 mb-3" hide-details>
           <v-radio label="Bajo promedio" value="BAJO_PROMEDIO" color="red-darken-2" />
@@ -41,15 +84,22 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
-import type { RecordSituationForm } from "@/interfaces/scholarship";
+import type { CutBlockResult, RecordSituationForm } from "@/interfaces/scholarship";
+import { CUT_BLOCK_REASON_LABELS, fmt, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
 
-const props = defineProps<{ loading?: boolean }>();
+const props = defineProps<{
+  loading?: boolean;
+  blockResult?: CutBlockResult | null;
+}>();
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();
 
 const form = reactive({ resolution_cause: null as string | null, resolution_notes: null as string | null });
 
 watch(model, (v) => { if (!v) { form.resolution_cause = null; form.resolution_notes = null; } });
+
+const monthLabel = (month: number, year: number): string =>
+  `${MONTHS_ES[month - 1] ?? month} ${year}`;
 
 const isValid = computed(() =>
   !!form.resolution_cause &&
