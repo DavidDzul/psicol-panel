@@ -87,7 +87,21 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
   },
 ];
 
+export interface SituationMenuContext {
+  /** Row's month was already paid in advance (`advance_paid`). */
+  advancePaid?: boolean;
+}
+
+// The API rejects RETENIDA on months paid in advance (use Sin pago 0%).
+const ADVANCE_PAID_EXCLUDED_KEYS: SituationKey[] = ["RETENIDA"];
+
 /** Entries to render in the "Acciones" menu — excludes `hidden` ones. */
 export const visibleSituationMenuItems = (
   items: SituationMenuItem[] = SITUATION_MENU_ITEMS,
-): SituationMenuItem[] => items.filter((item) => !item.hidden);
+  ctx: SituationMenuContext = {},
+): SituationMenuItem[] =>
+  items.filter(
+    (item) =>
+      !item.hidden &&
+      !(ctx.advancePaid && ADVANCE_PAID_EXCLUDED_KEYS.includes(item.key)),
+  );

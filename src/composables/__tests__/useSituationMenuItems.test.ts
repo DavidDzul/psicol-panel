@@ -57,6 +57,27 @@ describe("visibleSituationMenuItems", () => {
     expect(visible.map((item) => item.key)).toEqual(nonHiddenKeys);
   });
 
+  it("drops RETENIDA but keeps the rest when the row is advance paid", () => {
+    const keys = visibleSituationMenuItems(undefined, { advancePaid: true }).map(
+      (item) => item.key,
+    );
+
+    expect(keys).not.toContain("RETENIDA");
+    expect(keys).toContain("PAGO_MESES");
+    expect(keys).toContain("DESCUENTO_DEFINITIVO");
+  });
+
+  it("offers RETENIDA for non-advance rows", () => {
+    expect(
+      visibleSituationMenuItems(undefined, { advancePaid: false }).map(
+        (item) => item.key,
+      ),
+    ).toContain("RETENIDA");
+    expect(visibleSituationMenuItems().map((item) => item.key)).toContain(
+      "RETENIDA",
+    );
+  });
+
   it("filters any hidden entry from an arbitrary list, not just the default one", () => {
     const items: SituationMenuItem[] = [
       { key: "SIN_PAGO", icon: "mdi-cash-off", label: "A", color: "grey" },

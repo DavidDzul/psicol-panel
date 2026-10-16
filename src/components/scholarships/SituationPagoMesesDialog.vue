@@ -121,6 +121,15 @@
             class="mb-1"
           />
           <v-alert
+            v-if="hasAttendanceDiscount && payCurrentMonth"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            Pagar el mes en curso perdona el descuento por faltas de este mes.
+          </v-alert>
+          <v-alert
             v-if="!payCurrentMonth"
             type="warning"
             variant="tonal"
@@ -200,6 +209,9 @@ const props = defineProps<{
   // payable (3-month window, top-2 most recent) subset server-side.
   periodYear?: number | null;
   periodMonth?: number | null;
+  // The month carries an attendance discount (retardos/faltas). Paying the
+  // current month forgives it, so the checkbox defaults to unchecked.
+  hasAttendanceDiscount?: boolean;
 }>();
 
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
@@ -299,6 +311,7 @@ const load = async (): Promise<void> => {
 
 watch(model, (open) => {
   if (open) {
+    payCurrentMonth.value = !props.hasAttendanceDiscount;
     load();
   } else {
     rows.value = [];

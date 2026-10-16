@@ -24,6 +24,9 @@ export const getCleanDraftIds = (rows: BulkRefrendRow[]): number[] =>
         !r.has_falta_discount &&
         !r.has_retardos_discount &&
         r.month_absent === 0 &&
-        r.semester_lates_unconsumed < 2,
+        r.semester_lates_unconsumed < 2 &&
+        // Months paid in advance are registered individually; the API rejects
+        // bulk approval for them.
+        !r.advance_paid,
     )
     .map((r) => r.refrend.id);

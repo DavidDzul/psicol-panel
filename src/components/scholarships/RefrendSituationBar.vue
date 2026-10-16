@@ -109,6 +109,8 @@ const props = defineProps<{
   // two things it's actually doing, so it never claims to waive a penalty
   // that isn't there.
   hasAttendanceDiscount?: boolean;
+  // Month already paid in advance: "Beca retenida" is not offered.
+  advancePaid?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -144,5 +146,7 @@ const quickActionLabel = computed(() =>
 // tested there) — SUSPENDIDA is flagged `hidden: true` so it stays in the
 // catalog (its dialog and `situationDialogs` key are untouched) but is no
 // longer offered here.
-const visibleMenuItems = computed(() => visibleSituationMenuItems());
+const visibleMenuItems = computed(() =>
+  visibleSituationMenuItems(undefined, { advancePaid: props.advancePaid }),
+);
 </script>
