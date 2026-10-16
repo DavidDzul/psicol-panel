@@ -49,3 +49,34 @@ describe("SituationSinPagoDialog — resulting amount", () => {
     expect(body().text()).toContain("$0.00");
   });
 });
+
+describe("SituationSinPagoDialog — Telmex split", () => {
+  const open = async (telmexCoveredAmount?: string | number | null) => {
+    wrapper = mount(SituationSinPagoDialog, {
+      props: { modelValue: true, loading: false, telmexCoveredAmount },
+      global: { plugins: [vuetify] },
+      attachTo: document.body,
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    return body().text();
+  };
+
+  it("shows the Impulso/Telmex split when Telmex covers part of the month", async () => {
+    const text = await open("1500.00");
+    expect(text).toContain("Parte Impulso: $0.00");
+    expect(text).toContain("Parte Telmex: $1,500.00 (se deposita)");
+    expect(text).not.toContain("Monto a pagar");
+    expect(text).not.toContain("$0.01");
+  });
+
+  it.each([[null], [undefined], ["0.00"]])(
+    "keeps the plain amount when no coverage applies (%s)",
+    async (value) => {
+      const text = await open(value);
+      expect(text).toContain("Monto a pagar: $0.00");
+      expect(text).not.toContain("Parte Telmex");
+      expect(text).not.toContain("$0.01");
+    },
+  );
+});

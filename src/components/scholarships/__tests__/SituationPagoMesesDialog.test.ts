@@ -295,3 +295,59 @@ describe("SituationPagoMesesDialog — eligibility empty-state messaging", () =>
     expect(document.body.textContent).not.toContain("Este becario no tiene retenciones pendientes.");
   });
 });
+
+describe("SituationPagoMesesDialog — attendance discount default", () => {
+  const ALERT = "Pagar el mes en curso perdona el descuento por faltas de este mes.";
+  const currentMonthBox = () => {
+    const boxes = body().findAll('input[type="checkbox"]');
+    return boxes[boxes.length - 1].element as HTMLInputElement;
+  };
+
+  it("defaults unchecked, without the info alert, when the month has a discount", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog(800, { hasAttendanceDiscount: true });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(currentMonthBox().checked).toBe(false);
+    expect(document.body.textContent).not.toContain(ALERT);
+  });
+
+  it("shows the info alert once the user checks the box and honors the selection", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog(800, { hasAttendanceDiscount: true });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    await body().findAll('input[type="checkbox"]').at(-1)!.setValue(true);
+    await w.vm.$nextTick();
+
+    expect(currentMonthBox().checked).toBe(true);
+    expect(document.body.textContent).toContain(ALERT);
+  });
+
+  it("resets to the discount-aware default when the dialog reopens", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog(800, { hasAttendanceDiscount: true });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+    await body().findAll('input[type="checkbox"]').at(-1)!.setValue(true);
+
+    await w.setProps({ modelValue: false });
+    await w.setProps({ modelValue: true });
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(currentMonthBox().checked).toBe(false);
+  });
+
+  it("keeps the default checked and no alert without a discount", async () => {
+    fetchPendingWithholdings.mockResolvedValue({ rows: [pendingWithholding] });
+    const w = await mountDialog(800);
+    await new Promise((resolve) => setTimeout(resolve));
+    await w.vm.$nextTick();
+
+    expect(currentMonthBox().checked).toBe(true);
+    expect(document.body.textContent).not.toContain(ALERT);
+  });
+});

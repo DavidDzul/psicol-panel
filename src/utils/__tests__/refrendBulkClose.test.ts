@@ -149,6 +149,12 @@ describe("getCleanDraftIds", () => {
     expect(getCleanDraftIds([dirty, clean])).toEqual([42]);
   });
 
+  it("excludes advance_paid rows and keeps normal clean drafts", () => {
+    const advance = buildRow({ id: 5 }, { advance_paid: true });
+    const normal = buildRow({ id: 6 });
+    expect(getCleanDraftIds([advance, normal])).toEqual([6]);
+  });
+
   it("returns an empty array for an empty input", () => {
     expect(getCleanDraftIds([])).toEqual([]);
   });
