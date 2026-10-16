@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { DOMWrapper, mount } from "@vue/test-utils";
 import { createVuetify } from "vuetify";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
-import type { RecordSituationResult } from "@/interfaces/scholarship";
+import type { CutBlockResult } from "@/interfaces/scholarship";
 
 if (!("visualViewport" in window)) {
   Object.defineProperty(window, "visualViewport", { value: null, writable: true });
@@ -37,7 +37,7 @@ afterEach(() => {
 
 const body = () => new DOMWrapper(document.body);
 
-const mountDialog = (blockResult: RecordSituationResult | null = null) => {
+const mountDialog = (blockResult: CutBlockResult | null = null) => {
   wrapper = mount(SituationBajaDialog, {
     props: { modelValue: true, loading: false, blockResult },
     global: { plugins: [vuetify] },
@@ -135,6 +135,7 @@ describe("SituationBajaDialog — blockResult (amendment #1988, no acknowledge f
           withheld_amount: "300.00",
           paid_amount: "0.00",
           remaining_amount: "300.00",
+          is_current_refrend: false,
         },
       ],
     });
@@ -143,6 +144,92 @@ describe("SituationBajaDialog — blockResult (amendment #1988, no acknowledge f
     expect(body().text()).toContain("Agosto 2026");
     expect(body().text()).toContain("$300.00");
     expect(body().text()).toContain("Pago de meses retenidos");
+    expect(body().text()).not.toContain("Este mes");
+    expect(body().text()).not.toContain("Deshaz la resolución");
     expect(body().text()).not.toContain("Perdida");
+  });
+});
+
+describe("SituationBajaDialog — own-month retention (amendment 6)", () => {
+  const msg =
+    "Este mes tiene una retención registrada; deshaga la resolución de este mes antes de marcar egreso o baja definitiva.";
+
+  it("own-month only: shows the Este mes chip and the undo instruction, not the Pago de meses retenidos hint", () => {
+    mountDialog({
+      status: "pending_withholdings_required",
+      msg,
+      withholdings: [
+        {
+          id: 1,
+          period_year: 2026,
+          period_month: 6,
+          withheld_amount: "100.00",
+          paid_amount: "0.00",
+          remaining_amount: "100.00",
+          is_current_refrend: true,
+        },
+      ],
+    });
+
+    expect(body().text()).toContain(msg);
+    expect(body().text()).toContain("Este mes");
+    expect(body().text()).toContain("Deshaz la resolución de este mes (quita la retención) antes de continuar.");
+    expect(body().text()).not.toContain("Pago de meses retenidos");
+  });
+
+  it("other-month only: no chip, only the Pago de meses retenidos hint", () => {
+    mountDialog({
+      status: "pending_withholdings_required",
+      msg: "El becario tiene retenciones pendientes.",
+      withholdings: [
+        {
+          id: 2,
+          period_year: 2026,
+          period_month: 2,
+          withheld_amount: "100.00",
+          paid_amount: "0.00",
+          remaining_amount: "100.00",
+          is_current_refrend: false,
+        },
+      ],
+    });
+
+    const chips = body().findAll(".v-chip");
+    expect(chips).toHaveLength(0);
+    expect(body().text()).toContain('Resuélvelas desde "Pago de meses retenidos" antes de continuar.');
+    expect(body().text()).not.toContain("Deshaz la resolución");
+  });
+
+  it("mixed: chip only on the current row and both instructions", () => {
+    mountDialog({
+      status: "pending_withholdings_required",
+      msg,
+      withholdings: [
+        {
+          id: 1,
+          period_year: 2026,
+          period_month: 6,
+          withheld_amount: "100.00",
+          paid_amount: "0.00",
+          remaining_amount: "100.00",
+          is_current_refrend: true,
+        },
+        {
+          id: 2,
+          period_year: 2026,
+          period_month: 2,
+          withheld_amount: "100.00",
+          paid_amount: "0.00",
+          remaining_amount: "100.00",
+          is_current_refrend: false,
+        },
+      ],
+    });
+
+    const chips = body().findAll(".v-chip");
+    expect(chips).toHaveLength(1);
+    expect(chips[0].text()).toBe("Este mes");
+    expect(body().text()).toContain("Deshaz la resolución de este mes (quita la retención) antes de continuar.");
+    expect(body().text()).toContain('Resuélvelas desde "Pago de meses retenidos" antes de continuar.');
   });
 });

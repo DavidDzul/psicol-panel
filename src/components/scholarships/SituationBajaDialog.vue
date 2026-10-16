@@ -39,14 +39,7 @@
           </template>
 
           <template v-else-if="blockResult.status === 'pending_withholdings_required'">
-            <ul class="pl-4 mb-0">
-              <li v-for="w in blockResult.withholdings" :key="w.id">
-                {{ monthLabel(w.period_month, w.period_year) }} — {{ fmt(w.remaining_amount) }}
-              </li>
-            </ul>
-            <div class="text-caption mt-1">
-              Resuélvelas desde "Pago de meses retenidos" antes de continuar.
-            </div>
+            <CutPendingWithholdingsList :withholdings="blockResult.withholdings" />
           </template>
         </v-alert>
 
@@ -84,8 +77,9 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
+import CutPendingWithholdingsList from "@/components/scholarships/CutPendingWithholdingsList.vue";
 import type { CutBlockResult, RecordSituationForm } from "@/interfaces/scholarship";
-import { CUT_BLOCK_REASON_LABELS, fmt, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
+import { CUT_BLOCK_REASON_LABELS, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
 
 const props = defineProps<{
   loading?: boolean;

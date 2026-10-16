@@ -408,6 +408,8 @@ export interface CutPendingWithholding {
   withheld_amount: string
   paid_amount: string
   remaining_amount: string
+  /** True when this is the cut month's own retention (amendment 6). */
+  is_current_refrend: boolean
 }
 
 // Discriminated result for scholarshipStore.recordPaymentSituation() (sdd/
