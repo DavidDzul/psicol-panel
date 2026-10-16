@@ -498,13 +498,44 @@ describe("useRefrendTableDisplay — statusChip CLOSED override for EGRESO_RETIC
     expect(chip.label).not.toBe("Pagado");
   });
 
-  it("regression guard: a CLOSED row with the manual EGRESADO resolution_type still reads Pagado, byte-identically", () => {
+  // sdd/egresado-baja-definitiva PR3: EGRESADO and BAJA_DEFINITIVA are now
+  // terminal cycle closures (CloseScholarshipCycleAction on the backend —
+  // the refrend always arrives CLOSED). The Estado column must show the
+  // becario's actual outcome ("Egresado" / "Baja definitiva") instead of
+  // collapsing to the generic "Pagado" — a CLOSED $0 cut is never actually a
+  // payment. This REPLACES the prior "still reads Pagado" regression guard,
+  // which pinned the OLD (pre-cut) behavior.
+  it("a CLOSED row with the manual EGRESADO resolution_type reads 'Egresado', not the generic Pagado", () => {
     const row = buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESADO" });
     expect(statusChip(row.refrend)).toEqual({
-      label: "Pagado",
-      color: "teal",
-      icon: "mdi-cash-check",
+      label: "Egresado",
+      color: "blue-grey",
+      icon: "mdi-account-check-outline",
     });
+  });
+
+  it("a CLOSED row with BAJA_DEFINITIVA reads 'Baja definitiva', not the generic Pagado", () => {
+    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "BAJA_DEFINITIVA" });
+    expect(statusChip(row.refrend)).toEqual({
+      label: "Baja definitiva",
+      color: "red-darken-3",
+      icon: "mdi-account-remove-outline",
+    });
+  });
+
+  it("the EGRESADO cut chip is visually distinct from EGRESO_RETICULA and from BAJA_DEFINITIVA", () => {
+    const egresadoCut = statusChip(
+      buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESADO" }).refrend,
+    );
+    const egresoReticula = statusChip(
+      buildRow({ workflow_status: "CLOSED", resolution_type: "EGRESO_RETICULA" }).refrend,
+    );
+    const bajaDefinitiva = statusChip(
+      buildRow({ workflow_status: "CLOSED", resolution_type: "BAJA_DEFINITIVA" }).refrend,
+    );
+    expect(egresadoCut.label).not.toBe(egresoReticula.label);
+    expect(egresadoCut.label).not.toBe(bajaDefinitiva.label);
+    expect(egresadoCut.color).not.toBe(bajaDefinitiva.color);
   });
 
   it("regression guard: every other CLOSED row keeps the generic Pagado label byte-identically", () => {

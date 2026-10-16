@@ -3,6 +3,7 @@ import type {
   BulkRefrendRow,
   ScholarshipRefrend,
 } from "@/interfaces/scholarship";
+import { isCycleCut } from "@/utils/refrendActionability";
 
 // ── Currency formatting ──────────────────────────────────────────────────────
 
@@ -79,10 +80,22 @@ export const statusChip = (
   // sdd/egresado-status-timing (design R1, HIGH severity): without this
   // override, the branch below short-circuits BEFORE the resolution-type
   // branch and a never-paid $0 egreso row would read "Pagado"/teal. Every
-  // OTHER CLOSED row (including the manual EGRESADO resolution_type) must
-  // keep reading "Pagado" byte-identically — only this exact combination
-  // is special-cased.
-  if (s === "CLOSED" && refrend.resolution_type === "EGRESO_RETICULA")
+  // OTHER CLOSED row (including the manual EGRESADO resolution_type) used to
+  // keep reading "Pagado" byte-identically — only EGRESO_RETICULA was
+  // special-cased.
+  //
+  // sdd/egresado-baja-definitiva PR3 (overrides the note above): EGRESADO and
+  // BAJA_DEFINITIVA are now terminal cycle closures too
+  // (CloseScholarshipCycleAction) — a CLOSED row with either resolution_type
+  // is never actually a payment ($0, cycle stopped), so it must show its own
+  // chip ("Egresado" / "Baja definitiva") instead of collapsing into the
+  // generic "Pagado". isCycleCut() keeps this list in one place
+  // (utils/refrendActionability.ts) so this branch and any other caller never
+  // drift apart.
+  if (
+    s === "CLOSED" &&
+    (refrend.resolution_type === "EGRESO_RETICULA" || isCycleCut(refrend))
+  )
     return _resolutionTypeMeta(refrend)!;
   if (s === "CLOSED")
     return { label: "Pagado", color: "teal", icon: "mdi-cash-check" };
@@ -141,6 +154,16 @@ export const finalResolutionChip = (
 };
 
 // ── Resolution cause label ────────────────────────────────────────────────────
+
+// sdd/egresado-baja-definitiva PR3 (amendments #1983/#1987): Spanish labels
+// for the backend's CYCLE_CUT_BLOCKED `blocking_months[].reason` enum.
+// Shared by SituationEgresadoDialog.vue/SituationBajaDialog.vue so both
+// dialogs render the exact same wording for the same backend reason.
+export const CUT_BLOCK_REASON_LABELS: Record<string, string> = {
+  ADVANCE_PAID: "Pagado por adelantado",
+  PAID: "Ya pagado",
+  ABONOS_APPLIED: "Con abonos aplicados",
+};
 
 export const CAUSE_LABELS: Record<string, string> = {
   FALTAS_FI: "Faltas a F.I.",

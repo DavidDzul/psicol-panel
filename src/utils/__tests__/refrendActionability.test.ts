@@ -10,6 +10,8 @@ import {
   canAprobacion,
   canRecordSituation,
   computeDueAmount,
+  CYCLE_CUT_RESOLUTIONS,
+  isCycleCut,
   isFullyWithheld,
   isLocked,
 } from "@/utils/refrendActionability";
@@ -173,6 +175,41 @@ describe("canRecordSituation", () => {
     expect(
       canRecordSituation(buildRefrend("AUTHORIZED", "DRAFT")),
     ).toBe(false);
+  });
+});
+
+// sdd/egresado-baja-definitiva PR3: EGRESADO/BAJA_DEFINITIVA are now terminal
+// cycle cuts handled by CloseScholarshipCycleAction on the backend — the
+// refrend always arrives CLOSED (already covered by isLocked's existing
+// workflow_status check), so isCycleCut is purely a DISPLAY predicate
+// (statusChip needs to know which CLOSED rows carry a cut resolution_type,
+// distinct from EGRESO_RETICULA and from a plain "Pagado").
+describe("CYCLE_CUT_RESOLUTIONS / isCycleCut", () => {
+  it("contains exactly EGRESADO and BAJA_DEFINITIVA", () => {
+    expect(CYCLE_CUT_RESOLUTIONS.has("EGRESADO")).toBe(true);
+    expect(CYCLE_CUT_RESOLUTIONS.has("BAJA_DEFINITIVA")).toBe(true);
+    expect(CYCLE_CUT_RESOLUTIONS.size).toBe(2);
+  });
+
+  it("is true for an EGRESADO resolution_type", () => {
+    const refrend = { ...buildRefrend("PAID", "CLOSED"), resolution_type: "EGRESADO" as const };
+    expect(isCycleCut(refrend)).toBe(true);
+  });
+
+  it("is true for a BAJA_DEFINITIVA resolution_type", () => {
+    const refrend = { ...buildRefrend("CANCELLED", "CLOSED"), resolution_type: "BAJA_DEFINITIVA" as const };
+    expect(isCycleCut(refrend)).toBe(true);
+  });
+
+  it("is false for EGRESO_RETICULA (the distinct automatic server-only resolution)", () => {
+    const refrend = { ...buildRefrend("PAID", "CLOSED"), resolution_type: "EGRESO_RETICULA" as const };
+    expect(isCycleCut(refrend)).toBe(false);
+  });
+
+  it("is false for null and for every other resolution_type", () => {
+    expect(isCycleCut(buildRefrend("PAID", "CLOSED"))).toBe(false);
+    const refrend = { ...buildRefrend("PAID", "CLOSED"), resolution_type: "RETENIDA" as const };
+    expect(isCycleCut(refrend)).toBe(false);
   });
 });
 
