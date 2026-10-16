@@ -371,6 +371,7 @@
             :has-attendance-discount="
               item.has_retardos_discount || item.has_falta_discount
             "
+            :advance-paid="item.advance_paid"
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
             @clear-resolution="onClearResolution(item)"
@@ -425,6 +426,9 @@
     <SituationSinPagoDialog
       v-model="situationDialogs.SIN_PAGO"
       :loading="situationSubmitLoading"
+      :telmex-covered-amount="
+        activeRow ? telmexCoverageAmount(activeRow.refrend) : null
+      "
       @submit="onSituationSubmit"
     />
     <SituationRetenidaDialog
@@ -446,6 +450,9 @@
       :current-month-amount="activeRowDueAmount"
       :period-year="activeRow?.refrend.period_year"
       :period-month="activeRow?.refrend.period_month"
+      :has-attendance-discount="
+        !!(activeRow?.has_retardos_discount || activeRow?.has_falta_discount)
+      "
       @submit="onSituationSubmit"
     />
     <SituationSuspendidaDialog
