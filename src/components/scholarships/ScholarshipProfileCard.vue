@@ -56,6 +56,19 @@
               <v-icon start size="small">mdi-check-circle-outline</v-icon>
               {{ advancePaymentLabel }}
             </v-chip>
+            <!-- sdd/egresado-baja-definitiva (design "Stop marker
+                 visibility"): the stop marker is data on scholarship_profiles
+                 but must be VISIBLE here as a chip once set. -->
+            <v-chip
+              v-if="cycleClosedLabel"
+              label
+              color="blue-grey-darken-1"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-flag-checkered</v-icon>
+              Ciclo cerrado: {{ cycleClosedLabel }}
+            </v-chip>
           </div>
           <v-btn size="small" variant="tonal" @click="startEdit">
             Editar perfil
@@ -257,6 +270,16 @@
               <v-icon start size="small">mdi-check-circle-outline</v-icon>
               {{ advancePaymentLabel }}
             </v-chip>
+            <v-chip
+              v-if="cycleClosedLabel"
+              label
+              color="blue-grey-darken-1"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-flag-checkered</v-icon>
+              Ciclo cerrado: {{ cycleClosedLabel }}
+            </v-chip>
           </div>
           <div class="text-caption text-medium-emphasis">
             La configuración de beca la administra el equipo de
@@ -452,6 +475,27 @@ const reticulaUrl = computed(() =>
 const advancePaymentLabel = computed(
   () => "¿Estudia en el CERT de Mérida o UNID Tizimín?",
 );
+
+// sdd/egresado-baja-definitiva (design "Stop marker visibility"):
+// cycle_closed_period arrives as a full ISO-8601 timestamp (e.g.
+// "2026-10-01T06:00:00.000000Z"), confirmed against the backend's own
+// pinned test (PR2c). MM/YYYY is derived by SLICING the string directly —
+// never via Date/dayjs parsing, which would apply a local timezone
+// conversion and could shift the displayed month/year.
+const CYCLE_CLOSURE_LABELS: Record<string, string> = {
+  EGRESADO: "Egresado",
+  BAJA_DEFINITIVA: "Baja definitiva",
+};
+
+const cycleClosedLabel = computed<string | null>(() => {
+  const period = profile.value?.cycle_closed_period;
+  if (!period) return null;
+  const yyyy = period.slice(0, 4);
+  const mm = period.slice(5, 7);
+  const reason = profile.value?.cycle_closure_reason;
+  const reasonLabel = reason ? (CYCLE_CLOSURE_LABELS[reason] ?? reason) : null;
+  return reasonLabel ? `${mm}/${yyyy} · ${reasonLabel}` : `${mm}/${yyyy}`;
+});
 
 const emptyForm = () => ({
   user_id: props.userId,

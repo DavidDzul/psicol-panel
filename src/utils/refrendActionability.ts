@@ -59,3 +59,21 @@ export const canRecordSituation = (refrend: ScholarshipRefrend): boolean =>
  */
 export const isFullyWithheld = (refrend: ScholarshipRefrend): boolean =>
   refrend.status === "WITHHELD" && Number(refrend.final_amount) === 0;
+
+/**
+ * sdd/egresado-baja-definitiva: EGRESADO and BAJA_DEFINITIVA are now terminal
+ * cycle closures (CloseScholarshipCycleAction on the backend) — the refrend
+ * always arrives `workflow_status === 'CLOSED'`, so `isLocked` above already
+ * covers the lock/action-hiding concern with no change needed. This predicate
+ * is purely a DISPLAY helper: it tells callers (statusChip) which CLOSED rows
+ * carry a manual cut resolution_type, distinct from the automatic
+ * `EGRESO_RETICULA` and from every other resolution that still reads the
+ * generic "Pagado".
+ */
+export const CYCLE_CUT_RESOLUTIONS = new Set<ScholarshipRefrend["resolution_type"]>([
+  "EGRESADO",
+  "BAJA_DEFINITIVA",
+]);
+
+export const isCycleCut = (refrend: ScholarshipRefrend): boolean =>
+  CYCLE_CUT_RESOLUTIONS.has(refrend.resolution_type);

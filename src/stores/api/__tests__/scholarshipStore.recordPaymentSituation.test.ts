@@ -72,6 +72,128 @@ describe("scholarshipStore.recordPaymentSituation", () => {
     expect(showAlertSpy).not.toHaveBeenCalled();
   });
 
+  // sdd/egresado-baja-definitiva PR3 (amendment #1983/#1987/#1988): the cut
+  // guards show their structured 422 payload INSIDE the situation dialog, not
+  // as a generic toast — same "no error toast, let the specialized UI handle
+  // it" precedent as ADVANCE_DIVERGENCE_REQUIRED above.
+  it('returns status "cut_blocked" with blocking_months (and shows NO error toast) for CYCLE_CUT_BLOCKED', async () => {
+    setActivePinia(createPinia());
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          res: false,
+          msg: "Tiene noviembre y diciembre 2026 pagados por adelantado; resuélvelos antes de marcar egreso.",
+          code: "CYCLE_CUT_BLOCKED",
+          data: {
+            blocking_months: [
+              { period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" },
+              { period_year: 2026, period_month: 12, reason: "ADVANCE_PAID" },
+            ],
+          },
+        },
+      },
+    };
+    vi.mocked(axios.post).mockRejectedValue(axiosError);
+    const alertStore = useAlertStore();
+    const showAlertSpy = vi.spyOn(alertStore, "showAlert");
+    const store = useScholarshipStore();
+
+    const result = await store.recordPaymentSituation(5, {
+      resolution_type: "EGRESADO",
+    });
+
+    expect(result).toEqual({
+      status: "cut_blocked",
+      msg: "Tiene noviembre y diciembre 2026 pagados por adelantado; resuélvelos antes de marcar egreso.",
+      blocking_months: [
+        { period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" },
+        { period_year: 2026, period_month: 12, reason: "ADVANCE_PAID" },
+      ],
+    });
+    expect(showAlertSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns status "cut_blocked" with telmex_coverage (and shows NO error toast) for CYCLE_CUT_ACTIVE_TELMEX_COVERAGE', async () => {
+    setActivePinia(createPinia());
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          res: false,
+          msg: "El becario tiene una cobertura Telmex activa; cancélala en Becas Telmex y reintenta.",
+          code: "CYCLE_CUT_ACTIVE_TELMEX_COVERAGE",
+          data: { coverage_id: 9, status: "ACTIVA", start_period: "2026-08-01" },
+        },
+      },
+    };
+    vi.mocked(axios.post).mockRejectedValue(axiosError);
+    const alertStore = useAlertStore();
+    const showAlertSpy = vi.spyOn(alertStore, "showAlert");
+    const store = useScholarshipStore();
+
+    const result = await store.recordPaymentSituation(5, {
+      resolution_type: "BAJA_DEFINITIVA",
+    });
+
+    expect(result).toEqual({
+      status: "cut_blocked",
+      msg: "El becario tiene una cobertura Telmex activa; cancélala en Becas Telmex y reintenta.",
+      telmex_coverage: { coverage_id: 9, status: "ACTIVA", start_period: "2026-08-01" },
+    });
+    expect(showAlertSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns status "pending_withholdings_required" with the withholdings list (and shows NO error toast) for CYCLE_CUT_PENDING_WITHHOLDINGS', async () => {
+    setActivePinia(createPinia());
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          res: false,
+          msg: "Tiene retenciones pendientes; resuélvelas antes de continuar.",
+          code: "CYCLE_CUT_PENDING_WITHHOLDINGS",
+          data: {
+            withholdings: [
+              {
+                id: 3,
+                period_year: 2026,
+                period_month: 7,
+                withheld_amount: "500.00",
+                paid_amount: "0.00",
+                remaining_amount: "500.00",
+              },
+            ],
+          },
+        },
+      },
+    };
+    vi.mocked(axios.post).mockRejectedValue(axiosError);
+    const alertStore = useAlertStore();
+    const showAlertSpy = vi.spyOn(alertStore, "showAlert");
+    const store = useScholarshipStore();
+
+    const result = await store.recordPaymentSituation(5, {
+      resolution_type: "EGRESADO",
+    });
+
+    expect(result).toEqual({
+      status: "pending_withholdings_required",
+      msg: "Tiene retenciones pendientes; resuélvelas antes de continuar.",
+      withholdings: [
+        {
+          id: 3,
+          period_year: 2026,
+          period_month: 7,
+          withheld_amount: "500.00",
+          paid_amount: "0.00",
+          remaining_amount: "500.00",
+        },
+      ],
+    });
+    expect(showAlertSpy).not.toHaveBeenCalled();
+  });
+
   it("shows the backend msg and returns a generic error result on a domain-error rejection without the divergence code", async () => {
     setActivePinia(createPinia());
     const axiosError = {
