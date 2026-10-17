@@ -6,18 +6,6 @@ import {
 } from "@/composables/useSituationMenuItems";
 
 describe("visibleSituationMenuItems", () => {
-  it("excludes SUSPENDIDA from the default catalog", () => {
-    const visible = visibleSituationMenuItems();
-
-    expect(visible.some((item) => item.key === "SUSPENDIDA")).toBe(false);
-  });
-
-  it("keeps SUSPENDIDA in the underlying catalog untouched", () => {
-    expect(
-      SITUATION_MENU_ITEMS.some((item) => item.key === "SUSPENDIDA"),
-    ).toBe(true);
-  });
-
   it("excludes SIN_PAGO from the default catalog (promoted to a RefrendSituationBar quick action instead)", () => {
     const visible = visibleSituationMenuItems();
 
@@ -82,10 +70,10 @@ describe("visibleSituationMenuItems", () => {
     const items: SituationMenuItem[] = [
       { key: "SIN_PAGO", icon: "mdi-cash-off", label: "A", color: "grey" },
       {
-        key: "SUSPENDIDA",
-        icon: "mdi-percent-outline",
+        key: "BAJA_DEFINITIVA",
+        icon: "mdi-account-off-outline",
         label: "B",
-        color: "deep-orange",
+        color: "red-darken-2",
         hidden: true,
       },
     ];

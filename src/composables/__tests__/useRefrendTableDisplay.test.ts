@@ -28,7 +28,6 @@ const baseRefrend: ScholarshipRefrend = {
   resolution_type: null,
   resolution_cause: null,
   resolution_notes: null,
-  suspension_percentage: null,
   withholding_mode: null,
   withholding_value: null,
   carryover_months_count: null,
@@ -400,24 +399,6 @@ describe("useRefrendTableDisplay — finalResolutionChip", () => {
     });
     // statusChip collapses to the generic Pagado label for the same row.
     expect(statusChip(row.refrend).label).toBe("Pagado");
-  });
-
-  it("covers REEMBOLSO_PARCIAL", () => {
-    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "REEMBOLSO_PARCIAL" });
-    expect(finalResolutionChip(row.refrend)).toEqual({
-      label: "Reembolso parcial",
-      color: "teal",
-      icon: "mdi-cash-refund",
-    });
-  });
-
-  it("includes the suspension percentage for SUSPENDIDA", () => {
-    const row = buildRow({
-      workflow_status: "CLOSED",
-      resolution_type: "SUSPENDIDA",
-      suspension_percentage: "50",
-    });
-    expect(finalResolutionChip(row.refrend)?.label).toBe("Suspendido 50%");
   });
 
   // sdd/egresado-status-timing (design D7/R1): server-only auto-generated

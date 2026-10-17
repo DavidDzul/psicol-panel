@@ -32,7 +32,6 @@ const buildRefrend = (
   resolution_type: null,
   resolution_cause: null,
   resolution_notes: null,
-  suspension_percentage: null,
   withholding_mode: null,
   withholding_value: null,
   carryover_months_count: null,
@@ -104,12 +103,6 @@ describe("canVerificacion", () => {
 
   it("is true for CON_INCIDENCIA when unlocked", () => {
     expect(canVerificacion(buildRefrend("DRAFT", "CON_INCIDENCIA"))).toBe(true);
-  });
-
-  it("is false for PENDIENTE_NOTIFICACION", () => {
-    expect(canVerificacion(buildRefrend("DRAFT", "PENDIENTE_NOTIFICACION"))).toBe(
-      false,
-    );
   });
 
   it("is false for LISTO_PARA_PAGO", () => {

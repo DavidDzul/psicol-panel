@@ -95,10 +95,8 @@ const props = defineProps<{
   // A value READ from the refrend, so it can also be a server-only value
   // (BAJA, EGRESO_RETICULA), not just a staff-selectable ResolutionType.
   currentResolution: ServerResolutionType | null;
-  // Precomputed by the parent via statusChip(refrend) — the label needs
-  // suspension_percentage, which currentResolution alone cannot supply, and
-  // the mapping already lives in useRefrendTableDisplay.ts. Do not duplicate
-  // it here.
+  // Precomputed by the parent via statusChip(refrend) — the mapping
+  // already lives in useRefrendTableDisplay.ts. Do not duplicate it here.
   resolutionChip: { label: string; color: string; icon: string };
   locked: boolean;
   loading?: boolean;
@@ -143,9 +141,8 @@ const quickActionLabel = computed(() =>
 // becario has nothing pending.
 
 // Catalog + `hidden` filtering live in `useSituationMenuItems.ts` (unit
-// tested there) — SUSPENDIDA is flagged `hidden: true` so it stays in the
-// catalog (its dialog and `situationDialogs` key are untouched) but is no
-// longer offered here.
+// tested there) — entries flagged `hidden: true` stay in the catalog but are
+// not offered here.
 const visibleMenuItems = computed(() =>
   visibleSituationMenuItems(undefined, { advancePaid: props.advancePaid }),
 );
