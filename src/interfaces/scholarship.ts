@@ -102,6 +102,11 @@ export interface ScholarshipProfile {
   // the string directly, same as every other display of this field.
   cycle_closed_period: string | null
   cycle_closure_reason: 'EGRESADO' | 'BAJA_DEFINITIVA' | null
+  // sdd/perfil-beca-montos-admin: set ONLY by Administración's config save
+  // (PUT scholarship-profiles/{userId}/config). `null` = amounts not yet
+  // configured by Administración → refrend generation skips this becario.
+  // Read-only here, never sent by psicol-panel.
+  config_set_at: string | null
   created_at: string
   updated_at: string
   // relation (loaded via `grantedBy:id,first_name,last_name` in show()/update())
@@ -556,7 +561,15 @@ export interface GeneratePeriodForm {
 // `skipped_out_of_reticula` is new and counts becarios whose period falls
 // outside their retícula window; both are reported as skips, never as
 // errors. `errors` counts only genuine failures.
-export type GenerateFailureKind = 'skipped_out_of_reticula' | 'error'
+//
+// sdd/perfil-beca-montos-admin: `skipped_config_pending` counts becarios whose
+// profile has no amounts configured by Administración yet (config_set_at is
+// null); also a skip, never an error. Always present in the API response;
+// typed optional so older payloads/fixtures stay valid.
+export type GenerateFailureKind =
+  | 'skipped_out_of_reticula'
+  | 'skipped_config_pending'
+  | 'error'
 
 export interface GenerateRefrendFailure {
   user_id: number
@@ -569,6 +582,7 @@ export interface GenerateRefrendsResult {
   created: number
   skipped: number
   skipped_out_of_reticula: number
+  skipped_config_pending?: number
   errors: number
   failures: GenerateRefrendFailure[]
 }
