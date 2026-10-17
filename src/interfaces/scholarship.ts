@@ -63,32 +63,6 @@ export type DocumentStatus = 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED'
 export type IncidentCategory = 'ASISTENCIA' | 'ACADEMICO' | 'DOCUMENTOS' | 'ADMINISTRATIVO' | 'OTRO'
 export type IncidentPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
-export type PaymentVerifyMotivo = 'RETENIDA' | 'SUSPENDIDA' | 'BAJA'
-export type BecaRetenidaOpcion = 'BECA_RETENIDA' | 'PAGO_MESES_RETENIDOS'
-export type BajaOpcion = 'DEFINITIVA' | 'TEMPORAL'
-
-export type BecaRetenidaCausa =
-  | 'FALTAS_FI'
-  | 'SIN_ENTREVISTA_CALIFICACIONES'
-  | 'NO_ENTREGO_CALIFICACIONES_PROVISIONALES'
-  | 'NO_ENTREGO_CALIFICACIONES_ORIGINALES'
-  | 'OTRO'
-
-export type SuspendidaCausa =
-  | 'BAJO_PROMEDIO'
-  | 'FALTAS_FORMACION_INTEGRAL'
-  | 'LLEVARSE_EXTRAORDINARIO'
-  | 'OTRO'
-
-export type BajaCausa =
-  | 'BAJO_PROMEDIO'
-  | 'FALTAS_FORMACION_INTEGRAL'
-  | 'DEJO_ESCUELA_PERSONALES'
-  | 'DEJO_ESCUELA_VOCACIONAL'
-  | 'DESAPARECIO'
-  | 'FALTAS_REGLAMENTO'
-  | 'OTRO'
-
 // ── Domain models ──────────────────────────────────────────────────────────
 
 export interface ScholarshipProfile {
@@ -504,25 +478,6 @@ export interface AtencionFlagForm {
 
 export interface PedagogiaResolveForm {
   comment?: string | null
-}
-
-export interface RefrendPaymentVerifyForm {
-  motivo: PaymentVerifyMotivo
-  // RETENIDA fields
-  retenida_opcion?: BecaRetenidaOpcion | null
-  retenida_num_meses?: number | null
-  retenida_meses_especificar?: string | null
-  retenida_causa?: BecaRetenidaCausa | null
-  retenida_causa_otro?: string | null
-  // SUSPENDIDA fields
-  suspendida_pct?: number | null
-  suspendida_causa?: SuspendidaCausa | null
-  suspendida_causa_otro?: string | null
-  // BAJA fields
-  baja_opcion?: BajaOpcion | null
-  baja_causa?: BajaCausa | null
-  baja_causa_otro?: string | null
-  notes?: string | null
 }
 
 export interface StudentDocument {

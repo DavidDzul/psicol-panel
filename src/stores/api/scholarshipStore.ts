@@ -19,7 +19,6 @@ import type {
   InlinePatchPayload,
   AtencionFlagForm,
   PedagogiaResolveForm,
-  RefrendPaymentVerifyForm,
   RecordSituationForm,
   RecordSituationResult,
   ScholarshipWithholding,
@@ -333,24 +332,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     } catch (error: unknown) {
       const msg = isAxiosError(error)
         ? ((error.response?.data as { msg?: string })?.msg ?? "Error al recalcular.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
-    }
-  };
-
-  const submitPaymentVerify = async (id: number, form: RefrendPaymentVerifyForm): Promise<ScholarshipRefrend | undefined> => {
-    try {
-      const res = await axios.post<ScholarshipRefrendResponse>(
-        `api/admin/scholarship-refrends/${id}/payment-verify`,
-        form
-      );
-      const refrend = _mergeRefrend(res.data.data);
-      _mergeBulkRow(refrend);
-      showAlert({ title: "Verificación de pago registrada.", status: "success" });
-      return refrend;
-    } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { message?: string })?.message ?? "Error al verificar pago.")
         : "Error de red.";
       showAlert({ title: msg, status: "error" });
     }
@@ -867,7 +848,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     clearFlag,
     pedagogiaResolve,
     notifyStudent,
-    submitPaymentVerify,
     recalculateRefrend,
     approveFullPayment,
     clearRefrendResolution,
