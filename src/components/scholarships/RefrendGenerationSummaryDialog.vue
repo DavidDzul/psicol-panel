@@ -44,6 +44,14 @@
                   {{ summary.result.skipped_out_of_reticula }} fuera de retícula
                 </v-chip>
                 <v-chip
+                  v-if="(summary.result.skipped_config_pending ?? 0) > 0"
+                  color="warning"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ summary.result.skipped_config_pending }} pendientes de configuración
+                </v-chip>
+                <v-chip
                   v-if="summary.result.errors > 0"
                   color="error"
                   size="small"
@@ -63,6 +71,9 @@
                 Creados: {{ summary.result.created }} ·
                 Omitidos (ya existían): {{ summary.result.skipped }} ·
                 Fuera de retícula: {{ summary.result.skipped_out_of_reticula }} ·
+                <template v-if="(summary.result.skipped_config_pending ?? 0) > 0">
+                  Pendientes de configuración: {{ summary.result.skipped_config_pending }} ·
+                </template>
                 Errores: {{ summary.result.errors }}
               </p>
 
