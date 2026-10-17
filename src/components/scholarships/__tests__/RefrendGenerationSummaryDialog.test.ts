@@ -114,6 +114,70 @@ describe("RefrendGenerationSummaryDialog", () => {
     expect(text).toContain("Error del servidor.");
   });
 
+  it("shows the pending-config count and lists its failures when skipped_config_pending > 0", () => {
+    mountDialog([
+      {
+        generationId: 1,
+        generationName: "Generación A",
+        result: {
+          created: 2,
+          skipped: 0,
+          skipped_out_of_reticula: 0,
+          skipped_config_pending: 1,
+          errors: 0,
+          failures: [
+            {
+              user_id: 7,
+              name: "Ana López",
+              reason: "El becario no tiene montos de beca configurados por Administración.",
+              kind: "skipped_config_pending",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const text = body().text();
+    expect(text).toContain("Pendientes de configuración: 1");
+    expect(text).toContain("1 pendientes de configuración");
+    expect(text).toContain("Ana López");
+    expect(text).toContain(
+      "El becario no tiene montos de beca configurados por Administración.",
+    );
+  });
+
+  it("renders no pending-config row when skipped_config_pending is 0 or missing", () => {
+    mountDialog([
+      {
+        generationId: 1,
+        generationName: "Generación A",
+        result: {
+          created: 1,
+          skipped: 0,
+          skipped_out_of_reticula: 0,
+          skipped_config_pending: 0,
+          errors: 0,
+          failures: [],
+        },
+      },
+      {
+        generationId: 2,
+        generationName: "Generación B",
+        // Older API response without the key (backward compatible).
+        result: {
+          created: 1,
+          skipped: 0,
+          skipped_out_of_reticula: 0,
+          errors: 0,
+          failures: [],
+        },
+      },
+    ]);
+
+    expect(body().text()).not.toContain("Pendientes de configuración");
+    expect(body().text()).not.toContain("pendientes de configuración");
+  });
+
   it("emits update:modelValue false when closed", async () => {
     mountDialog([
       {

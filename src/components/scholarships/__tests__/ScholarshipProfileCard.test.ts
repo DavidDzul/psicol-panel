@@ -36,6 +36,7 @@ const baseProfile: ScholarshipProfile = {
   iu_payment_amount: null,
   cycle_closed_period: null,
   cycle_closure_reason: null,
+  config_set_at: "2026-10-01T06:00:00.000000Z",
   created_at: "2026-01-01",
   updated_at: "2026-01-01",
 };
@@ -625,5 +626,46 @@ describe("ScholarshipProfileCard — replace-confirmation dialog (422 aumento vi
         temporary_increase_valid_until: "2026-09-30",
       }),
     );
+  });
+});
+
+// sdd/perfil-beca-montos-admin R6.2: informational chip while Administración
+// has not configured the amounts (config_set_at null). Never blocks editing.
+describe("ScholarshipProfileCard — montos pendientes chip", () => {
+  const PENDING_CHIP = "Montos pendientes (Administración)";
+
+  it("shows the chip in view mode when config_set_at is null", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile, config_set_at: null });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain(PENDING_CHIP);
+  });
+
+  it("shows the chip in edit mode when config_set_at is null and keeps saving enabled", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile, config_set_at: null });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    await wrapper.find("button").trigger("click"); // "Editar perfil"
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain(PENDING_CHIP);
+    const save = wrapper
+      .findAll("button")
+      .find((b) => b.text().toLowerCase().includes("guardar"));
+    expect(save).toBeTruthy();
+    expect(save!.attributes("disabled")).toBeUndefined();
+  });
+
+  it("does not show the chip when config_set_at is set (view and edit modes)", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = mountCard();
+    await flushPromises();
+    expect(wrapper.text()).not.toContain(PENDING_CHIP);
+
+    await wrapper.find("button").trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).not.toContain(PENDING_CHIP);
   });
 });

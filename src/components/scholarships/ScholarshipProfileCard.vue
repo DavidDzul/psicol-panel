@@ -69,6 +69,16 @@
               <v-icon start size="small">mdi-flag-checkered</v-icon>
               Ciclo cerrado: {{ cycleClosedLabel }}
             </v-chip>
+            <v-chip
+              v-if="!profile.config_set_at"
+              label
+              color="warning"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-alert-outline</v-icon>
+              Montos pendientes (Administración)
+            </v-chip>
           </div>
           <v-btn size="small" variant="tonal" @click="startEdit">
             Editar perfil
@@ -279,6 +289,16 @@
             >
               <v-icon start size="small">mdi-flag-checkered</v-icon>
               Ciclo cerrado: {{ cycleClosedLabel }}
+            </v-chip>
+            <v-chip
+              v-if="!profile.config_set_at"
+              label
+              color="warning"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="small">mdi-alert-outline</v-icon>
+              Montos pendientes (Administración)
             </v-chip>
           </div>
           <div class="text-caption text-medium-emphasis">
