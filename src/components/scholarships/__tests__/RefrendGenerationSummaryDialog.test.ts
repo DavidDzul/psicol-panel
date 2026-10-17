@@ -139,6 +139,7 @@ describe("RefrendGenerationSummaryDialog", () => {
 
     const text = body().text();
     expect(text).toContain("Pendientes de configuración: 1");
+    expect(text).toContain("1 pendientes de configuración");
     expect(text).toContain("Ana López");
     expect(text).toContain(
       "El becario no tiene montos de beca configurados por Administración.",
@@ -174,6 +175,7 @@ describe("RefrendGenerationSummaryDialog", () => {
     ]);
 
     expect(body().text()).not.toContain("Pendientes de configuración");
+    expect(body().text()).not.toContain("pendientes de configuración");
   });
 
   it("emits update:modelValue false when closed", async () => {
