@@ -53,16 +53,6 @@ const _resolutionTypeMeta = (
     return { label: "Egresado (retícula)", color: "indigo", icon: "mdi-account-clock-outline" };
   if (r === "BAJA_DEFINITIVA")
     return { label: "Baja definitiva", color: "red-darken-3", icon: "mdi-account-remove-outline" };
-  if (r === "REEMBOLSO_PARCIAL")
-    return { label: "Reembolso parcial", color: "teal", icon: "mdi-cash-refund" };
-  if (r === "SUSPENDIDA") {
-    const pct = refrend.suspension_percentage ?? null;
-    return {
-      label: pct ? `Suspendido ${pct}%` : "Suspendido",
-      color: "deep-orange",
-      icon: "mdi-pause-circle-outline",
-    };
-  }
   return null;
 };
 
@@ -75,8 +65,6 @@ export const statusChip = (
     return { label: "Borrador", color: "grey", icon: "mdi-file-document-edit-outline" };
   if (s === "CON_INCIDENCIA")
     return { label: "Con incidencia", color: "orange", icon: "mdi-alert-decagram-outline" };
-  if (s === "PENDIENTE_NOTIFICACION")
-    return { label: "Pend. notif.", color: "blue", icon: "mdi-bell-outline" };
   // sdd/egresado-status-timing (design R1, HIGH severity): without this
   // override, the branch below short-circuits BEFORE the resolution-type
   // branch and a never-paid $0 egreso row would read "Pagado"/teal. Every

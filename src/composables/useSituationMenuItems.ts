@@ -57,17 +57,6 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
     color: "teal",
   },
   {
-    key: "SUSPENDIDA",
-    icon: "mdi-percent-outline",
-    label: "Suspensión temporal",
-    color: "deep-orange",
-    // Ocultada del menú de Acciones (decisión de producto, PR1 de
-    // sdd/pedagogia-acciones-visibilidad-y-beca-retenida-montos). El
-    // catálogo, `SituationSuspendidaDialog.vue` y cualquier refrendo
-    // histórico con resolution_cause=SUSPENDIDA siguen intactos.
-    hidden: true,
-  },
-  {
     key: "PAGO_ADELANTADO",
     icon: "mdi-cash-clock",
     label: "Pago adelantado",

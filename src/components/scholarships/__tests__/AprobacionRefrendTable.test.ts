@@ -90,7 +90,6 @@ const STUBS = {
   SituationSinPagoDialog: true,
   SituationRetenidaDialog: true,
   SituationPagoMesesDialog: true,
-  SituationSuspendidaDialog: true,
   SituationBajaDialog: true,
   SituationEgresadoDialog: true,
   SituationPagoAdelantadoDialog: true,
@@ -110,7 +109,6 @@ const baseRefrend: ScholarshipRefrend = {
   resolution_type: null,
   resolution_cause: null,
   resolution_notes: null,
-  suspension_percentage: null,
   withholding_mode: null,
   withholding_value: null,
   carryover_months_count: null,
@@ -1690,10 +1688,9 @@ describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-
 
 describe('AprobacionRefrendTable — "Final" column shows the advance-payment breakdown (live user report, 2026-09-27)', () => {
   // The "Final" column only showed the final_amount + extra = total_to_pay
-  // breakdown for the amount_pending_from_previous and
-  // refund_amount_from_previous cases — there was no branch at all for
-  // advance_payment_amount, so a row with ONLY an advance payment registered
-  // (no retention, no refund) silently fell through to showing just
+  // breakdown for the amount_pending_from_previous case — there was no
+  // branch at all for advance_payment_amount, so a row with ONLY an advance
+  // payment registered (no retention) silently fell through to showing just
   // final_amount, hiding the advance amount even though total_to_pay itself
   // was already computed correctly server-side.
 
@@ -1703,7 +1700,6 @@ describe('AprobacionRefrendTable — "Final" column shows the advance-payment br
       ...row.refrend,
       final_amount: "1200.00",
       amount_pending_from_previous: "0",
-      refund_amount_from_previous: "0",
       advance_payment_amount: "3600.00",
       total_to_pay: "4800.00",
     };
