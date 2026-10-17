@@ -422,6 +422,13 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
     expect(rowClass(row)).toBe("row-pending");
   });
 
+  it("has no dedicated chip for the removed PENDIENTE_NOTIFICACION status", () => {
+    const row = buildRow({
+      workflow_status: "PENDIENTE_NOTIFICACION" as unknown as BulkRefrendRow["refrend"]["workflow_status"],
+    });
+    expect(statusChip(row.refrend).label).not.toBe("Pend. notif.");
+  });
+
   it("labels a CON_INCIDENCIA workflow_status as Con incidencia", () => {
     const row = buildRow({ workflow_status: "CON_INCIDENCIA" });
     expect(statusChip(row.refrend).label).toBe("Con incidencia");

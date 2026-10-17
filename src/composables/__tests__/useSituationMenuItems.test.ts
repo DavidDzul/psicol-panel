@@ -5,6 +5,15 @@ import {
   type SituationMenuItem,
 } from "@/composables/useSituationMenuItems";
 
+describe("SITUATION_MENU_ITEMS", () => {
+  it("no longer carries the removed SUSPENDIDA / REEMBOLSO_PARCIAL situations", () => {
+    const keys: string[] = SITUATION_MENU_ITEMS.map((item) => item.key);
+
+    expect(keys).not.toContain("SUSPENDIDA");
+    expect(keys).not.toContain("REEMBOLSO_PARCIAL");
+  });
+});
+
 describe("visibleSituationMenuItems", () => {
   it("excludes SIN_PAGO from the default catalog (promoted to a RefrendSituationBar quick action instead)", () => {
     const visible = visibleSituationMenuItems();
