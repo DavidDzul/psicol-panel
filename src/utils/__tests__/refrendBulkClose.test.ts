@@ -24,7 +24,6 @@ const buildRefrend = (
   resolution_type: null,
   resolution_cause: null,
   resolution_notes: null,
-  suspension_percentage: null,
   withholding_mode: null,
   withholding_value: null,
   carryover_months_count: null,

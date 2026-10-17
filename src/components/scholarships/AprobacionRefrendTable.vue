@@ -325,19 +325,9 @@
               = {{ fmt(item.refrend.total_to_pay) }}
             </span>
           </template>
-          <template
-            v-else-if="Number(item.refrend.refund_amount_from_previous) > 0"
-          >
-            <span class="text-caption text-green-darken-1">
-              + {{ fmt(item.refrend.refund_amount_from_previous!) }} reemb.
-            </span>
-            <span class="text-caption font-weight-bold text-green-darken-2">
-              = {{ fmt(item.refrend.total_to_pay) }}
-            </span>
-          </template>
           <!-- Bug found via live user report (2026-09-27): this column had
                no branch at all for advance_payment_amount, so a row with
-               ONLY an advance payment registered (no retención/reembolso)
+               ONLY an advance payment registered (no retención)
                silently showed just final_amount — total_to_pay itself was
                already correct server-side, this was purely a missing
                display case. -->
@@ -455,11 +445,6 @@
       "
       @submit="onSituationSubmit"
     />
-    <SituationSuspendidaDialog
-      v-model="situationDialogs.SUSPENDIDA"
-      :loading="situationSubmitLoading"
-      @submit="onSituationSubmit"
-    />
     <SituationBajaDialog
       v-model="situationDialogs.BAJA_DEFINITIVA"
       :loading="situationSubmitLoading"
@@ -543,7 +528,6 @@ import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDi
 import SituationRetenidaDialog from "@/components/scholarships/SituationRetenidaDialog.vue";
 import SituationDescuentoDefinitivoDialog from "@/components/scholarships/SituationDescuentoDefinitivoDialog.vue";
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
-import SituationSuspendidaDialog from "@/components/scholarships/SituationSuspendidaDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
 import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
@@ -924,10 +908,8 @@ const situationDialogs = ref<Record<SituationKey, boolean>>({
   RETENIDA: false,
   DESCUENTO_DEFINITIVO: false,
   PAGO_MESES: false,
-  SUSPENDIDA: false,
   BAJA_DEFINITIVA: false,
   EGRESADO: false,
-  REEMBOLSO_PARCIAL: false,
   PAGO_ADELANTADO: false,
 });
 const situationSubmitLoading = ref(false);

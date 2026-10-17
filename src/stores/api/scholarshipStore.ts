@@ -282,22 +282,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
-  const notifyStudent = async (id: number, notificationMethod?: string): Promise<ScholarshipRefrend | undefined> => {
-    try {
-      const res = await axios.post<ScholarshipRefrendResponse>(
-        `api/admin/scholarship-refrends/${id}/notify`,
-        { method: notificationMethod ?? 'EMAIL' }
-      );
-      const refrend = _mergeRefrend(res.data.data);
-      _mergeBulkRow(refrend);
-      return refrend;
-    } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { message?: string })?.message ?? "Error al notificar.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
-    }
-  };
 
   const clearFlag = async (id: number): Promise<ScholarshipRefrend | undefined> => {
     try {
@@ -847,7 +831,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     atencionFlag,
     clearFlag,
     pedagogiaResolve,
-    notifyStudent,
     recalculateRefrend,
     approveFullPayment,
     clearRefrendResolution,

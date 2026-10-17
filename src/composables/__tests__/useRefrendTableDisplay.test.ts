@@ -28,7 +28,6 @@ const baseRefrend: ScholarshipRefrend = {
   resolution_type: null,
   resolution_cause: null,
   resolution_notes: null,
-  suspension_percentage: null,
   withholding_mode: null,
   withholding_value: null,
   carryover_months_count: null,
@@ -402,24 +401,6 @@ describe("useRefrendTableDisplay — finalResolutionChip", () => {
     expect(statusChip(row.refrend).label).toBe("Pagado");
   });
 
-  it("covers REEMBOLSO_PARCIAL", () => {
-    const row = buildRow({ workflow_status: "CLOSED", resolution_type: "REEMBOLSO_PARCIAL" });
-    expect(finalResolutionChip(row.refrend)).toEqual({
-      label: "Reembolso parcial",
-      color: "teal",
-      icon: "mdi-cash-refund",
-    });
-  });
-
-  it("includes the suspension percentage for SUSPENDIDA", () => {
-    const row = buildRow({
-      workflow_status: "CLOSED",
-      resolution_type: "SUSPENDIDA",
-      suspension_percentage: "50",
-    });
-    expect(finalResolutionChip(row.refrend)?.label).toBe("Suspendido 50%");
-  });
-
   // sdd/egresado-status-timing (design D7/R1): server-only auto-generated
   // resolution_type for the retícula month+2 $0 egreso refrendo. Must be
   // distinct from the manual EGRESADO chip (icon AND color) so a future
@@ -439,6 +420,13 @@ describe("useRefrendTableDisplay — statusChip / rowClass (unchanged behavior)"
     const row = buildRow({ workflow_status: "DRAFT" });
     expect(statusChip(row.refrend).label).toBe("Borrador");
     expect(rowClass(row)).toBe("row-pending");
+  });
+
+  it("has no dedicated chip for the removed PENDIENTE_NOTIFICACION status", () => {
+    const row = buildRow({
+      workflow_status: "PENDIENTE_NOTIFICACION" as unknown as BulkRefrendRow["refrend"]["workflow_status"],
+    });
+    expect(statusChip(row.refrend).label).not.toBe("Pend. notif.");
   });
 
   it("labels a CON_INCIDENCIA workflow_status as Con incidencia", () => {

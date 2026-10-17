@@ -20,7 +20,6 @@ export type RefrendStatus =
 export type WorkflowStatus =
   | 'DRAFT'
   | 'CON_INCIDENCIA'
-  | 'PENDIENTE_NOTIFICACION'
   | 'LISTO_PARA_PAGO'
   | 'CLOSED'
 
@@ -29,10 +28,8 @@ export type ResolutionType =
   | 'SIN_PAGO'
   | 'RETENIDA'
   | 'DESCUENTO_DEFINITIVO'
-  | 'SUSPENDIDA'
   | 'BAJA_DEFINITIVA'
   | 'EGRESADO'
-  | 'REEMBOLSO_PARCIAL'
 
 // Server-only resolution_type values that are deliberately NEVER part of
 // the staff-selectable ResolutionType union above (same precedent as
@@ -154,7 +151,6 @@ export interface ScholarshipRefrend {
   resolution_type: ServerResolutionType | null
   resolution_cause: string | null
   resolution_notes: string | null
-  suspension_percentage: string | null
   withholding_mode: 'percentage' | 'fixed' | null
   withholding_value: string | null
   carryover_months_count: number | null
@@ -186,7 +182,6 @@ export interface ScholarshipRefrend {
   discount_amount: string
   final_amount: string
   amount_pending_from_previous: string
-  refund_amount_from_previous?: string
   total_to_pay: string
   // Origin-refrend advance-payment indicator (sdd/pago-adelantado, design
   // D6). Lives on the refrend itself (a real column, `RecordAdvancePaymentAction`
@@ -336,11 +331,9 @@ export interface RecordSituationForm {
   resolution_type: ResolutionType
   resolution_cause?: string | null
   resolution_notes?: string | null
-  suspension_percentage?: number | null
   withholding_mode?: 'percentage' | 'fixed' | null
   withholding_value?: number | null
   withholding_payments?: WithholdingPaymentInput[]
-  refund_amount?: number | null
   // Required only when this refrendo was previously advance-paid and the
   // resolution being applied now diverges from what was advance-paid (see
   // RecordPaymentSituationAction's arrival-time reconciliation block).
