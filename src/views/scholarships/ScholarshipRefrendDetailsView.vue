@@ -26,16 +26,6 @@
       >
         Retener refrendo
       </v-btn>
-      <v-btn
-        v-if="!isLocked"
-        color="orange-darken-2"
-        variant="text"
-        size="small"
-        prepend-icon="mdi-account-school"
-        @click="graduateDialog = true"
-      >
-        Marcar como egresado
-      </v-btn>
     </div>
 
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
@@ -716,54 +706,6 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-  <!-- Graduate dialog -->
-  <v-dialog v-model="graduateDialog" max-width="480">
-    <v-card>
-      <v-card-title class="text-subtitle-1 pa-4 d-flex align-center ga-2">
-        <v-icon color="orange-darken-2" size="small">mdi-account-school</v-icon>
-        Marcar como egresado
-      </v-card-title>
-      <v-card-text class="pt-0">
-        <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-          Esta acción cambiará al becario a estado <strong>Inactivo</strong> y
-          cancelará el refrendo activo del mes actual. Esta acción no se puede
-          deshacer fácilmente.
-        </v-alert>
-
-        <v-textarea
-          v-model="graduateComment"
-          label="Comentario obligatorio"
-          variant="outlined"
-          density="compact"
-          rows="3"
-          auto-grow
-          placeholder="Razón del egreso, fecha de graduación, observaciones..."
-          :rules="[requiredRule]"
-        />
-
-        <v-checkbox
-          v-model="graduateConfirmed"
-          label="Entiendo que esta acción marcará al becario como egresado y es irreversible."
-          density="compact"
-          color="warning"
-          class="mt-1"
-        />
-      </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="graduateDialog = false">Cancelar</v-btn>
-        <v-btn
-          color="orange-darken-2"
-          variant="tonal"
-          :disabled="!graduateConfirmed || !graduateComment.trim()"
-          @click="onGraduate({ comment: graduateComment })"
-        >
-          Confirmar egreso
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -802,9 +744,6 @@ const authorizeForm = reactive<{
   authorization_notes: "",
 });
 
-const graduateComment = ref<string>("");
-const graduateConfirmed = ref<boolean>(false);
-
 // Separate dialog ref for aprobacion (verificacion uses reviewDialog from composable)
 const aprobacionReviewDialog = ref<boolean>(false);
 
@@ -820,7 +759,6 @@ const {
   withholdDialog,
   withholdReason,
   authorizeDialog,
-  graduateDialog,
   openVerificacionReview,
   openAprobacionReview: _openAprobacionReview,
   onSubmitReview,
@@ -829,7 +767,6 @@ const {
   onMarkPaid,
   openWithhold,
   onWithhold,
-  onGraduate,
 } = useScholarshipDetails();
 
 // Override aprobacion review to use separate dialog
@@ -982,9 +919,6 @@ const formatDate = (iso: string): string =>
     month: "short",
     year: "numeric",
   });
-
-const requiredRule = (v: string): boolean | string =>
-  (v && v.trim().length > 0) || "Campo requerido.";
 </script>
 
 <style scoped>

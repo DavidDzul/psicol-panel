@@ -93,6 +93,9 @@
                   item-title="text"
                   item-value="value"
                   label="Tipo de usuario"
+                  :readonly="isUserTypeLocked"
+                  :hint="isUserTypeLocked ? USER_TYPE_LOCKED_HINT : undefined"
+                  :persistent-hint="isUserTypeLocked"
                 ></v-select>
               </v-col>
               <v-col cols="12" md="6">
@@ -240,6 +243,12 @@ watch(enrollment, (newValue) => {
     enrollment.value = newValue.toUpperCase();
   }
 });
+
+// Holders of a scholarship profile cannot change user_type here (the API
+// answers 422 USER_TYPE_LOCKED); graduation goes through the refrendo situation.
+const USER_TYPE_LOCKED_HINT =
+  "Para egresar a un becario usa la situación Egresado en su refrendo.";
+const isUserTypeLocked = computed(() => !!props.editItem?.has_scholarship_profile);
 
 const filteredGenerations = computed(() =>
   props.generations.filter((map) => map.campus === campus.value),

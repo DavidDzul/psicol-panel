@@ -15,6 +15,9 @@ export interface User {
   active: boolean;
   created_at: string | null;
   updated_at: string;
+  // Present on admin user/graduate payloads: true when the user holds a
+  // scholarship profile (user_type is then locked by the API).
+  has_scholarship_profile?: boolean;
 }
 
 export interface UserRole {

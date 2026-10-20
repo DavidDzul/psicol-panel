@@ -569,6 +569,7 @@ export interface GeneratePeriodForm {
 export type GenerateFailureKind =
   | 'skipped_out_of_reticula'
   | 'skipped_config_pending'
+  | 'skipped_reticula_missing'
   | 'error'
 
 export interface GenerateRefrendFailure {
@@ -583,6 +584,7 @@ export interface GenerateRefrendsResult {
   skipped: number
   skipped_out_of_reticula: number
   skipped_config_pending?: number
+  skipped_reticula_missing?: number
   errors: number
   failures: GenerateRefrendFailure[]
 }
@@ -609,6 +611,3 @@ export interface AuthorizeForm {
   authorization_notes?: string | null
 }
 
-export interface GraduateForm {
-  comment: string
-}
