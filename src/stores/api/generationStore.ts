@@ -6,6 +6,9 @@ import { useAlertStore } from "@/stores/alert";
 import type { Generation } from "@/interfaces/generation";
 import type { GenerationsResponse } from "@/interfaces/api";
 
+const UPDATE_ERROR_FALLBACK =
+  "Error al actualizar la información, intente nuevamente.";
+
 export const useGenerationsStore = defineStore("generationsStore", () => {
   const router = useRouter();
   const { showAlert } = useAlertStore();
@@ -77,8 +80,13 @@ export const useGenerationsStore = defineStore("generationsStore", () => {
       }
     } catch (error: any) {
       console.error(error);
+      // sdd/generaciones-activas-refrendos: surface the server's reason (e.g.
+      // 422 GENERATION_HAS_PENDING_BECARIOS) instead of a generic text.
+      const data = error?.response?.data as
+        | { message?: string; msg?: string }
+        | undefined;
       showAlert({
-        title: "Error al actualizar la información, intente nuevamente.",
+        title: data?.message || data?.msg || UPDATE_ERROR_FALLBACK,
         status: "error",
       });
       throw error;

@@ -30,6 +30,9 @@
                 v-bind="generation_activeProps"
                 label="¿Generación activa?"
                 density="comfortable"
+                :disabled="isDeactivationLocked"
+                :hint="deactivationLockedHint"
+                :persistent-hint="isDeactivationLocked"
               ></v-checkbox>
             </v-col>
           </v-row>
@@ -57,7 +60,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from "@vee-validate/yup";
 import { type FieldState, useForm } from "vee-validate";
-import { watch } from "vue";
+import { computed, watch } from "vue";
 import * as yup from "yup";
 
 import type { Generation, GenerationForm } from "@/interfaces/generation";
@@ -81,6 +84,24 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+
+// sdd/generaciones-activas-refrendos: the API answers 422
+// GENERATION_HAS_PENDING_BECARIOS when an active generación with pending
+// becarios is deactivated, so lock the checkbox up front. Inactive
+// generaciones can always be re-activated.
+const pendingBecariosCount = computed<number>(
+  () => props.editItem?.pending_becarios_count ?? 0,
+);
+
+const isDeactivationLocked = computed<boolean>(
+  () => !!props.editItem?.generation_active && pendingBecariosCount.value > 0,
+);
+
+const deactivationLockedHint = computed<string | undefined>(() =>
+  isDeactivationLocked.value
+    ? `No se puede desactivar: ${pendingBecariosCount.value} becarios con pagos pendientes (retícula o meses de gracia vigentes)`
+    : undefined,
+);
 
 const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
