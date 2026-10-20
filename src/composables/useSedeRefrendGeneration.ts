@@ -17,7 +17,13 @@ export const selectCampusGenerations = (
 ): Generation[] =>
   generations
     .filter((generation) => generation.campus === campus)
-    .sort((a, b) => a.generation_name.localeCompare(b.generation_name));
+    // String() guards against a DB that serves generation_name as a number;
+    // numeric collation orders "2" before "19".
+    .sort((a, b) =>
+      String(a.generation_name).localeCompare(String(b.generation_name), undefined, {
+        numeric: true,
+      }),
+    );
 
 const extractErrorMessage = (error: unknown): string => {
   if (isAxiosError(error)) {

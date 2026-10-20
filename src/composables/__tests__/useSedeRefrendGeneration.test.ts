@@ -82,6 +82,29 @@ describe("selectCampusGenerations", () => {
     ]);
   });
 
+  it("sorts numeric generation names numerically (2 before 19)", () => {
+    const generations = [
+      buildGeneration({ id: 1, campus: "CDMX", generation_name: "19" }),
+      buildGeneration({ id: 2, campus: "CDMX", generation_name: "2" }),
+      buildGeneration({ id: 3, campus: "CDMX", generation_name: "1" }),
+    ];
+
+    expect(selectCampusGenerations(generations, "CDMX").map((g) => g.id)).toEqual([
+      3, 2, 1,
+    ]);
+  });
+
+  it("does not crash when the API returns generation_name as a number", () => {
+    const generations = [
+      buildGeneration({ id: 1, campus: "CDMX", generation_name: 19 as unknown as string }),
+      buildGeneration({ id: 2, campus: "CDMX", generation_name: 2 as unknown as string }),
+    ];
+
+    expect(selectCampusGenerations(generations, "CDMX").map((g) => g.id)).toEqual([
+      2, 1,
+    ]);
+  });
+
   it("does NOT filter on generation_active — an inactive generación is still included", () => {
     const generations = [
       buildGeneration({ id: 1, campus: "CDMX", generation_active: false }),
