@@ -51,7 +51,6 @@ vi.mock("@/composables/useScholarshipDetails", () => ({
     withholdDialog: ref(false),
     withholdReason: ref(""),
     authorizeDialog: ref(false),
-    graduateDialog: ref(false),
     openVerificacionReview: vi.fn(),
     openAprobacionReview: vi.fn(),
     onSubmitReview: vi.fn(),
@@ -60,7 +59,6 @@ vi.mock("@/composables/useScholarshipDetails", () => ({
     onMarkPaid: vi.fn(),
     openWithhold: vi.fn(),
     onWithhold: vi.fn(),
-    onGraduate: vi.fn(),
   }),
 }));
 
@@ -183,5 +181,13 @@ describe("ScholarshipRefrendDetailsView — chip de aumento temporal", () => {
 
     expect(wrapper.text()).toContain("Monto base");
     expect(wrapper.text()).toContain("$2,500.00");
+  });
+});
+
+describe("ScholarshipRefrendDetailsView — egreso manual removido", () => {
+  it("does not render the 'Marcar como egresado' control", () => {
+    const wrapper = mountView({ ...baseRefrend });
+
+    expect(wrapper.text()).not.toContain("Marcar como egresado");
   });
 });

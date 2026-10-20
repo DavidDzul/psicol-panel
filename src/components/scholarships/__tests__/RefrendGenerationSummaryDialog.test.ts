@@ -201,3 +201,67 @@ describe("RefrendGenerationSummaryDialog", () => {
     expect(body().text()).toContain("No hay generaciones");
   });
 });
+
+describe("RefrendGenerationSummaryDialog — sin retícula cargada", () => {
+  it("shows the chip, the count and the failures when skipped_reticula_missing > 0", () => {
+    mountDialog([
+      {
+        generationId: 1,
+        generationName: "Generación A",
+        result: {
+          created: 0,
+          skipped: 0,
+          skipped_out_of_reticula: 0,
+          skipped_reticula_missing: 2,
+          errors: 0,
+          failures: [
+            {
+              user_id: 10,
+              name: "Ana Sin Reticula",
+              reason: "El becario no tiene fechas de retícula cargadas. Cárgalas en la sección Retícula de su perfil.",
+              kind: "skipped_reticula_missing",
+            },
+            {
+              user_id: 11,
+              name: "Beto Sin Reticula",
+              reason: "El becario no tiene fechas de retícula cargadas. Cárgalas en la sección Retícula de su perfil.",
+              kind: "skipped_reticula_missing",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const text = body().text();
+    expect(text).toContain("2 sin retícula cargada");
+    expect(text).toContain("Sin retícula cargada: 2");
+    expect(text).toContain("Ana Sin Reticula");
+    expect(text).toContain("Beto Sin Reticula");
+    expect(text).toContain("Cárgalas en la sección Retícula");
+  });
+
+  it("hides chip and count when skipped_reticula_missing is 0 or absent", () => {
+    mountDialog([
+      {
+        generationId: 1,
+        generationName: "Generación A",
+        result: {
+          created: 1,
+          skipped: 0,
+          skipped_out_of_reticula: 0,
+          skipped_reticula_missing: 0,
+          errors: 0,
+          failures: [],
+        },
+      },
+      {
+        generationId: 2,
+        generationName: "Generación B",
+        result: { created: 1, skipped: 0, skipped_out_of_reticula: 0, errors: 0, failures: [] },
+      },
+    ]);
+
+    expect(body().text()).not.toContain("sin retícula cargada");
+    expect(body().text()).not.toContain("Sin retícula cargada");
+  });
+});
