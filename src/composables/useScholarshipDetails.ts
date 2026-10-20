@@ -11,7 +11,6 @@ import type {
   AuthorizeForm,
   StudentDocument,
   AttendanceSummary,
-  GraduateForm,
 } from "@/interfaces/scholarship";
 
 export function useScholarshipDetails() {
@@ -27,7 +26,6 @@ export function useScholarshipDetails() {
   const withholdDialog    = ref<boolean>(false);
   const withholdReason    = ref<string>('');
   const authorizeDialog   = ref<boolean>(false);
-  const graduateDialog    = ref<boolean>(false);
   const attendanceSummary = ref<AttendanceSummary | null>(null);
   const scholarshipProfile = ref<ScholarshipProfile | null>(null);
 
@@ -131,12 +129,6 @@ export function useScholarshipDetails() {
     withholdDialog.value = false;
   };
 
-  const onGraduate = async (form: GraduateForm): Promise<void> => {
-    if (!refrend.value) return;
-    await store.markAsGraduate(refrend.value.user_id, form);
-    graduateDialog.value = false;
-  };
-
   return {
     refrend,
     docList,
@@ -149,7 +141,6 @@ export function useScholarshipDetails() {
     withholdDialog,
     withholdReason,
     authorizeDialog,
-    graduateDialog,
     openVerificacionReview,
     openAprobacionReview,
     onSubmitReview,
@@ -158,6 +149,5 @@ export function useScholarshipDetails() {
     onMarkPaid,
     openWithhold,
     onWithhold,
-    onGraduate,
   };
 }

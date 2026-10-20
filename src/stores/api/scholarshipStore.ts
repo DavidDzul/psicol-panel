@@ -12,7 +12,6 @@ import type {
   ReviewForm,
   AuthorizeForm,
   AttendanceSummary,
-  GraduateForm,
   BulkRefrendRow,
   BulkTableMeta,
   BulkTableParams,
@@ -35,7 +34,6 @@ import type {
   ScholarshipRefrendResponse,
   GenerateRefrendsResponse,
   AttendanceSummaryResponse,
-  GraduatePersonResponse,
   ScholarshipWithholdingsResponse,
   PendingWithholdingsMeta,
   AdvancePaymentResponse,
@@ -366,24 +364,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
 
   const getAttendanceSummary = (userId: number, year: number, month: number): AttendanceSummary | undefined =>
     attendanceSummaries.value.get(`${userId}_${year}_${month}`);
-
-  // ── Graduate ──────────────────────────────────────────────────────────────
-
-  const markAsGraduate = async (userId: number, form: GraduateForm): Promise<User | undefined> => {
-    try {
-      const res = await axios.post<GraduatePersonResponse>(
-        `api/admin/persons/${userId}/graduate`,
-        form
-      );
-      showAlert({ title: "Becario marcado como egresado.", status: "success" });
-      return res.data.data;
-    } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al marcar como egresado.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
-    }
-  };
 
   // ── Bulk table actions ────────────────────────────────────────────────────
 
@@ -822,7 +802,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     fetchAttendanceSummary,
     getAttendanceSummary,
     uploadReticula,
-    markAsGraduate,
     fetchBulkTable,
     resetBulkTable,
     fetchIncidenciasTable,
