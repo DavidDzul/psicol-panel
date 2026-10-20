@@ -11,9 +11,10 @@ import type { GenerateRefrendsResult } from "@/interfaces/scholarship";
 // ── Test harness ─────────────────────────────────────────────────────────────
 //
 // sdd/verificacion-incidencias-ux PR3 (design): the composable loops over
-// ALL generaciones whose campus matches the selected sede (NOT gated by
-// generation_active — an inactive flag isn't used by any backend logic and
-// could silently skip real becarios, design rationale), sorted by name, and
+// the generaciones whose campus matches the selected sede, sorted by name, and
+// sdd/generaciones-activas-refrendos: ONLY active ones — the API guard now
+// guarantees an inactive generación has no becarios with pending payments, so
+// skipping them cannot silently drop real becarios. It
 // calls scholarshipStore.generatePeriod SEQUENTIALLY, one request in flight
 // at a time. scholarshipStore is mocked at the module boundary (it now
 // returns a typed result and rethrows on failure, see
@@ -105,12 +106,22 @@ describe("selectCampusGenerations", () => {
     ]);
   });
 
-  it("does NOT filter on generation_active — an inactive generación is still included", () => {
+  it("excludes inactive generaciones of the campus (generation_active filter)", () => {
     const generations = [
-      buildGeneration({ id: 1, campus: "CDMX", generation_active: false }),
+      buildGeneration({ id: 1, campus: "CDMX", generation_active: false, generation_name: "Gen A" }),
+      buildGeneration({ id: 2, campus: "CDMX", generation_active: true, generation_name: "Gen B" }),
     ];
 
-    expect(selectCampusGenerations(generations, "CDMX")).toHaveLength(1);
+    expect(selectCampusGenerations(generations, "CDMX").map((g) => g.id)).toEqual([2]);
+  });
+
+  it("returns an empty list when every generación of the campus is inactive", () => {
+    const generations = [
+      buildGeneration({ id: 1, campus: "CDMX", generation_active: false }),
+      buildGeneration({ id: 2, campus: "MTY", generation_active: true }),
+    ];
+
+    expect(selectCampusGenerations(generations, "CDMX")).toEqual([]);
   });
 });
 
@@ -241,6 +252,21 @@ describe("useSedeRefrendGeneration — run", () => {
     expect(composable.summaries.value).toEqual([
       { generationId: 1, generationName: "Gen A", result: buildResult({ created: 7 }) },
     ]);
+  });
+
+  it("skips inactive generaciones: generatePeriod is never called for them", async () => {
+    const gens = [
+      buildGeneration({ id: 1, generation_name: "Gen A", generation_active: false }),
+      buildGeneration({ id: 2, generation_name: "Gen B", generation_active: true }),
+    ];
+    const composable = setup(gens);
+    generatePeriod.mockResolvedValue(buildResult());
+
+    await composable.run("CDMX", 2026, 10);
+
+    expect(generatePeriod).toHaveBeenCalledTimes(1);
+    expect(generatePeriod.mock.calls[0][0].generation_id).toBe(2);
+    expect(composable.total.value).toBe(1);
   });
 
   it("only loops generaciones of the selected campus, ignoring other sedes", async () => {

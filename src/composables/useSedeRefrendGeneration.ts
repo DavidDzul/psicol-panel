@@ -6,17 +6,22 @@ import { useGenerationsStore } from "@/stores/api/generationStore";
 import type { Generation } from "@/interfaces/generation";
 import type { GenerationRunSummary } from "@/interfaces/scholarship";
 
-// sdd/verificacion-incidencias-ux PR3 (design): loop ALL generaciones whose
-// campus matches the selected sede, sorted by name — NOT gated by
-// generation_active, since that flag isn't read by any backend logic and
-// could silently skip real becarios (egreso grace window). Exported as a
-// pure function so ordering/filtering is unit-testable without Pinia.
+// sdd/verificacion-incidencias-ux PR3 (design): loop the generaciones whose
+// campus matches the selected sede, sorted by name.
+// sdd/generaciones-activas-refrendos: ONLY active generaciones are included.
+// The API refuses to deactivate a generación that still has becarios with
+// pending payments (retícula or grace months), so an inactive generación can
+// no longer hide real becarios. Exported as a pure function so
+// ordering/filtering is unit-testable without Pinia.
 export const selectCampusGenerations = (
   generations: Generation[],
   campus: string,
 ): Generation[] =>
   generations
-    .filter((generation) => generation.campus === campus)
+    .filter(
+      (generation) =>
+        generation.campus === campus && generation.generation_active,
+    )
     // String() guards against a DB that serves generation_name as a number;
     // numeric collation orders "2" before "19".
     .sort((a, b) =>
