@@ -81,6 +81,19 @@ const setRow = async (
 const addMonthButton = (w: ReturnType<typeof mount>) =>
   w.findAllComponents(VBtn).find((b) => b.text() === "Agregar mes");
 
+const setCause = async (
+  w: ReturnType<typeof mount>,
+  value: string,
+): Promise<void> => {
+  await body().find('input[name="advance-payment-cause"]').setValue(value);
+  await w.vm.$nextTick();
+};
+
+const confirmarButton = () =>
+  body()
+    .findAll("button")
+    .find((b) => b.text() === "Confirmar");
+
 const clickConfirmar = async (): Promise<void> => {
   const buttons = body().findAll("button");
   const confirmBtn = buttons.find((b) => b.text() === "Confirmar");
@@ -195,6 +208,7 @@ describe("SituationPagoAdelantadoDialog — validation", () => {
 describe("SituationPagoAdelantadoDialog — submit payload", () => {
   it("emits submit with the single pre-selected month and no amount field (server-computed, never client-supplied)", async () => {
     const w = await mountDialog();
+    await setCause(w, "Viaje académico");
 
     await clickConfirmar();
 
@@ -218,6 +232,7 @@ describe("SituationPagoAdelantadoDialog — submit payload", () => {
     // payload gets sorted regardless of entry order.
     await setRow(w, 1, 2030, 6);
     await setRow(w, 2, 2027, 1);
+    await setCause(w, "Viaje académico");
 
     await clickConfirmar();
 
@@ -244,14 +259,91 @@ describe("SituationPagoAdelantadoDialog — submit payload", () => {
     expect(form.cause).toBe("Beca de excelencia");
   });
 
-  it("omits cause when left blank", async () => {
+});
+
+describe("SituationPagoAdelantadoDialog — required cause", () => {
+  it("labels the field 'Causa' without the optional suffix", async () => {
+    await mountDialog();
+
+    expect(body().text()).toContain("Causa");
+    expect(body().text()).not.toContain("Causa (opcional)");
+  });
+
+  it("disables Confirmar when the cause is empty", async () => {
+    await mountDialog();
+
+    expect(confirmarButton()!.attributes("disabled")).toBeDefined();
+  });
+
+  it("disables Confirmar when the cause is whitespace-only", async () => {
     const w = await mountDialog();
+    await setCause(w, "    ");
+
+    expect(confirmarButton()!.attributes("disabled")).toBeDefined();
+  });
+
+  it("enables Confirmar once a non-blank cause is typed", async () => {
+    const w = await mountDialog();
+    await setCause(w, "Viaje académico");
+
+    expect(confirmarButton()!.attributes("disabled")).toBeUndefined();
+  });
+
+  it("does not show the error before the field is touched", async () => {
+    await mountDialog();
+
+    expect(body().text()).not.toContain("La causa es obligatoria");
+  });
+
+  it("shows 'La causa es obligatoria' after blur when the cause is empty", async () => {
+    const w = await mountDialog();
+
+    await body().find('input[name="advance-payment-cause"]').trigger("blur");
+    await w.vm.$nextTick();
+
+    expect(body().text()).toContain("La causa es obligatoria");
+  });
+
+  it("shows the error after blur when the cause is whitespace-only", async () => {
+    const w = await mountDialog();
+    await setCause(w, "   ");
+    await body().find('input[name="advance-payment-cause"]').trigger("blur");
+    await w.vm.$nextTick();
+
+    expect(body().text()).toContain("La causa es obligatoria");
+  });
+
+  it("hides the error once a valid cause is provided", async () => {
+    const w = await mountDialog();
+    const input = body().find('input[name="advance-payment-cause"]');
+    await input.trigger("blur");
+    await setCause(w, "Viaje académico");
+
+    expect(body().text()).not.toContain("La causa es obligatoria");
+  });
+
+  it("does not emit submit when the cause is blank", async () => {
+    const w = await mountDialog();
+    await setCause(w, "   ");
 
     await clickConfirmar();
 
-    const emitted = w.emitted("submit");
-    const form = emitted![0][0] as Record<string, unknown>;
-    expect(form.cause).toBeUndefined();
+    expect(w.emitted("submit")).toBeFalsy();
+  });
+
+  it("clears the touched state when the dialog is reopened", async () => {
+    const w = await mountDialog();
+    await body().find('input[name="advance-payment-cause"]').trigger("blur");
+    await w.vm.$nextTick();
+    expect(body().text()).toContain("La causa es obligatoria");
+
+    await w.setProps({ modelValue: false });
+    await w.vm.$nextTick();
+    await w.setProps({ modelValue: true });
+    await w.vm.$nextTick();
+    await w.vm.$nextTick();
+
+    expect(body().text()).not.toContain("La causa es obligatoria");
   });
 });
 
