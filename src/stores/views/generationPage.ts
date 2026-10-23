@@ -84,6 +84,7 @@ export const useGenerationsPageStore = defineStore("generationsPage", () => {
     generations,
     createDialog,
     loadingCreate,
+    loading,
     filteredCampus,
     editItem,
     updateDialog,

@@ -20,6 +20,7 @@
   <GenerationUpdateDialog
     v-model="updateDialog"
     :edit-item="editItem"
+    :loading="loading"
     @submit="onUpdateGeneration"
   />
   <ConfirmationDialog ref="confirmationDialog"></ConfirmationDialog>
@@ -40,6 +41,7 @@ const {
   links,
   createDialog,
   loadingCreate,
+  loading,
   filteredCampus,
   editItem,
   updateDialog,
