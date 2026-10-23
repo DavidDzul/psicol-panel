@@ -143,8 +143,11 @@
           @confirm-replace="confirmReplace"
         />
 
-        <!-- ── Sección 3: Retícula ── -->
+        <!-- ── Sección 3: Constancia o malla curricular ── -->
         <v-divider class="my-3" />
+        <div class="text-caption text-medium-emphasis mb-1">
+          Constancia o malla curricular
+        </div>
         <template
           v-if="profile.reticula_start_date && profile.reticula_end_date"
         >
@@ -201,8 +204,8 @@
           </v-row>
         </template>
         <v-alert v-else type="info" variant="tonal" density="compact">
-          No se ha registrado la retícula. Es necesaria para validar el periodo
-          de pago.
+          No se ha registrado la constancia o malla curricular. Es necesaria para
+          validar el periodo de pago.
           <template #append>
             <v-btn size="small" variant="text" @click="startEdit">
               Registrar
@@ -392,8 +395,16 @@
         <v-col cols="12">
           <v-divider class="mb-1" />
           <div class="text-caption text-medium-emphasis mt-3 mb-1">
-            Retícula
+            Constancia o malla curricular
           </div>
+          <v-alert
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-1"
+          >
+            Sube la constancia de estudios o la malla curricular emitida por la institución. Debe indicar el nombre del becario/a, la carrera, la institución y la duración de la carrera. Registra en Inicio y Fin de carrera exactamente las fechas que indica el documento.
+          </v-alert>
         </v-col>
         <v-col cols="12" sm="4">
           <v-text-field
@@ -418,13 +429,13 @@
         <v-col cols="12" sm="4">
           <v-file-input
             v-model="form.file"
-            label="Documento de retícula"
+            :label="documentLabel"
             accept=".pdf,.jpg,.jpeg,.png"
             variant="outlined"
             density="compact"
             prepend-icon=""
             prepend-inner-icon="mdi-paperclip"
-            :rules="[fileSizeRule]"
+            :rules="[fileRequiredRule, fileSizeRule]"
             clearable
           />
         </v-col>
@@ -694,6 +705,18 @@ const discountStartBeforeEnd = (v: string): boolean | string => {
 const afterStart = (v: string): boolean | string => {
   if (!v || !form.reticula_start_date) return true;
   return v > form.reticula_start_date || "Debe ser posterior al inicio.";
+};
+
+const isDocumentRequired = computed(() => !profile.value?.reticula_file_path);
+
+const documentLabel = computed(() =>
+  isDocumentRequired.value ? "Documento *" : "Documento",
+);
+
+const fileRequiredRule = (v: File | File[] | null): boolean | string => {
+  if (!isDocumentRequired.value) return true;
+  const hasFile = Array.isArray(v) ? v.length > 0 : !!v;
+  return hasFile || "Campo requerido.";
 };
 
 const fileSizeRule = (v: File | null): boolean | string => {

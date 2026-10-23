@@ -12,7 +12,7 @@
     <v-card-text class="pa-4">
       <div class="mb-4">
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">
-          RETÍCULA
+          CONSTANCIA O MALLA CURRICULAR
         </div>
         <ScholarshipReticulaCard
           :user-id="userId"
