@@ -82,12 +82,13 @@
         <v-text-field
           v-model="cause"
           name="advance-payment-cause"
-          label="Causa (opcional)"
+          label="Causa"
           variant="outlined"
           density="compact"
           class="mb-2"
           maxlength="200"
-          hide-details
+          :error-messages="causeError"
+          @blur="causeTouched = true"
         />
         <v-textarea
           v-model="notes"
@@ -171,6 +172,7 @@ interface MonthRow {
 let rowKeySeq = 0;
 const rows = ref<MonthRow[]>([]);
 const cause = ref<string | null>(null);
+const causeTouched = ref(false);
 const notes = ref<string | null>(null);
 
 const nextPeriod = (year: number, month: number): { year: number; month: number } => {
@@ -196,8 +198,14 @@ watch(model, (open) => {
     rows.value = [];
   }
   cause.value = null;
+  causeTouched.value = false;
   notes.value = null;
 });
+
+const trimmedCause = computed(() => (cause.value ?? "").trim());
+const causeError = computed(() =>
+  causeTouched.value && !trimmedCause.value ? "La causa es obligatoria" : "",
+);
 
 const yearOptions = computed(() => {
   if (!props.periodYear) return [];
@@ -272,19 +280,19 @@ const isValid = computed(
     rows.value.length >= 1 &&
     rows.value.length <= MAX_ADVANCED_MONTHS_CLIENT &&
     !hasDuplicates.value &&
-    !hasInvalidPeriod.value,
+    !hasInvalidPeriod.value &&
+    trimmedCause.value.length > 0,
 );
 
 const submit = (): void => {
   if (!isValid.value) return;
-  const trimmedCause = cause.value?.trim();
   const trimmedNotes = notes.value?.trim();
   const sorted = [...rows.value].sort(
     (a, b) => a.year * 12 + a.month - (b.year * 12 + b.month),
   );
   emit("submit", {
     months: sorted.map((row) => ({ year: row.year, month: row.month })),
-    cause: trimmedCause ? trimmedCause : undefined,
+    cause: trimmedCause.value,
     notes: trimmedNotes ? trimmedNotes : undefined,
   });
 };

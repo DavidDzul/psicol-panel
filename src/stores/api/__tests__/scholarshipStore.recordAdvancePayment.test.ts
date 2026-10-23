@@ -26,6 +26,7 @@ const form: AdvancePaymentForm = {
     { year: 2026, month: 10 },
     { year: 2026, month: 11 },
   ],
+  cause: "Viaje académico",
 };
 
 describe("scholarshipStore.recordAdvancePayment", () => {

@@ -434,7 +434,7 @@ export interface AdvancePaymentMonthInput {
 // design D6). The frontend must never send an amount here.
 export interface AdvancePaymentForm {
   months: AdvancePaymentMonthInput[]
-  cause?: string
+  cause: string
   notes?: string
 }
 
