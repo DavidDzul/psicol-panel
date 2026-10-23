@@ -18,7 +18,7 @@
         <v-card-text>
           <v-form>
             <v-row>
-              <v-col cols="12" md="6">
+              <v-col cols="12">
                 <v-select
                   :items="userTypeOptions"
                   v-model="user_type"
@@ -27,6 +27,12 @@
                   item-value="value"
                   label="Tipo de usuario"
                 ></v-select>
+              </v-col>
+              <v-col cols="12">
+                <v-alert type="info" variant="tonal" density="compact">
+                  Escribe el nombre y los apellidos usando mayúsculas y
+                  minúsculas, por ejemplo: María José Pérez López.
+                </v-alert>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field

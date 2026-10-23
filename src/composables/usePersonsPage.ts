@@ -64,7 +64,7 @@ export function usePersonsPage(mode: PersonsMode): PersonsPageAdapter {
       onUpdate: store.onUpdateUser,
       defaultUserType: null,
       createDefaultUserType: "BEC_ACTIVE",
-      createTitle: "Nuevo becario/a",
+      createTitle: "Nuevo Usuario",
       updateTitle: "Actualizar becario/a",
     };
   } else {
