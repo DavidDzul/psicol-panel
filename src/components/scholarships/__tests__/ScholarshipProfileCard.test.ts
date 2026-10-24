@@ -128,7 +128,7 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
         .findAllComponents({ name: "VSelect" })
         .find((s) => (s.props("label") as string | undefined)?.startsWith("Tipo de beca")),
     ).toBeUndefined();
-    expect(fieldByLabel(wrapper, "Monto mensual")).toBeUndefined();
+    expect(fieldByLabel(wrapper, "Beca")).toBeUndefined();
     expect(fieldByLabel(wrapper, "Apoyo adicional")).toBeUndefined();
     expect(wrapper.findAllComponents({ name: "VSwitch" }).length).toBe(0);
 

@@ -26,7 +26,7 @@
             </div>
             <div>
               <div class="text-caption text-medium-emphasis mb-1">
-                Monto mensual
+                Beca
               </div>
               <div class="text-h6 font-weight-bold">
                 {{ fmt(profile.monthly_amount) }}
@@ -221,7 +221,7 @@
         density="compact"
         class="mb-4"
       >
-        Este becario no tiene perfil de beca. Configura el monto mensual para
+        Este becario no tiene perfil de beca. Configura la beca para
         poder generar refrendos.
         <template #append>
           <v-btn size="small" variant="text" @click="startEdit">
@@ -251,7 +251,7 @@
             </div>
             <div>
               <div class="text-caption text-medium-emphasis mb-1">
-                Monto mensual
+                Beca
               </div>
               <div class="text-body-1 font-weight-medium">
                 {{ fmt(profile.monthly_amount) }}

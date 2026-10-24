@@ -95,7 +95,7 @@
             style="max-width: 200px"
           />
 
-          <!-- Toggle de columnas opcionales (Monto mensual / Apoyo / Aumento
+          <!-- Toggle de columnas opcionales (Beca / Apoyo / Aumento
                temporal): las 3 ocultas por default, preferencia persistida en
                localStorage. -->
           <v-menu :close-on-content-click="false">
@@ -250,7 +250,7 @@
       <!-- Columnas opcionales (ocultas por default): desglose informativo
            que ya está incluido en "Base" — ver amountOrDash() por la
            nulabilidad asimétrica entre estos campos, y monthlyAmount() por
-           cómo se deriva "Monto mensual" sin un campo de backend propio. -->
+           cómo se deriva "Beca" sin un campo de backend propio. -->
       <template #item.monthly_amount="{ item }">
         <span class="text-caption text-medium-emphasis">{{
           amountOrDash(monthlyAmount(item.refrend))
@@ -656,7 +656,7 @@ watch([rowFilterMode, advancePaymentOnly], () => autoOpenedGroupIds.clear());
 // ── Table headers ──────────────────────────────────────────────────────────
 //
 // Split in three groups (design D5, D6) to open a slot for the optional
-// columns (Monto mensual / Apoyo / Aumento temporal) right before "Base",
+// columns (Beca / Apoyo / Aumento temporal) right before "Base",
 // without moving APROBACION_* headers into the shared useRefrendTableDisplay
 // module — they stay local to this component, same as VerificacionRefrendTable's
 // own headers.
@@ -694,20 +694,20 @@ const APROBACION_TELMEX_HEADERS = [
 // `.refrend`); the explicit #item.* slot renders each fine, but Vuetify's
 // internal sort would use the raw path and sort by `undefined`.
 const OPTIONAL_HEADERS = [
-  { title: "Monto mensual", key: "monthly_amount", width: 120, sortable: false },
+  { title: "Beca", key: "monthly_amount", width: 120, sortable: false },
   { title: "Apoyo", key: "snapshot_monto_apoyo", width: 90, sortable: false },
   // "Aum. temporal" was removed from here (sdd/temporary-increase-visibility
   // P2c): it is now an always-visible BASE_HEADERS column shared with
   // VerificacionRefrendTable, rendered via TemporaryIncreaseChip.vue instead
   // of the old plain-value + bare-reason-tooltip template.
-  // sdd/scholarship-telmex-iu-split follow-up: "Monto mensual" only means
+  // sdd/scholarship-telmex-iu-split follow-up: "Beca" only means
   // "monto base recurrente" for IU (gross - apoyo - increase). For TELMEX_IU
   // that same subtraction is meaningless (apoyo there is Telmex-covered
   // bookkeeping, never part of gross) — the actual payable base is Pago IU
-  // itself, so it gets its own column rather than overloading "Monto mensual".
+  // itself, so it gets its own column rather than overloading "Beca".
   { title: "Pago IU", key: "iu_payment_amount", width: 100, sortable: false },
   // sdd/telmex-cobertura-iu PR6: covered-amount breakdown, same "informativo
-  // — ya incluido en Base" convention as Monto mensual/Apoyo/Pago IU above
+  // — ya incluido en Base" convention as Beca/Apoyo/Pago IU above
   // (the Telmex-covered part is added to final_amount OUTSIDE the discount
   // base — see telmexCoverageAmount() below — but it is still part of what
   // the becario receives, same spirit as the other 3 breakdown columns).
@@ -735,7 +735,7 @@ type OptionalColumnKey = (typeof OPTIONAL_HEADERS)[number]["key"];
 // previous version (e.g. the removed "snapshot_temporary_increase_amount"
 // optional column, now a permanent BASE_HEADERS column) must not nuke the
 // user's OTHER selections. The old `raw.every(key => OPTIONAL_HEADERS.some
-// (...))` was all-or-nothing — one stale key reset Monto mensual / Apoyo /
+// (...))` was all-or-nothing — one stale key reset Beca / Apoyo /
 // Pago IU to []. Unknown keys are dropped by the prune below instead, since
 // a type-guard can validate shape but cannot transform the data.
 const isOptionalColumnKeyList = (raw: unknown): raw is OptionalColumnKey[] =>
@@ -785,7 +785,7 @@ const headers = computed(() => [
 const amountOrDash = (value: string | null): string =>
   value !== null && Number(value) > 0 ? fmt(value) : "—";
 
-// Derived "Monto mensual" — IU ONLY (sdd/scholarship-telmex-iu-split
+// Derived "Beca" — IU ONLY (sdd/scholarship-telmex-iu-split
 // follow-up). Before that change, snapshot_gross_amount always composed as
 // monthly_amount + monto_apoyo + increase, so subtracting the other two
 // components out of gross reconstructed the exact monthly base for every
@@ -799,7 +799,7 @@ const amountOrDash = (value: string | null): string =>
 //
 // Edge case: older/incomplete refrends without a frozen snapshot_gross_amount
 // fall back to base_amount in the "Base" cell (see #item.base_amount below),
-// but there is nothing to derive Monto mensual from in that case — it renders
+// but there is nothing to derive Beca from in that case — it renders
 // "—" rather than a value that could silently disagree with "Base".
 const monthlyAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
   if (refrend.snapshot_scholarship_type !== "IU") return null;
