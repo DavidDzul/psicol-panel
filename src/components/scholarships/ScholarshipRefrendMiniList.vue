@@ -6,7 +6,7 @@
       <v-list-item
         v-for="refrend in items"
         :key="refrend.id"
-        :subtitle="`Base: ${fmt(refrend.base_amount)} · Descuento: ${refrend.discount_percentage}% · Final: ${fmt(refrend.final_amount)}`"
+        :subtitle="`${baseAmountLabel(refrend.snapshot_scholarship_type)}: ${fmt(refrend.base_amount)} · Descuento: ${refrend.discount_percentage}% · Final: ${fmt(refrend.final_amount)}`"
         @click="$router.push(`/scholarships/${refrend.id}`)"
         class="cursor-pointer"
       >
@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import { baseAmountLabel } from "@/utils/baseAmountLabel";
 import { ref, onMounted } from "vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type { ScholarshipRefrend } from "@/interfaces/scholarship";

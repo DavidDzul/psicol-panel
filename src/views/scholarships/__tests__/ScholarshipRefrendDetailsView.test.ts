@@ -179,8 +179,18 @@ describe("ScholarshipRefrendDetailsView — chip de aumento temporal", () => {
   it("does not break the rest of the financial header (base_amount, final_amount) when the chip is absent", () => {
     const wrapper = mountView({ ...baseRefrend });
 
-    expect(wrapper.text()).toContain("Monto base");
     expect(wrapper.text()).toContain("$2,500.00");
+  });
+
+  it.each([
+    ["IU", "Beca"],
+    ["TELMEX_IU", "Pago IU"],
+    ["TELMEX", "Beca"],
+  ] as const)("labels the base amount of a %s refrend as %s", (type, label) => {
+    const wrapper = mountView({ ...baseRefrend, snapshot_scholarship_type: type });
+
+    expect(wrapper.text()).toContain(label);
+    expect(wrapper.text()).not.toContain("Monto base");
   });
 });
 
