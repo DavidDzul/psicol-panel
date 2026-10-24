@@ -62,7 +62,7 @@ export function usePersonsPage(mode: PersonsMode): PersonsPageAdapter {
       openDetail: store.openUserDetail,
       onSave: store.onSaveUser,
       onUpdate: store.onUpdateUser,
-      defaultUserType: null,
+      defaultUserType: "BEC_ACTIVE",
       createDefaultUserType: "BEC_ACTIVE",
       createTitle: "Nuevo Usuario",
       updateTitle: "Actualizar becario/a",

@@ -108,8 +108,27 @@
     </template>
 
     <template #[`item.active`]="{ item }">
-      <v-icon v-if="item.active" color="success">mdi-check</v-icon>
-      <v-icon v-else color="error">mdi-close</v-icon>
+      <div class="d-flex align-center ga-2">
+        <v-icon v-if="item.active" color="success">mdi-check</v-icon>
+        <v-icon v-else color="error">mdi-close</v-icon>
+        <v-tooltip
+          v-if="item.curriculum_uploaded !== true"
+          text="Sin constancia o malla curricular cargada"
+          location="top"
+        >
+          <template #activator="{ props: tooltipProps }">
+            <v-chip
+              v-bind="tooltipProps"
+              size="small"
+              variant="tonal"
+              color="warning"
+              prepend-icon="mdi-file-alert-outline"
+            >
+              Constancia pendiente
+            </v-chip>
+          </template>
+        </v-tooltip>
+      </div>
     </template>
 
     <template #[`item.actions`]="{ item }">

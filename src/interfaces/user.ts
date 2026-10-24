@@ -18,6 +18,9 @@ export interface User {
   // Present on admin user/graduate payloads: true when the user holds a
   // scholarship profile (user_type is then locked by the API).
   has_scholarship_profile?: boolean;
+  // Present on admin user/graduate payloads: true when the scholarship profile
+  // has a curriculum document (reticula_file_path) uploaded.
+  curriculum_uploaded?: boolean;
 }
 
 export interface UserRole {
