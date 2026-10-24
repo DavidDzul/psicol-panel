@@ -30,8 +30,8 @@ const baseProfile: ScholarshipProfile = {
   discount_valid_until: null,
   reticula_start_date: null,
   reticula_end_date: null,
-  reticula_file_path: null,
-  reticula_original_name: null,
+  reticula_file_path: "scholarships/1/reticula/constancia.pdf",
+  reticula_original_name: "constancia.pdf",
   egreso_administrativo: null,
   iu_payment_amount: null,
   cycle_closed_period: null,
@@ -187,6 +187,11 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
     const dateInputs = wrapper.findAll('input[type="date"]');
     await dateInputs[4].setValue("2026-01-01");
     await dateInputs[5].setValue("2026-06-01");
+    // No stored document yet -> the file is required, so attach one.
+    wrapper
+      .findComponent({ name: "VFileInput" })
+      .vm.$emit("update:modelValue", new File(["x"], "constancia.pdf"));
+    await wrapper.vm.$nextTick();
 
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
@@ -667,5 +672,101 @@ describe("ScholarshipProfileCard — montos pendientes chip", () => {
     await wrapper.find("button").trigger("click");
     await wrapper.vm.$nextTick();
     expect(wrapper.text()).not.toContain(PENDING_CHIP);
+  });
+});
+
+describe("ScholarshipProfileCard — constancia o malla curricular", () => {
+  const openEditor = async (stored: boolean): Promise<VueWrapper> => {
+    fetchProfile.mockResolvedValueOnce(
+      stored
+        ? { ...baseProfile }
+        : { ...baseProfile, reticula_file_path: null, reticula_original_name: null },
+    );
+    const wrapper = mountCard();
+    await flushPromises();
+    await wrapper.find("button").trigger("click"); // "Editar perfil"
+    await wrapper.vm.$nextTick();
+    return wrapper;
+  };
+
+  const fileInput = (wrapper: VueWrapper) =>
+    wrapper.findComponent({ name: "VFileInput" });
+
+  const fillDates = async (wrapper: VueWrapper): Promise<void> => {
+    await fieldByLabel(wrapper, "Inicio de carrera")!.find("input").setValue("2026-01-01");
+    await fieldByLabel(wrapper, "Fin de carrera")!.find("input").setValue("2026-06-01");
+  };
+
+  it("shows the new section title, description and no old copy in edit mode", async () => {
+    const wrapper = await openEditor(true);
+    const text = wrapper.text();
+
+    expect(text).toContain("Constancia o malla curricular");
+    expect(text).toContain(
+      "Sube la constancia de estudios o la malla curricular emitida por la institución. Debe indicar el nombre del becario/a, la carrera, la institución y la duración de la carrera. Registra en Inicio y Fin de carrera exactamente las fechas que indica el documento.",
+    );
+    expect(text).not.toContain("Retícula");
+    expect(text).not.toContain("Documento de retícula");
+  });
+
+  it("shows the section title and the new empty-state alert in view mode without reticula", async () => {
+    fetchProfile.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = mountCard();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Constancia o malla curricular");
+    expect(wrapper.text()).toContain(
+      "No se ha registrado la constancia o malla curricular. Es necesaria para validar el periodo de pago.",
+    );
+  });
+
+  it('labels the file input "Documento *" when no document is stored', async () => {
+    const wrapper = await openEditor(false);
+    expect(fileInput(wrapper).props("label")).toBe("Documento *");
+  });
+
+  it('labels the file input "Documento" when a document is already stored', async () => {
+    const wrapper = await openEditor(true);
+    expect(fileInput(wrapper).props("label")).toBe("Documento");
+  });
+
+  it("blocks the save when no document is stored and no file is chosen", async () => {
+    saveProfile.mockResolvedValue({ ...baseProfile });
+    const wrapper = await openEditor(false);
+    await fillDates(wrapper);
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(saveProfile).not.toHaveBeenCalled();
+    expect(uploadReticula).not.toHaveBeenCalled();
+    expect(wrapper.text()).toContain("Campo requerido.");
+  });
+
+  it("saves without a file when a document is already stored", async () => {
+    saveProfile.mockResolvedValueOnce({ ...baseProfile });
+    uploadReticula.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = await openEditor(true);
+    await fillDates(wrapper);
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(saveProfile).toHaveBeenCalledTimes(1);
+    expect(uploadReticula).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves when no document is stored and a file is chosen", async () => {
+    saveProfile.mockResolvedValueOnce({ ...baseProfile });
+    uploadReticula.mockResolvedValueOnce({ ...baseProfile });
+    const wrapper = await openEditor(false);
+    await fillDates(wrapper);
+    fileInput(wrapper).vm.$emit("update:modelValue", new File(["x"], "malla.pdf"));
+    await wrapper.vm.$nextTick();
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(uploadReticula).toHaveBeenCalledTimes(1);
   });
 });

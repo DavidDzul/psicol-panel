@@ -43,7 +43,7 @@
               size="small"
               variant="tonal"
               @click="startEdit"
-              >Editar retícula</v-btn
+              >Editar constancia</v-btn
             >
           </v-col>
         </v-row>
@@ -56,8 +56,8 @@
         density="compact"
         class="mb-3"
       >
-        No se ha registrado la retícula. Es necesaria para validar el periodo de
-        pago.
+        No se ha registrado la constancia o malla curricular. Es necesaria para
+        validar el periodo de pago.
         <template v-if="!props.readonly" #append>
           <v-btn size="small" variant="text" @click="startEdit"
             >Registrar</v-btn
@@ -73,6 +73,11 @@
       @submit.prevent="onSave"
     >
       <v-row class="pa-3">
+        <v-col cols="12">
+          <v-alert type="info" variant="tonal" density="compact">
+            Sube la constancia de estudios o la malla curricular emitida por la institución. Debe indicar el nombre del becario/a, la carrera, la institución y la duración de la carrera. Registra en Inicio y Fin de carrera exactamente las fechas que indica el documento.
+          </v-alert>
+        </v-col>
         <v-col cols="12" sm="4">
           <v-text-field
             v-model="form.reticula_start_date"
@@ -96,13 +101,13 @@
         <v-col cols="12" sm="4">
           <v-file-input
             v-model="form.file"
-            label="Documento de retícula"
+            :label="documentLabel"
             accept=".pdf,.jpg,.jpeg,.png"
             variant="outlined"
             density="compact"
             prepend-icon=""
             prepend-inner-icon="mdi-paperclip"
-            :rules="[fileSizeRule]"
+            :rules="[fileRequiredRule, fileSizeRule]"
             clearable
           />
         </v-col>
@@ -196,6 +201,18 @@ const required = (v: unknown): boolean | string =>
 const afterStart = (v: string): boolean | string => {
   if (!v || !form.reticula_start_date) return true;
   return v > form.reticula_start_date || "Debe ser posterior al inicio.";
+};
+
+const isDocumentRequired = computed(() => !props.profile?.reticula_file_path);
+
+const documentLabel = computed(() =>
+  isDocumentRequired.value ? "Documento *" : "Documento",
+);
+
+const fileRequiredRule = (v: File | File[] | null): boolean | string => {
+  if (!isDocumentRequired.value) return true;
+  const hasFile = Array.isArray(v) ? v.length > 0 : !!v;
+  return hasFile || "Campo requerido.";
 };
 
 const fileSizeRule = (v: File | null): boolean | string => {
