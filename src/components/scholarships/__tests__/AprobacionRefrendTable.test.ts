@@ -849,7 +849,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     await wrapper.vm.$nextTick();
 
     const headers = headerTexts(wrapper);
-    expect(headers.some((t) => t.includes("Monto mensual"))).toBe(false);
+    expect(headers.some((t) => t === "Beca")).toBe(false);
     expect(headers.some((t) => t.includes("Apoyo"))).toBe(false);
     // "Aum. temporal" is no longer an optional column — it is now a
     // permanent BASE_HEADERS column shared with VerificacionRefrendTable
@@ -915,7 +915,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     await wrapper.vm.$nextTick();
 
     const headers = headerTexts(wrapper);
-    expect(headers.some((t) => t.includes("Monto mensual"))).toBe(true);
+    expect(headers.some((t) => t === "Beca")).toBe(true);
     expect(headers.some((t) => t.includes("Apoyo"))).toBe(true);
 
     // The pruned preference (without the removed key) must be the one
@@ -985,7 +985,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(tooltip).toBeTruthy();
   });
 
-  // "Monto mensual" (3rd optional column, business-rules ampliación): derived
+  // "Beca" (3rd optional column, business-rules ampliación): derived
   // in the frontend from 3 snapshot fields already frozen for the same
   // period — gross - apoyo - aumento temporal — so its sum with the other 2
   // optional columns always reconstructs "Base" (snapshot_gross_amount).
@@ -1009,7 +1009,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     return row;
   };
 
-  it('computes and shows "Monto mensual" as gross - apoyo - aumento temporal when active', async () => {
+  it('computes and shows "Beca" as gross - apoyo - aumento temporal when active', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["monthly_amount"]));
     const row = buildRow(47, "Monto Mensual Calculado", 1, 0);
     row.refrend = {
@@ -1027,7 +1027,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(wrapper.text()).toContain(fmt(700));
   });
 
-  it('shows "Monto mensual" equal to "Base" when a refrend has no apoyo and no aumento temporal', async () => {
+  it('shows "Beca" equal to "Base" when a refrend has no apoyo and no aumento temporal', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["monthly_amount"]));
     const row = buildRow(48, "Sin Apoyo Ni Aumento", 1, 0);
     row.refrend = {
@@ -1043,21 +1043,21 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
 
     const rowEl = findRowByText(wrapper, "Sin Apoyo Ni Aumento");
     const values = currencyValuesInRow(rowEl);
-    // With only "Monto mensual" visible, the row's currency cells in order
-    // are [Monto mensual, Base, Final] — both Monto mensual and Base show
+    // With only "Beca" visible, the row's currency cells in order
+    // are [Beca, Base, Final] — both Beca and Base show
     // the full gross amount (1000).
     expect(values[0]).toBe(1000);
     expect(values[1]).toBe(1000);
   });
 
-  // sdd/scholarship-telmex-iu-split follow-up: "Monto mensual" only
+  // sdd/scholarship-telmex-iu-split follow-up: "Beca" only
   // reconstructs a real value for IU, where gross = monthly + apoyo +
   // increase. For TELMEX_IU, gross = iu_payment_amount + increase and
   // monto_apoyo is Telmex-covered bookkeeping never part of gross — the old
   // type-blind subtraction produced a number matching no real field
   // (reported live: Pago IU 350, Apoyo 100 → showed "250", not derived from
-  // anything real). "Monto mensual" must show "—" for non-IU types instead.
-  it('shows "Monto mensual" as "—" for a TELMEX_IU refrend (the derivation only applies to IU)', async () => {
+  // anything real). "Beca" must show "—" for non-IU types instead.
+  it('shows "Beca" as "—" for a TELMEX_IU refrend (the derivation only applies to IU)', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['monthly_amount']))
     const row = buildRow(50, 'Telmex IU Sin Monto Mensual', 1, 0)
     row.refrend = {
@@ -1096,7 +1096,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(wrapper.text()).toContain(fmt(350))
   })
 
-  it('shows both "Monto mensual" and "Pago IU" as "—" for a pure TELMEX refrend', async () => {
+  it('shows both "Beca" and "Pago IU" as "—" for a pure TELMEX refrend', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['monthly_amount', 'iu_payment_amount']))
     const row = buildRow(52, 'Telmex Puro', 1, 0)
     row.refrend = {
@@ -1120,7 +1120,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(rowEl.text()).not.toContain(fmt(200))
   })
 
-  it('shows the 2 remaining optional columns together, in order (Monto mensual, Apoyo), before "Base" — "Aum. temporal" is no longer in this menu, and is positioned before them as a permanent column', async () => {
+  it('shows the 2 remaining optional columns together, in order (Beca, Apoyo), before "Base" — "Aum. temporal" is no longer in this menu, and is positioned before them as a permanent column', async () => {
     const rows = [buildRow(49, "Con Las Tres", 1, 0)];
     const wrapper = mountTable(rows);
     await wrapper.vm.$nextTick();
@@ -1128,12 +1128,12 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
 
     await openColumnsMenu(wrapper);
     await clickColumnMenuItem("Apoyo");
-    await clickColumnMenuItem("Monto mensual");
+    await clickColumnMenuItem("Beca");
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
     const headers = headerTexts(wrapper);
-    const monthlyIndex = headers.findIndex((t) => t.includes("Monto mensual"));
+    const monthlyIndex = headers.findIndex((t) => t === "Beca");
     const apoyoIndex = headers.findIndex((t) => t.includes("Apoyo"));
     const baseIndex = headers.findIndex((t) => t === "Base");
 
@@ -1153,7 +1153,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
   // columns must always equal "Base" for a refrend with all 3 components
   // present, because they're derived/read from snapshot fields frozen at the
   // same instant for the same period.
-  it("sums Monto mensual + Apoyo + Aum. temporal (treating — as 0) and matches \"Base\" exactly", async () => {
+  it("sums Beca + Apoyo + Aum. temporal (treating — as 0) and matches \"Base\" exactly", async () => {
     localStorage.setItem(
       OPTIONAL_COLUMNS_KEY,
       JSON.stringify(["monthly_amount", "snapshot_monto_apoyo"]),
@@ -1176,7 +1176,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     // "Aum. temporal" is now a BASE_HEADERS column, so it appears FIRST in
     // row order (right after "Pago adelantado", before the Incidencia/
     // Respuesta/optional columns) — NOT adjacent to Base anymore:
-    // [Aum. temporal, Monto mensual, Apoyo, Base, Final].
+    // [Aum. temporal, Beca, Apoyo, Base, Final].
     const [aumento, monthly, apoyo, base] = values;
 
     expect(aumento).toBe(200);

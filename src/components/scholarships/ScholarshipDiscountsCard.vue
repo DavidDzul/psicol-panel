@@ -36,7 +36,7 @@
     </v-card-text>
     <v-divider />
     <v-card-text class="d-flex justify-space-between pa-3">
-      <span class="text-body-2">Monto base</span>
+      <span class="text-body-2">{{ baseAmountLabel(refrend.snapshot_scholarship_type) }}</span>
       <span class="font-weight-medium">{{ fmt(refrend.base_amount) }}</span>
     </v-card-text>
     <v-card-text class="d-flex justify-space-between pa-3 pt-0">
@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { baseAmountLabel } from "@/utils/baseAmountLabel";
 import type {
   ScholarshipRefrend,
   ScholarshipRefrendDiscount,

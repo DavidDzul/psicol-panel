@@ -46,7 +46,9 @@
 
           <!-- Financials -->
           <v-col cols="auto" class="text-right">
-            <div class="text-caption text-medium-emphasis">Monto base</div>
+            <div class="text-caption text-medium-emphasis">
+              {{ baseAmountLabel(refrend.snapshot_scholarship_type) }}
+            </div>
             <div class="text-body-1 font-weight-medium">
               {{ fmt(refrend.base_amount) }}
             </div>
@@ -431,7 +433,8 @@
 
                 <template #subtitle>
                   <span class="text-caption">
-                    Base {{ fmt(sr.base_amount) }}
+                    {{ baseAmountLabel(sr.snapshot_scholarship_type) }}
+                    {{ fmt(sr.base_amount) }}
                     <template v-if="Number(sr.discount_amount) > 0">
                       · Desc. {{ fmt(sr.discount_amount) }}
                     </template>
@@ -712,6 +715,7 @@
 import { computed, reactive, ref } from "vue";
 import { useScholarshipDetails } from "@/composables/useScholarshipDetails";
 import BreadCrumbs from "@/components/shared/BreadCrumbs.vue";
+import { baseAmountLabel } from "@/utils/baseAmountLabel";
 import ScholarshipDiscountsCard from "@/components/scholarships/ScholarshipDiscountsCard.vue";
 import ScholarshipReviewDialog from "@/components/scholarships/ScholarshipReviewDialog.vue";
 import ScholarshipVerificacionReviewDialog from "@/components/scholarships/ScholarshipVerificacionReviewDialog.vue";
