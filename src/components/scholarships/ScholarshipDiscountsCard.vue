@@ -79,9 +79,6 @@ const discountLabel = (type: DiscountType): string => {
     RETARDOS: "Penalización por retardos",
     FALTA_INJUSTIFICADA: "Falta injustificada",
     PROMEDIO_BAJO: "Promedio académico bajo",
-    DOCUMENTOS: "Documentos faltantes",
-    RECAUDACION: "Actividad de recaudación",
-    OTRO: "Otro descuento",
   };
   return map[type] ?? type;
 };

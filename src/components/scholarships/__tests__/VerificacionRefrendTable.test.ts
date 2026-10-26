@@ -79,7 +79,6 @@ const baseRefrend: ScholarshipRefrend = {
   pedagogia_observations: null,
   pedagogia_reviewed_by_id: null,
   pedagogia_reviewed_at: null,
-  notified_by_id: null,
   notified_at: null,
   notification_method: null,
   locked_at: null,

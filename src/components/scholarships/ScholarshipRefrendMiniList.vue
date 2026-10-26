@@ -7,15 +7,18 @@
         v-for="refrend in items"
         :key="refrend.id"
         :subtitle="`${baseAmountLabel(refrend.snapshot_scholarship_type)}: ${fmt(refrend.base_amount)} · Descuento: ${refrend.discount_percentage}% · Final: ${fmt(refrend.final_amount)}`"
-        @click="$router.push(`/scholarships/${refrend.id}`)"
-        class="cursor-pointer"
       >
         <template #title>
           <span class="text-body-2 font-weight-medium">{{ monthLabel(refrend) }}</span>
         </template>
         <template #append>
-          <v-chip :color="statusColor(refrend.status)" size="x-small" label>
-            {{ statusLabel(refrend.status) }}
+          <v-chip
+            :color="statusChip(refrend).color"
+            :prepend-icon="statusChip(refrend).icon"
+            size="x-small"
+            label
+          >
+            {{ statusChip(refrend).label }}
           </v-chip>
         </template>
       </v-list-item>
@@ -32,10 +35,7 @@ import { baseAmountLabel } from "@/utils/baseAmountLabel";
 import { ref, onMounted } from "vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
 import type { ScholarshipRefrend } from "@/interfaces/scholarship";
-import {
-  refrendStatusColor as statusColor,
-  refrendStatusLabel as statusLabel,
-} from "@/utils/refrendStatusDisplay";
+import { statusChip } from "@/composables/useRefrendTableDisplay";
 
 const props = defineProps<{
   userId: number;

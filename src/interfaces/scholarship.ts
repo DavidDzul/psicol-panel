@@ -10,9 +10,6 @@ export type RefrendType = 'NORMAL' | 'RETENCION' | 'REEMBOLSO'
 
 export type RefrendStatus =
   | 'DRAFT'
-  | 'ATENCION_REVIEW'
-  | 'PEDAGOGIA_REVIEW'
-  | 'AUTHORIZED'
   | 'PAID'
   | 'WITHHELD'
   | 'CANCELLED'
@@ -45,9 +42,6 @@ export type DiscountType =
   | 'RETARDOS'
   | 'FALTA_INJUSTIFICADA'
   | 'PROMEDIO_BAJO'
-  | 'DOCUMENTOS'
-  | 'RECAUDACION'
-  | 'OTRO'
 
 export type DocumentType =
   | 'CONSTANCIA_ESTUDIOS'
@@ -209,7 +203,6 @@ export interface ScholarshipRefrend {
   pedagogia_observations: string | null
   pedagogia_reviewed_by_id: number | null
   pedagogia_reviewed_at: string | null
-  notified_by_id: number | null
   notified_at: string | null
   notification_method: string | null
   locked_at: string | null

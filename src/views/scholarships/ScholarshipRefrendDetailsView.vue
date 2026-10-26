@@ -266,7 +266,7 @@
                 Autorizar pago
               </v-btn>
               <v-btn
-                v-if="refrend.status === 'AUTHORIZED'"
+                v-if="(refrend.status as string) === 'AUTHORIZED'"
                 color="teal"
                 variant="tonal"
                 size="small"
@@ -854,14 +854,14 @@ const canAprobacionReview = computed<boolean>(() =>
 );
 
 const canAuthorize = computed<boolean>(() =>
-  refrend.value ? refrend.value.status === "PEDAGOGIA_REVIEW" : false,
+  refrend.value ? (refrend.value.status as string) === "PEDAGOGIA_REVIEW" : false,
 );
 
 const aprobacionStatus = computed<string>(() => {
   if (!refrend.value) return "Pendiente";
   if (["AUTHORIZED", "PAID"].includes(refrend.value.status))
     return "Autorizado";
-  if (refrend.value.status === "PEDAGOGIA_REVIEW")
+  if ((refrend.value.status as string) === "PEDAGOGIA_REVIEW")
     return "Revisado — pendiente de autorizar";
   return "Pendiente de revisión";
 });

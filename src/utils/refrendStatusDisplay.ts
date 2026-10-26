@@ -12,9 +12,6 @@ import type { RefrendStatus } from "@/interfaces/scholarship";
 
 const STATUS_COLOR: Record<RefrendStatus, string> = {
   DRAFT: "grey",
-  ATENCION_REVIEW: "blue",
-  PEDAGOGIA_REVIEW: "purple",
-  AUTHORIZED: "green",
   PAID: "teal",
   WITHHELD: "orange",
   CANCELLED: "red",
@@ -22,9 +19,6 @@ const STATUS_COLOR: Record<RefrendStatus, string> = {
 
 const STATUS_LABEL: Record<RefrendStatus, string> = {
   DRAFT: "Borrador",
-  ATENCION_REVIEW: "Rev. Verificación",
-  PEDAGOGIA_REVIEW: "Rev. Aprobación",
-  AUTHORIZED: "Autorizado",
   PAID: "Pagado",
   WITHHELD: "Retenido",
   CANCELLED: "Cancelado",

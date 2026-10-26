@@ -9,7 +9,6 @@ import type { RefrendStatus, ScholarshipRefrend } from "@/interfaces/scholarship
 
 export const LOCKED_STATUSES = new Set<RefrendStatus>([
   "PAID",
-  "AUTHORIZED",
   "CANCELLED",
 ]);
 

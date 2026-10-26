@@ -8,9 +8,6 @@ import {
 
 const EXPECTED: Record<RefrendStatus, { label: string; color: string }> = {
   DRAFT: { label: "Borrador", color: "grey" },
-  ATENCION_REVIEW: { label: "Rev. Verificación", color: "blue" },
-  PEDAGOGIA_REVIEW: { label: "Rev. Aprobación", color: "purple" },
-  AUTHORIZED: { label: "Autorizado", color: "green" },
   PAID: { label: "Pagado", color: "teal" },
   WITHHELD: { label: "Retenido", color: "orange" },
   CANCELLED: { label: "Cancelado", color: "red" },

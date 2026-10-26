@@ -61,7 +61,6 @@ const buildRefrend = (
   pedagogia_observations: null,
   pedagogia_reviewed_by_id: null,
   pedagogia_reviewed_at: null,
-  notified_by_id: null,
   notified_at: null,
   notification_method: null,
   locked_at: null,
@@ -79,8 +78,10 @@ describe("isLocked", () => {
     expect(isLocked(buildRefrend("PAID", "LISTO_PARA_PAGO"))).toBe(true);
   });
 
-  it("is true when legacy status is AUTHORIZED regardless of workflow_status", () => {
-    expect(isLocked(buildRefrend("AUTHORIZED", "LISTO_PARA_PAGO"))).toBe(true);
+  it("tolerates an unknown legacy status without crashing (locked only via workflow_status)", () => {
+    const legacy = "AUTHORIZED" as never;
+    expect(isLocked(buildRefrend(legacy, "LISTO_PARA_PAGO"))).toBe(false);
+    expect(isLocked(buildRefrend(legacy, "CLOSED"))).toBe(true);
   });
 
   it("is true when legacy status is CANCELLED even with a null workflow_status (legacy fallback)", () => {
@@ -164,9 +165,9 @@ describe("canRecordSituation", () => {
     expect(canRecordSituation(buildRefrend("DRAFT", "CLOSED"))).toBe(false);
   });
 
-  it("is false when legacy status is locked (e.g. AUTHORIZED)", () => {
+  it("is false when legacy status is locked (e.g. PAID)", () => {
     expect(
-      canRecordSituation(buildRefrend("AUTHORIZED", "DRAFT")),
+      canRecordSituation(buildRefrend("PAID", "DRAFT")),
     ).toBe(false);
   });
 });

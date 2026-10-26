@@ -57,7 +57,6 @@ const baseRefrend: ScholarshipRefrend = {
   pedagogia_observations: null,
   pedagogia_reviewed_by_id: null,
   pedagogia_reviewed_at: null,
-  notified_by_id: null,
   notified_at: null,
   notification_method: null,
   locked_at: null,
@@ -111,7 +110,7 @@ const buildRow = (
 describe("useRefrendTableDisplay — isLocked re-export", () => {
   it("re-exports the same LOCKED_STATUSES set used by refrendActionability", () => {
     expect(LOCKED_STATUSES.has("PAID")).toBe(true);
-    expect(LOCKED_STATUSES.has("AUTHORIZED")).toBe(true);
+    expect(LOCKED_STATUSES.has("AUTHORIZED" as never)).toBe(false);
     expect(LOCKED_STATUSES.has("CANCELLED")).toBe(true);
     expect(LOCKED_STATUSES.has("DRAFT" as never)).toBe(false);
   });
