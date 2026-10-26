@@ -116,14 +116,18 @@ export const usePersonsStore = defineStore("personsStore", () => {
         );
         updated = res.data.updateUser;
       }
+      // Merge defensively: an API without the computed list flags must not
+      // wipe the ones the row already carries.
+      const previous = allPersons.value.get(id);
+      const merged: User = previous ? { ...previous, ...updated } : updated;
       const newMap = new Map(allPersons.value);
-      newMap.set(updated.id, updated);
+      newMap.set(merged.id, merged);
       allPersons.value = newMap;
       if (personDetails.value?.id === id) {
-        personDetails.value = updated;
+        personDetails.value = { ...personDetails.value, ...updated };
       }
       showAlert({ title: "Información actualizada exitosamente.", status: "success" });
-      return updated;
+      return merged;
     } catch (error: unknown) {
       const msg = isAxiosError(error)
         ? ((error.response?.data as { message?: string })?.message ??
@@ -131,6 +135,22 @@ export const usePersonsStore = defineStore("personsStore", () => {
         : "Error de red, intenta más tarde.";
       showAlert({ title: msg, status: "error" });
       throw error;
+    }
+  };
+
+  /**
+   * Patches computed list flags (e.g. curriculum_uploaded) locally so the list
+   * row reflects a change made elsewhere without refetching the whole list.
+   */
+  const patchPersonFlags = (id: number, flags: Partial<User>): void => {
+    const current = allPersons.value.get(id);
+    if (current) {
+      const newMap = new Map(allPersons.value);
+      newMap.set(id, { ...current, ...flags });
+      allPersons.value = newMap;
+    }
+    if (personDetails.value?.id === id) {
+      personDetails.value = { ...personDetails.value, ...flags };
     }
   };
 
@@ -143,5 +163,6 @@ export const usePersonsStore = defineStore("personsStore", () => {
     showPerson,
     createPerson,
     updatePerson,
+    patchPersonFlags,
   };
 });
