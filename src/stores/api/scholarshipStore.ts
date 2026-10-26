@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { toRaw } from "vue";
 import { useAlertStore } from "@/stores/alert";
+import { usePersonsStore } from "@/stores/api/personsStore";
 import type {
   ScholarshipProfile,
   ScholarshipRefrend,
@@ -111,6 +112,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       const newMap = new Map(profiles.value);
       newMap.set(form.user_id, profile);
       profiles.value = newMap;
+      usePersonsStore().patchPersonFlags(form.user_id, { has_scholarship_profile: true });
       showAlert({ title: "Perfil de beca guardado.", status: "success" });
       return profile;
     } catch (error: unknown) {
@@ -332,6 +334,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       const newMap = new Map(profiles.value);
       newMap.set(userId, profile);
       profiles.value = newMap;
+      usePersonsStore().patchPersonFlags(userId, { curriculum_uploaded: true });
       showAlert({ title: "Retícula guardada.", status: "success" });
       return profile;
     } catch {
