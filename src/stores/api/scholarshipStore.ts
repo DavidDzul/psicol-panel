@@ -10,8 +10,6 @@ import type {
   ScholarshipRefrend,
   ScholarshipProfileForm,
   GeneratePeriodForm,
-  ReviewForm,
-  AuthorizeForm,
   AttendanceSummary,
   BulkRefrendRow,
   BulkTableMeta,
@@ -40,23 +38,11 @@ import type {
   AdvancePaymentResponse,
 } from "@/interfaces/api";
 
-// ── Boundary Rule seam ──────────────────────────────────────────────────────
-// UI vocabulary (ReviewStage) ↔ HTTP contract (endpoint segment). The values
-// on the right mirror backend routes and MUST NOT be renamed; this table is
-// the ONLY place in the frontend where both vocabularies meet.
-export type ReviewStage = "verificacion" | "aprobacion";
-
-const REVIEW_ENDPOINT: Record<ReviewStage, "atencion-review" | "pedagogia-review"> = {
-  verificacion: "atencion-review",
-  aprobacion: "pedagogia-review",
-};
-
 export const useScholarshipStore = defineStore("scholarshipStore", () => {
   const { showAlert } = useAlertStore();
 
   const refrends = ref<Map<number, ScholarshipRefrend>>(new Map());
   const profiles = ref<Map<number, ScholarshipProfile>>(new Map());
-  const selectedRefrend = ref<ScholarshipRefrend | null>(null);
   const attendanceSummaries = ref<Map<string, AttendanceSummary>>(new Map());
 
   // ── Bulk table (master table — variante Completa) ─────────────────────────
@@ -156,22 +142,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
-  const fetchRefrend = async (id: number): Promise<ScholarshipRefrend | undefined> => {
-    try {
-      const res = await axios.get<ScholarshipRefrendResponse>(
-        `api/admin/scholarship-refrends/${id}`
-      );
-      const refrend = res.data.data;
-      const newMap = new Map(refrends.value);
-      newMap.set(refrend.id, refrend);
-      refrends.value = newMap;
-      selectedRefrend.value = refrend;
-      return refrend;
-    } catch {
-      showAlert({ title: "Error al cargar el refrendo.", status: "error" });
-    }
-  };
-
   // ── Refrends — generation ─────────────────────────────────────────────────
 
   // sdd/verificacion-incidencias-ux PR3: useSedeRefrendGeneration calls this
@@ -214,18 +184,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   };
 
   // ── Refrends — status transitions ─────────────────────────────────────────
-
-  const submitStageReview = async (id: number, stage: ReviewStage, form: ReviewForm): Promise<ScholarshipRefrend | undefined> =>
-    _updateRefrend(`api/admin/scholarship-refrends/${id}/${REVIEW_ENDPOINT[stage]}`, form);
-
-  const authorizeRefrend = async (id: number, form?: AuthorizeForm): Promise<ScholarshipRefrend | undefined> =>
-    _updateRefrend(`api/admin/scholarship-refrends/${id}/authorize`, form ?? {});
-
-  const markPaid = async (id: number): Promise<ScholarshipRefrend | undefined> =>
-    _putRefrend(`api/admin/scholarship-refrends/${id}/paid`);
-
-  const withholdRefrend = async (id: number, reason?: string): Promise<ScholarshipRefrend | undefined> =>
-    _updateRefrend(`api/admin/scholarship-refrends/${id}/withhold`, { reason });
 
   // ── Workflow actions (master table) ───────────────────────────────────────
 
@@ -475,30 +433,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       .map((rows) => ({ rows, idx: rows.value.findIndex((r) => r.refrend.id === id) }))
       .filter((loc) => loc.idx >= 0);
 
-  const _updateRefrend = async (url: string, data: object): Promise<ScholarshipRefrend | undefined> => {
-    try {
-      const res = await axios.put<ScholarshipRefrendResponse>(url, data);
-      return _mergeRefrend(res.data.data);
-    } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al actualizar refrendo.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
-    }
-  };
-
-  const _putRefrend = async (url: string): Promise<ScholarshipRefrend | undefined> => {
-    try {
-      const res = await axios.put<ScholarshipRefrendResponse>(url);
-      return _mergeRefrend(res.data.data);
-    } catch (error: unknown) {
-      const msg = isAxiosError(error)
-        ? ((error.response?.data as { msg?: string })?.msg ?? "Error al actualizar refrendo.")
-        : "Error de red.";
-      showAlert({ title: msg, status: "error" });
-    }
-  };
-
   const _mergeBulkRow = (
     refrend: ScholarshipRefrend,
     extra?: Partial<Omit<BulkRefrendRow, "refrend">>
@@ -524,9 +458,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     const newMap = new Map(refrends.value);
     newMap.set(refrend.id, refrend);
     refrends.value = newMap;
-    if (selectedRefrend.value?.id === refrend.id) {
-      selectedRefrend.value = refrend;
-    }
     return refrend;
   };
 
@@ -779,7 +710,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
   return {
     refrends,
     profiles,
-    selectedRefrend,
     attendanceSummaries,
     bulkRows,
     bulkMeta,
@@ -795,13 +725,8 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     saveProfile,
     fetchRefrends,
     fetchRefrendsForUser,
-    fetchRefrend,
     generatePeriod,
     generateForUser,
-    submitStageReview,
-    authorizeRefrend,
-    markPaid,
-    withholdRefrend,
     fetchAttendanceSummary,
     getAttendanceSummary,
     uploadReticula,

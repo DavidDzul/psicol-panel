@@ -594,13 +594,3 @@ export interface GenerationRunSummary {
   requestError?: string
 }
 
-export interface ReviewForm {
-  observations?: string | null
-  labels?: string[] | null
-}
-
-export interface AuthorizeForm {
-  final_amount_override?: number | null
-  authorization_notes?: string | null
-}
-

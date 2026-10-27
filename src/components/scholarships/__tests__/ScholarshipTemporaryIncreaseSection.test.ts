@@ -153,7 +153,7 @@ describe("ScholarshipTemporaryIncreaseSection — vista de lectura", () => {
   });
 
   // LOW finding: unify the zero-amount check to Number(...) > 0 (matches
-  // ScholarshipRefrendDetailsView.vue) instead of a truthy-string check —
+  // the former details view) instead of a truthy-string check —
   // a stored "0.00" must not render as an active increase.
   it("does not render the section when the stored amount is exactly zero", () => {
     const wrapper = mountHost({
