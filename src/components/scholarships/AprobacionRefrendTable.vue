@@ -620,7 +620,7 @@ const displayRows = computed(() => {
             r.advance_paid,
         );
   if (advancePaymentOnly.value) {
-    rows = rows.filter((r) => r.advance_payment_eligible);
+    rows = rows.filter((r) => r.is_cert_unid);
   }
   return filterRowsByName(rows, searchQuery.value);
 });

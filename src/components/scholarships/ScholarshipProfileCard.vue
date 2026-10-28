@@ -47,7 +47,7 @@
               </div>
             </div>
             <v-chip
-              v-if="profile.advance_payment_eligible"
+              v-if="profile.is_cert_unid"
               label
               color="secondary"
               variant="tonal"
@@ -274,7 +274,7 @@
               </div>
             </div>
             <v-chip
-              v-if="profile.advance_payment_eligible"
+              v-if="profile.is_cert_unid"
               label
               color="secondary"
               variant="tonal"
@@ -500,7 +500,7 @@ const reticulaUrl = computed(() =>
     : "#",
 );
 
-// Single source of truth for the visible copy of `advance_payment_eligible` —
+// Single source of truth for the visible copy of `is_cert_unid` —
 // today's eligibility criterion is CERT university affiliation, but the
 // field itself is generic. Relabeling later means editing this one string.
 const advancePaymentLabel = computed(

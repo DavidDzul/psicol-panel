@@ -74,7 +74,7 @@ export interface ScholarshipProfile {
   temporary_increase_valid_until: string | null
   temporary_increase_reason: string | null
   temporary_increase_granted_by_id: number | null
-  advance_payment_eligible: boolean
+  is_cert_unid: boolean
   active_discount_percentage: string | null
   discount_reason: string | null
   discount_valid_from: string | null
@@ -254,7 +254,7 @@ export interface BulkRefrendRow {
   profile_discount_reason: string | null
   pending_withholding_count: number
   pending_withholding_amount: string | null
-  advance_payment_eligible: boolean
+  is_cert_unid: boolean
   // Row indicator (sdd/pago-adelantado, design D6 + "AdvancePaidRowFields"):
   // true when THIS row's own refrend was pre-created by
   // RecordAdvancePaymentAction. Purely informational — never read by

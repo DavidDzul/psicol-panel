@@ -151,7 +151,7 @@ const buildRow = (
   name: string,
   incidentsCount: number,
   pendingCount: number,
-  advancePaymentEligible = false,
+  isCertUnid = false,
   advancePaid: {
     paid?: boolean;
     amount?: string | null;
@@ -191,7 +191,7 @@ const buildRow = (
   profile_discount_reason: null,
   pending_withholding_count: pendingCount,
   pending_withholding_amount: pendingCount > 0 ? "500.00" : null,
-  advance_payment_eligible: advancePaymentEligible,
+  is_cert_unid: isCertUnid,
   advance_paid: advancePaid.paid ?? false,
   advance_paid_amount: advancePaid.amount ?? null,
   advance_paid_origin_year: advancePaid.originYear ?? null,

@@ -8,7 +8,7 @@ import type { ScholarshipProfile, ScholarshipProfileForm } from "@/interfaces/sc
 
 // Covers spec "Flag editable via profile form" (toggle on/off + save) and the
 // D-constraint that the visible label lives in exactly one place per file —
-// this suite is a regression guard for the `advance_payment_eligible`
+// this suite is a regression guard for the `is_cert_unid`
 // v-switch wiring: startEdit() pre-fill, onSave() payload, and the read-view
 // chip.
 
@@ -23,7 +23,7 @@ const baseProfile: ScholarshipProfile = {
   temporary_increase_valid_until: null,
   temporary_increase_reason: null,
   temporary_increase_granted_by_id: null,
-  advance_payment_eligible: false,
+  is_cert_unid: false,
   active_discount_percentage: null,
   discount_reason: null,
   discount_valid_from: null,
@@ -106,7 +106,7 @@ afterEach(() => {
 
 describe("ScholarshipProfileCard — config fields are read-only", () => {
   // Spec: "psicol-panel displays the 4 fields as read-only" — scholarship_type,
-  // monthly_amount, monto_apoyo, and advance_payment_eligible must render as
+  // monthly_amount, monto_apoyo, and is_cert_unid must render as
   // read-only text (current values still visible) in edit mode too, with no
   // input control of any kind for them.
   it("renders the 4 config fields as plain read-only text in edit mode, not as inputs", async () => {
@@ -115,7 +115,7 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
       scholarship_type: "TELMEX",
       monthly_amount: "1500",
       monto_apoyo: "200",
-      advance_payment_eligible: true,
+      is_cert_unid: true,
     });
     const wrapper = mountCard();
     await flushPromises();
@@ -170,7 +170,7 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
     expect(payload).not.toHaveProperty("scholarship_type");
     expect(payload).not.toHaveProperty("monthly_amount");
     expect(payload).not.toHaveProperty("monto_apoyo");
-    expect(payload).not.toHaveProperty("advance_payment_eligible");
+    expect(payload).not.toHaveProperty("is_cert_unid");
   });
 
   it("does not send the 4 config fields in the saveProfile payload when creating a new profile", async () => {
@@ -201,13 +201,13 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
     expect(payload).not.toHaveProperty("scholarship_type");
     expect(payload).not.toHaveProperty("monthly_amount");
     expect(payload).not.toHaveProperty("monto_apoyo");
-    expect(payload).not.toHaveProperty("advance_payment_eligible");
+    expect(payload).not.toHaveProperty("is_cert_unid");
   });
 
   it("shows the CERT label in the read view when the flag is true", async () => {
     fetchProfile.mockResolvedValueOnce({
       ...baseProfile,
-      advance_payment_eligible: true,
+      is_cert_unid: true,
     });
     const wrapper = mountCard();
     await flushPromises();
@@ -220,7 +220,7 @@ describe("ScholarshipProfileCard — config fields are read-only", () => {
   it("hides the CERT label in the read view when the flag is false", async () => {
     fetchProfile.mockResolvedValueOnce({
       ...baseProfile,
-      advance_payment_eligible: false,
+      is_cert_unid: false,
     });
     const wrapper = mountCard();
     await flushPromises();

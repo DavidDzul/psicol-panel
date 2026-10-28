@@ -43,7 +43,7 @@ const baseProfile: ScholarshipProfile = {
   temporary_increase_valid_until: null,
   temporary_increase_reason: null,
   temporary_increase_granted_by_id: null,
-  advance_payment_eligible: false,
+  is_cert_unid: false,
   active_discount_percentage: null,
   discount_reason: null,
   discount_valid_from: null,
