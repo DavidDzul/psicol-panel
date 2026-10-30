@@ -144,56 +144,6 @@ describe("scholarshipStore.recordPaymentSituation", () => {
     expect(showAlertSpy).not.toHaveBeenCalled();
   });
 
-  it('returns status "pending_withholdings_required" with the withholdings list (and shows NO error toast) for CYCLE_CUT_PENDING_WITHHOLDINGS', async () => {
-    setActivePinia(createPinia());
-    const axiosError = {
-      isAxiosError: true,
-      response: {
-        data: {
-          res: false,
-          msg: "Tiene retenciones pendientes; resuélvelas antes de continuar.",
-          code: "CYCLE_CUT_PENDING_WITHHOLDINGS",
-          data: {
-            withholdings: [
-              {
-                id: 3,
-                period_year: 2026,
-                period_month: 7,
-                withheld_amount: "500.00",
-                paid_amount: "0.00",
-                remaining_amount: "500.00",
-              },
-            ],
-          },
-        },
-      },
-    };
-    vi.mocked(axios.post).mockRejectedValue(axiosError);
-    const alertStore = useAlertStore();
-    const showAlertSpy = vi.spyOn(alertStore, "showAlert");
-    const store = useScholarshipStore();
-
-    const result = await store.recordPaymentSituation(5, {
-      resolution_type: "EGRESADO",
-    });
-
-    expect(result).toEqual({
-      status: "pending_withholdings_required",
-      msg: "Tiene retenciones pendientes; resuélvelas antes de continuar.",
-      withholdings: [
-        {
-          id: 3,
-          period_year: 2026,
-          period_month: 7,
-          withheld_amount: "500.00",
-          paid_amount: "0.00",
-          remaining_amount: "500.00",
-        },
-      ],
-    });
-    expect(showAlertSpy).not.toHaveBeenCalled();
-  });
-
   it("shows the backend msg and returns a generic error result on a domain-error rejection without the divergence code", async () => {
     setActivePinia(createPinia());
     const axiosError = {

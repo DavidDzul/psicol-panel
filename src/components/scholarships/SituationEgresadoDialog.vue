@@ -19,10 +19,11 @@
         <!-- sdd/revertir-pago-adelantado S10 (R21): informational only, the
              confirm button never depends on the preview. -->
         <CycleCutAdvanceWarning :preview="cutPreview ?? null" :loading="cutPreviewLoading" />
+        <CycleCutWithholdingWarning :preview="cutPreview ?? null" :loading="cutPreviewLoading" />
 
         <!-- sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): the
              backend's cut guards (blocking later months, ACTIVA Telmex
-             coverage, pending withholdings) are rendered here instead of a
+             coverage) are rendered here instead of a
              generic toast — NO acknowledge checkbox, any of these BLOCKS
              outright and staff must resolve the underlying issue elsewhere,
              then retry. -->
@@ -44,9 +45,6 @@
             </div>
           </template>
 
-          <template v-else-if="blockResult.status === 'pending_withholdings_required'">
-            <CutPendingWithholdingsList :withholdings="blockResult.withholdings" />
-          </template>
         </v-alert>
 
         <v-textarea
@@ -72,8 +70,8 @@
 
 <script setup lang="ts">
 import { reactive, watch } from "vue";
-import CutPendingWithholdingsList from "@/components/scholarships/CutPendingWithholdingsList.vue";
 import CycleCutAdvanceWarning from "@/components/scholarships/CycleCutAdvanceWarning.vue";
+import CycleCutWithholdingWarning from "@/components/scholarships/CycleCutWithholdingWarning.vue";
 import type { CutBlockResult, CycleCutPreview, RecordSituationForm } from "@/interfaces/scholarship";
 import { CUT_BLOCK_REASON_LABELS, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildCycleCutAdvanceWarning } from "@/utils/cycleCutWarning";
-import type { CycleCutPreview, CycleCutPreviewMonth, CycleCutPreviewOrigin } from "@/interfaces/scholarship";
+import { buildCycleCutAdvanceWarning, buildCycleCutWithholdingWarning } from "@/utils/cycleCutWarning";
+import type {
+  CycleCutPreview,
+  CycleCutPreviewMonth,
+  CycleCutPreviewOrigin,
+  CycleCutWithholdingRow,
+} from "@/interfaces/scholarship";
 
 const month = (y: number, m: number, originM = 3, originY = 2026): CycleCutPreviewMonth => ({
   period_year: y,
@@ -86,5 +91,49 @@ describe("buildCycleCutAdvanceWarning", () => {
     const text = buildCycleCutAdvanceWarning(p) as string;
     expect(text).toContain("Como el pago de marzo ya se realizó");
     expect(text).toContain("Como el pago de mayo aún no se realiza, se descontarán $2,500.00 del pago adelantado de ese mes.");
+  });
+});
+
+describe("buildCycleCutWithholdingWarning", () => {
+  const w = (over: Partial<CycleCutWithholdingRow> = {}): CycleCutWithholdingRow => ({
+    id: 1,
+    period_year: 2026,
+    period_month: 8,
+    withheld_amount: "1000.00",
+    paid_amount: "250.00",
+    remaining_amount: "750.00",
+    is_current_refrend: false,
+    ...over,
+  });
+
+  const withW = (rows: CycleCutWithholdingRow[], total = "750.00"): CycleCutPreview => ({
+    ...preview([]),
+    withholdings_to_cancel: { rows, total_remaining: total },
+  });
+
+  it("returns null for a null preview, a missing key, or no rows (S14)", () => {
+    expect(buildCycleCutWithholdingWarning(null)).toBeNull();
+    expect(buildCycleCutWithholdingWarning(preview([]))).toBeNull();
+    expect(buildCycleCutWithholdingWarning(withW([], "0.00"))).toBeNull();
+  });
+
+  it("builds the exact copy, rows (oldest first) and total", () => {
+    const result = buildCycleCutWithholdingWarning(
+      withW(
+        [
+          w({ id: 2, period_month: 9, remaining_amount: "500.00", is_current_refrend: true }),
+          w({ id: 1, period_month: 8, remaining_amount: "750.00" }),
+        ],
+        "1250.00",
+      ),
+    );
+    expect(result).toEqual({
+      text: "Al confirmar se cancelarán las retenciones pendientes de este becario. Esta acción no se puede deshacer.",
+      rows: [
+        { id: 1, label: "Agosto 2026", amount: "$750.00", isCurrent: false },
+        { id: 2, label: "Septiembre 2026", amount: "$500.00", isCurrent: true },
+      ],
+      total: "$1,250.00",
+    });
   });
 });

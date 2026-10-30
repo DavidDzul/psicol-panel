@@ -970,8 +970,8 @@ const situationLoadingId = ref<number | null>(null);
 const activeSituationKey = ref<SituationKey | null>(null);
 
 // sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): EGRESADO/
-// BAJA_DEFINITIVA cut guards (blocking later months, ACTIVA Telmex coverage,
-// pending withholdings) return a structured result instead of a generic
+// BAJA_DEFINITIVA cut guards (blocking later months, ACTIVA Telmex coverage)
+// return a structured result instead of a generic
 // toast — SituationEgresadoDialog/SituationBajaDialog render it inline. Reset
 // on every fresh open so a stale block from a PREVIOUS attempt never leaks
 // into a new one.
@@ -1104,7 +1104,7 @@ const onSituationSubmit = async (form: RecordSituationForm): Promise<void> => {
     // BAJA_DEFINITIVA resolution — store the structured result so the open
     // dialog can render it, and keep the dialog open (no optimistic
     // state change, design spec "Blocking-months error surfaced").
-    if (result.status === "cut_blocked" || result.status === "pending_withholdings_required") {
+    if (result.status === "cut_blocked") {
       cutBlockResult.value = result;
       return;
     }

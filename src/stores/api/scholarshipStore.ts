@@ -26,7 +26,6 @@ import type {
   ScholarshipAdvancePayment,
   GenerateRefrendsResult,
   CutBlockingMonth,
-  CutPendingWithholding,
 } from "@/interfaces/scholarship";
 import type { User } from "@/interfaces/user";
 import type {
@@ -561,7 +560,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
                 coverage_id?: number;
                 status?: string;
                 start_period?: string;
-                withholdings?: CutPendingWithholding[];
               };
             }
           | undefined;
@@ -588,13 +586,6 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
               status: body.data?.status ?? "",
               start_period: body.data?.start_period ?? "",
             },
-          };
-        }
-        if (body?.code === "CYCLE_CUT_PENDING_WITHHOLDINGS") {
-          return {
-            status: "pending_withholdings_required",
-            msg: body.msg ?? "El becario tiene retenciones pendientes.",
-            withholdings: body.data?.withholdings ?? [],
           };
         }
         showAlert({ title: body?.msg ?? "Error al registrar situación.", status: "error" });
