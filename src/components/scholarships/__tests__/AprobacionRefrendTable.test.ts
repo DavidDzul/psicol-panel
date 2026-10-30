@@ -16,7 +16,9 @@ import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPa
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
-import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
+import RevertAdvancePaymentDialog from "@/components/scholarships/RevertAdvancePaymentDialog.vue";
+import { VTooltip } from "vuetify/components";
+import type { ActiveAdvance, BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // recordPaymentSituation/recordAdvancePayment hit axios directly (no
 // repository seam) — mocked at the module boundary so the "close the right
@@ -34,6 +36,7 @@ const recordPaymentSituation = vi
 const recordAdvancePayment = vi.fn().mockResolvedValue(undefined);
 const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
 const fetchCycleCutPreview = vi.fn().mockResolvedValue(null);
+const revertAdvancePayment = vi.fn().mockResolvedValue({ status: "success" });
 // approveFullPayment resolves to a discriminated result too (design D4 fix
 // 2026-09-27 — see the dedicated "divergence-reason follow-up" describe
 // block below for the divergence_required/error branches), same reasoning
@@ -47,6 +50,7 @@ vi.mock("@/stores/api/scholarshipStore", () => ({
     approveFullPayment,
     clearRefrendResolution,
     fetchCycleCutPreview,
+    revertAdvancePayment,
     bulkApprove: vi.fn(),
     pedagogiaResolve: vi.fn(),
   }),
@@ -1819,5 +1823,146 @@ describe("AprobacionRefrendTable — cut preview wiring (sdd/revertir-pago-adela
     await wrapper.vm.$nextTick();
 
     expect(fetchCycleCutPreview).not.toHaveBeenCalled();
+  });
+});
+
+describe("AprobacionRefrendTable — revert advance + overpayment (sdd/revertir-pago-adelantado S11b)", () => {
+  const activeAdvance: ActiveAdvance = {
+    id: 9,
+    status: "ACTIVE",
+    months_count: 2,
+    total_amount: "5000.00",
+    months: [
+      { id: 1, period_year: 2026, period_month: 6, amount: "2500.00", status: "PENDING" },
+      { id: 2, period_year: 2026, period_month: 7, amount: "2500.00", status: "PENDING" },
+    ],
+  };
+
+  const settle = async (wrapper: ReturnType<typeof mountTable>) => {
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+  };
+
+  const findRevertBtn = (wrapper: ReturnType<typeof mountTable>) =>
+    wrapper.findAll("button").find((b) => b.text().includes("Revertir adelanto"));
+
+  const withAdvance = (id: number, extra: Partial<BulkRefrendRow> = {}): BulkRefrendRow => ({
+    ...buildRow(id, "Origen Adelanto", 1, 0, false, {}, "5000.00"),
+    active_advance: activeAdvance,
+    advance_revert_block: null,
+    ...extra,
+  });
+
+  const openAndConfirm = async (wrapper: ReturnType<typeof mountTable>) => {
+    await settle(wrapper);
+    await findRevertBtn(wrapper)!.trigger("click");
+    wrapper.findComponent(RevertAdvancePaymentDialog).vm.$emit("confirm", "Se registró por error");
+    await settle(wrapper);
+  };
+
+  afterEach(() => {
+    revertAdvancePayment.mockReset();
+    revertAdvancePayment.mockResolvedValue({ status: "success" });
+  });
+
+  it("S16: no button without active_advance", async () => {
+    const wrapper = mountTable([buildRow(90, "Sin Adelanto", 1, 0)]);
+    await settle(wrapper);
+    expect(findRevertBtn(wrapper)).toBeUndefined();
+  });
+
+  it("S14: shows an enabled button in the actions cell when revertable", async () => {
+    const wrapper = mountTable([withAdvance(91)]);
+    await settle(wrapper);
+    const btn = findRevertBtn(wrapper);
+    expect(btn).toBeDefined();
+    expect(btn!.attributes("disabled")).toBeUndefined();
+    expect(btn!.element.closest("td")?.textContent).toContain("Pago adelantado registrado");
+  });
+
+  it("S15: disables the button with the code's tooltip when blocked", async () => {
+    const wrapper = mountTable([withAdvance(92, { advance_revert_block: "ADVANCE_ORIGIN_PAID" })]);
+    await settle(wrapper);
+    expect(findRevertBtn(wrapper)!.attributes("disabled")).toBeDefined();
+    const tips = wrapper.findAllComponents(VTooltip).map((t) => t.props("text"));
+    expect(tips).toContain("No puedes revertir: el refrendo de origen ya se pagó.");
+  });
+
+  it("opens the dialog with the row's advance and origin period", async () => {
+    const wrapper = mountTable([withAdvance(93)]);
+    await settle(wrapper);
+    await findRevertBtn(wrapper)!.trigger("click");
+    const dialog = wrapper.findComponent(RevertAdvancePaymentDialog);
+    expect(dialog.props("modelValue")).toBe(true);
+    expect(dialog.props("activeAdvance")).toEqual(activeAdvance);
+    expect(dialog.props("originPeriod")).toEqual({ year: 2026, month: 5 });
+  });
+
+  it("S21: on confirm calls the store and closes the dialog on success", async () => {
+    const wrapper = mountTable([withAdvance(94)]);
+    await openAndConfirm(wrapper);
+    expect(revertAdvancePayment).toHaveBeenCalledWith(94, "Se registró por error");
+    expect(wrapper.findComponent(RevertAdvancePaymentDialog).props("modelValue")).toBe(false);
+  });
+
+  it("keeps the dialog open with the mapped Spanish message on a coded error", async () => {
+    revertAdvancePayment.mockResolvedValue({ status: "error", code: "ADVANCE_ORIGIN_PAID", msg: "raw server" });
+    const wrapper = mountTable([withAdvance(95)]);
+    await openAndConfirm(wrapper);
+    const dialog = wrapper.findComponent(RevertAdvancePaymentDialog);
+    expect(dialog.props("modelValue")).toBe(true);
+    expect(dialog.props("errorMessage")).toBe("No puedes revertir: el refrendo de origen ya se pagó.");
+    expect(dialog.props("loading")).toBe(false);
+  });
+
+  it("falls back to the server message when the error has no code", async () => {
+    revertAdvancePayment.mockResolvedValue({ status: "error", code: null, msg: "Error de red." });
+    const wrapper = mountTable([withAdvance(96)]);
+    await openAndConfirm(wrapper);
+    expect(wrapper.findComponent(RevertAdvancePaymentDialog).props("errorMessage")).toBe("Error de red.");
+  });
+
+  it("clears the previous error when the dialog is reopened", async () => {
+    revertAdvancePayment.mockResolvedValue({ status: "error", code: null, msg: "Error de red." });
+    const wrapper = mountTable([withAdvance(97)]);
+    await openAndConfirm(wrapper);
+    wrapper.findComponent(RevertAdvancePaymentDialog).vm.$emit("update:modelValue", false);
+    await settle(wrapper);
+    await findRevertBtn(wrapper)!.trigger("click");
+    expect(wrapper.findComponent(RevertAdvancePaymentDialog).props("errorMessage")).toBeNull();
+  });
+
+  it("S37: renders the overpayment chip on the cut row", async () => {
+    const wrapper = mountTable([
+      withAdvance(98, {
+        active_advance: null,
+        advance_overpayment: {
+          amount: "5000.00",
+          months: [
+            { period_year: 2026, period_month: 4, amount: "2500.00" },
+            { period_year: 2026, period_month: 5, amount: "2500.00" },
+          ],
+          origin_period_year: 2026,
+          origin_period_month: 3,
+        },
+      }),
+    ]);
+    await settle(wrapper);
+    expect(wrapper.text()).toContain("Sobrepago por adelanto: $5,000.00 (abril y mayo)");
+  });
+
+  it("S38: no overpayment chip when advance_overpayment is null", async () => {
+    const wrapper = mountTable([withAdvance(99)]);
+    await settle(wrapper);
+    expect(wrapper.text()).not.toContain("Sobrepago por adelanto");
+  });
+
+  it("S9 wiring: passes has-active-advance to the situation bar", async () => {
+    const wrapper = mountTable([withAdvance(100)]);
+    await settle(wrapper);
+    expect(wrapper.findComponent(RefrendSituationBar).props("hasActiveAdvance")).toBe(true);
+    const plain = mountTable([buildRow(101, "Plano", 1, 0)]);
+    await settle(plain);
+    expect(plain.findComponent(RefrendSituationBar).props("hasActiveAdvance")).toBe(false);
   });
 });

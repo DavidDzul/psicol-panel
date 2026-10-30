@@ -1,5 +1,6 @@
 import { campusMap } from "@/constants";
 import type {
+  AdvanceOverpayment,
   BulkRefrendRow,
   ScholarshipRefrend,
 } from "@/interfaces/scholarship";
@@ -363,6 +364,39 @@ export const advancePaymentRegisteredChip = (
   return {
     label: "Pago adelantado registrado",
     tooltip: `+${amount} · Se sumará al monto de esta decisión`,
+  };
+};
+
+// ── Advance overpayment chip (cut row, sdd/revertir-pago-adelantado S11b) ──
+//
+// Shown when a cycle cut cancelled advance months of an origin that was
+// already paid. Month names are lowercase, joined "a, b y c"; the year is
+// appended only when the months span more than one calendar year.
+
+const monthWord = (month: number): string =>
+  (MONTHS_ES[month - 1] ?? String(month)).toLowerCase();
+
+const joinSpanish = (items: string[]): string =>
+  items.length <= 1
+    ? (items[0] ?? "")
+    : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+
+export const advanceOverpaymentChip = (
+  overpayment: AdvanceOverpayment | null | undefined,
+): { label: string; tooltip: string } | null => {
+  if (!overpayment) return null;
+  const months = [...overpayment.months].sort(
+    (a, b) => a.period_year - b.period_year || a.period_month - b.period_month,
+  );
+  const withYear = new Set(months.map((m) => m.period_year)).size > 1;
+  const names = months.map((m) =>
+    withYear ? `${monthWord(m.period_month)} de ${m.period_year}` : monthWord(m.period_month),
+  );
+  const amount = fmt(overpayment.amount);
+  const origin = `${MONTHS_ES[overpayment.origin_period_month - 1] ?? overpayment.origin_period_month} ${overpayment.origin_period_year}`;
+  return {
+    label: `Sobrepago por adelanto: ${amount} (${joinSpanish(names)})`,
+    tooltip: `Sobrepago por adelanto · pago de ${origin} ya realizado · ${amount} que administración deberá recuperar`,
   };
 };
 

@@ -352,6 +352,31 @@
                (user feedback, live review) into the actions cell, before
                the situation actions, for a more compact table. -->
           <AdvancePaymentRegisteredChip :row="item" />
+          <AdvanceOverpaymentChip :overpayment="item.advance_overpayment" />
+          <!-- Outside RefrendSituationBar so it also shows on rows where the
+               bar is hidden (e.g. LISTO_PARA_PAGO). The span keeps the
+               tooltip working while the button is disabled. -->
+          <v-tooltip
+            v-if="item.active_advance != null"
+            location="bottom"
+            max-width="260"
+            :text="advanceRevertTooltip(item) ?? ''"
+          >
+            <template #activator="{ props: tp }">
+              <span v-bind="tp">
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  color="error"
+                  prepend-icon="mdi-undo-variant"
+                  :disabled="!canRevert(item)"
+                  @click="openRevertDialog(item)"
+                >
+                  Revertir adelanto
+                </v-btn>
+              </span>
+            </template>
+          </v-tooltip>
           <RefrendSituationBar
             v-if="canRecordSituation(item.refrend)"
             :current-resolution="item.refrend.resolution_type ?? null"
@@ -476,6 +501,19 @@
       @cancel="onDivergenceReasonCancel"
     />
 
+    <RevertAdvancePaymentDialog
+      v-if="revertRow?.active_advance"
+      v-model="revertDialogOpen"
+      :active-advance="revertRow.active_advance"
+      :origin-period="{
+        year: revertRow.refrend.period_year,
+        month: revertRow.refrend.period_month,
+      }"
+      :loading="revertLoading"
+      :error-message="revertError"
+      @confirm="onRevertConfirm"
+    />
+
     <ConfirmationDialog ref="confirmationDialog" />
 
     <!-- Cerrar refrendo confirmation -->
@@ -527,6 +565,9 @@ import TemporaryIncreaseChip from "@/components/scholarships/TemporaryIncreaseCh
 import TelmexCoverageChip from "@/components/scholarships/TelmexCoverageChip.vue";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
+import AdvanceOverpaymentChip from "@/components/scholarships/AdvanceOverpaymentChip.vue";
+import RevertAdvancePaymentDialog from "@/components/scholarships/RevertAdvancePaymentDialog.vue";
+import { advanceRevertMessage, advanceRevertTooltip, canRevert } from "@/composables/useAdvanceRevert";
 import StatusIcon from "@/components/scholarships/StatusIcon.vue";
 import RefrendAprobacionDialog from "@/components/scholarships/RefrendAprobacionDialog.vue";
 import SituationSinPagoDialog from "@/components/scholarships/SituationSinPagoDialog.vue";
@@ -1133,6 +1174,41 @@ const onAdvancePaymentSubmit = async (form: AdvancePaymentForm): Promise<void> =
     }
   } finally {
     situationSubmitLoading.value = false;
+  }
+};
+
+// ── Revert advance payment (sdd/revertir-pago-adelantado S11b) ────────────
+//
+// The store already toasts and refreshes the active tables on success; the
+// table only owns the dialog lifecycle. On error the dialog stays open and
+// shows the mapped Spanish message (server msg when the code is unknown).
+// revertRow is kept after closing so the dialog can finish its leave
+// transition.
+
+const revertRow = ref<BulkRefrendRow | null>(null);
+const revertDialogOpen = ref(false);
+const revertLoading = ref(false);
+const revertError = ref<string | null>(null);
+
+const openRevertDialog = (row: BulkRefrendRow): void => {
+  revertRow.value = row;
+  revertError.value = null;
+  revertDialogOpen.value = true;
+};
+
+const onRevertConfirm = async (reason: string): Promise<void> => {
+  if (!revertRow.value || revertLoading.value) return;
+  revertLoading.value = true;
+  revertError.value = null;
+  try {
+    const result = await store.revertAdvancePayment(revertRow.value.refrend.id, reason);
+    if (result.status === "success") {
+      revertDialogOpen.value = false;
+    } else {
+      revertError.value = result.code ? advanceRevertMessage(result.code) : result.msg;
+    }
+  } finally {
+    revertLoading.value = false;
   }
 };
 </script>
