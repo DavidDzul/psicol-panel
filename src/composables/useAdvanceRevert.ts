@@ -17,7 +17,7 @@ const REVERT_MESSAGES: Record<string, string> = {
   ADVANCE_MONTH_SETTLED:
     "No puedes revertir: alguno de los meses adelantados ya se resolvió.",
   ADVANCE_FUTURE_TELMEX_COVERED:
-    "No puedes revertir: alguno de los meses adelantados está cubierto por Telmex.",
+    "No puedes revertir: alguno de los meses adelantados está cubierto por Telmex. Termina o cancela primero la cobertura Telmex.",
   ADVANCE_FUTURE_NOT_PRISTINE:
     "No puedes revertir: alguno de los meses adelantados ya tiene incidencias, descuentos o ajustes.",
   ADVANCE_CHAINED_FORBIDDEN:
