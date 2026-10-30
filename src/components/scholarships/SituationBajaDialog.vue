@@ -19,11 +19,13 @@
         <!-- sdd/revertir-pago-adelantado S10 (R21): informational only, the
              confirm button never depends on the preview. -->
         <CycleCutAdvanceWarning :preview="cutPreview ?? null" :loading="cutPreviewLoading" />
+        <CycleCutWithholdingWarning :preview="cutPreview ?? null" :loading="cutPreviewLoading" />
 
         <!-- sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): same
              blocking display as SituationEgresadoDialog.vue — NO acknowledge
              checkbox, NO "se marcarán como Perdidas" copy (FORFEITED is out
-             of scope). Any pending withholding BLOCKS outright. -->
+             of scope). Pending withholdings no longer block: the cut cancels
+             them (CycleCutWithholdingWarning above). -->
         <v-alert v-if="blockResult" type="error" variant="tonal" density="compact" class="mb-3">
           <div class="font-weight-medium mb-1">{{ blockResult.msg }}</div>
 
@@ -42,9 +44,6 @@
             </div>
           </template>
 
-          <template v-else-if="blockResult.status === 'pending_withholdings_required'">
-            <CutPendingWithholdingsList :withholdings="blockResult.withholdings" />
-          </template>
         </v-alert>
 
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
@@ -81,8 +80,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
-import CutPendingWithholdingsList from "@/components/scholarships/CutPendingWithholdingsList.vue";
 import CycleCutAdvanceWarning from "@/components/scholarships/CycleCutAdvanceWarning.vue";
+import CycleCutWithholdingWarning from "@/components/scholarships/CycleCutWithholdingWarning.vue";
 import type { CutBlockResult, CycleCutPreview, RecordSituationForm } from "@/interfaces/scholarship";
 import { CUT_BLOCK_REASON_LABELS, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
 

@@ -1,4 +1,4 @@
-import type { User } from './user'
+import type { User, DeactivationEffects } from './user'
 import type { Graduate } from './graduate'
 import type { Business, BusinessData, BusinessAgreement } from './business'
 import type { VacantPosition } from './vacant'
@@ -14,7 +14,7 @@ export interface UsersResponse { users: User[] }
 export interface UserResponse { user: User }
 export interface CreateUserResponse { createUser: User; res: unknown }
 export interface CreatePersonResponse { createPerson: User; res: unknown }
-export interface UpdateUserResponse { updateUser: User; res: unknown }
+export interface UpdateUserResponse { updateUser: User; res: unknown; deactivation_effects?: DeactivationEffects | null }
 
 // Auth
 export interface LoginResponse { token: string }
@@ -25,7 +25,7 @@ export interface UpdateProfileResponse { user: User; res: unknown }
 export interface GraduatesResponse { graduates: Graduate[] }
 export interface GraduateResponse { user: Graduate }
 export interface CreateGraduateResponse { createGraduate: Graduate; res: unknown }
-export interface UpdateGraduateResponse { updateGraduate: Graduate; res: unknown }
+export interface UpdateGraduateResponse { updateGraduate: Graduate; res: unknown; deactivation_effects?: DeactivationEffects | null }
 
 // Business
 export interface BusinessListResponse { business: Business[] }

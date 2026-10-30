@@ -49,3 +49,34 @@ export const buildCycleCutAdvanceWarning = (preview: CycleCutPreview | null): st
 
   return [head, ...tails].join(" ");
 };
+
+// sdd/retenciones-pendientes S6 (R7.1): the cut no longer blocks on pending
+// withholdings, it cancels them. Informational only — never gates confirm.
+export interface CycleCutWithholdingWarning {
+  text: string;
+  rows: { id: number; label: string; amount: string; isCurrent: boolean }[];
+  total: string;
+}
+
+const WITHHOLDING_WARNING_TEXT =
+  "Al confirmar se cancelarán las retenciones pendientes de este becario. Esta acción no se puede deshacer.";
+
+const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+export const buildCycleCutWithholdingWarning = (
+  preview: CycleCutPreview | null,
+): CycleCutWithholdingWarning | null => {
+  const toCancel = preview?.withholdings_to_cancel;
+  if (!toCancel || toCancel.rows.length === 0) return null;
+
+  const rows = [...toCancel.rows]
+    .sort((a, b) => compare({ year: a.period_year, month: a.period_month }, { year: b.period_year, month: b.period_month }))
+    .map((r) => ({
+      id: r.id,
+      label: `${capitalize(monthName(r.period_month))} ${r.period_year}`,
+      amount: fmt(r.remaining_amount),
+      isCurrent: r.is_current_refrend,
+    }));
+
+  return { text: WITHHOLDING_WARNING_TEXT, rows, total: fmt(toCancel.total_remaining) };
+};

@@ -323,8 +323,18 @@ export interface ScholarshipWithholding {
   remaining_amount: string
   cause: string | null
   status: 'PENDING' | 'PAID' | 'CANCELLED'
+  // sdd/retenciones-pendientes S1: audit fields, NULL on legacy CANCELLED rows.
+  cancelled_at?: string | null
+  cancellation_reason?: WithholdingCancellationReason | null
+  cancelled_by?: { id: number; first_name: string; last_name: string } | null
   payments?: ScholarshipWithholdingPayment[]
 }
+
+export type WithholdingCancellationReason =
+  | 'CYCLE_CUT'
+  | 'EGRESO_RETICULA'
+  | 'USER_DEACTIVATED'
+  | 'RECLASSIFIED'
 
 export interface WithholdingPaymentInput {
   withholding_id: number
@@ -356,11 +366,10 @@ export interface RecordSituationForm {
 // already-closed (CYCLE_ALREADY_CLOSED, msg only — generic error toast, no
 // structured data) -> own-abonos (plain DomainException, generic error
 // toast) -> blocking later months (CYCLE_CUT_BLOCKED) -> ACTIVA Telmex
-// coverage (CYCLE_CUT_ACTIVE_TELMEX_COVERAGE) -> pending withholdings
-// (CYCLE_CUT_PENDING_WITHHOLDINGS). The last 3 carry a structured `data`
-// payload the situation dialogs render inline instead of a generic toast
-// (amendment #1988: NO acknowledge flag — any pending withholding BLOCKS
-// outright, same as the other two guards).
+// coverage (CYCLE_CUT_ACTIVE_TELMEX_COVERAGE). The last 2 carry a structured
+// `data` payload the situation dialogs render inline instead of a generic
+// toast. Pending withholdings no longer block: the cut cancels them
+// (sdd/retenciones-pendientes), see CycleCutPreview.withholdings_to_cancel.
 
 export interface CutBlockingMonth {
   period_year: number
@@ -372,17 +381,6 @@ export interface CutActiveTelmexCoverage {
   coverage_id: number
   status: string
   start_period: string
-}
-
-export interface CutPendingWithholding {
-  id: number
-  period_year: number
-  period_month: number
-  withheld_amount: string
-  paid_amount: string
-  remaining_amount: string
-  /** True when this is the cut month's own retention (amendment 6). */
-  is_current_refrend: boolean
 }
 
 // Discriminated result for scholarshipStore.recordPaymentSituation() (sdd/
@@ -398,9 +396,6 @@ export interface CutPendingWithholding {
 // CYCLE_CUT_BLOCKED (`blocking_months` set) and
 // CYCLE_CUT_ACTIVE_TELMEX_COVERAGE (`telmex_coverage` set, amendment #1987)
 // — exactly one of the two is ever populated on a given result, never both.
-// "pending_withholdings_required" is its own status (CYCLE_CUT_PENDING_
-// WITHHOLDINGS, amendment #1988) since it always carries its own list and is
-// rendered as its own section in the dialog.
 export type RecordSituationResult =
   | { status: 'success'; refrend: ScholarshipRefrend }
   | { status: 'divergence_required' }
@@ -410,18 +405,14 @@ export type RecordSituationResult =
       blocking_months?: CutBlockingMonth[]
       telmex_coverage?: CutActiveTelmexCoverage
     }
-  | { status: 'pending_withholdings_required'; msg: string; withholdings: CutPendingWithholding[] }
   | { status: 'error' }
 
 // Narrowed view used by SituationEgresadoDialog.vue/SituationBajaDialog.vue's
-// `blockResult` prop — only the 2 variants that actually carry a `msg` to
+// `blockResult` prop — only the variant that actually carries a `msg` to
 // render. Keeping the prop typed this narrow (instead of the full
 // RecordSituationResult) lets template access like `blockResult.msg` type-check
 // without an extra discriminant check beyond the existing `v-if="blockResult"`.
-export type CutBlockResult = Extract<
-  RecordSituationResult,
-  { status: 'cut_blocked' | 'pending_withholdings_required' }
->
+export type CutBlockResult = Extract<RecordSituationResult, { status: 'cut_blocked' }>
 
 // ── Advance payment (pago adelantado) ──────────────────────────────────────
 
@@ -519,7 +510,6 @@ export type CycleCutBlockerCode =
   | 'CYCLE_CUT_OWN_ABONOS'
   | 'CYCLE_CUT_BLOCKED'
   | 'CYCLE_CUT_ACTIVE_TELMEX_COVERAGE'
-  | 'CYCLE_CUT_PENDING_WITHHOLDINGS'
 
 export interface CycleCutBlocker {
   code: CycleCutBlockerCode
@@ -545,10 +535,29 @@ export interface CycleCutPreviewOrigin {
   advance_payment_reduction: string
 }
 
+// sdd/retenciones-pendientes S6: pending withholdings the cut will cancel
+// (informational, never a blocker). Optional so older payloads still parse.
+export interface CycleCutWithholdingRow {
+  id: number
+  period_year: number
+  period_month: number
+  withheld_amount: string
+  paid_amount: string
+  remaining_amount: string
+  /** True when this is the cut month's own retention. */
+  is_current_refrend: boolean
+}
+
+export interface CycleCutWithholdingsToCancel {
+  rows: CycleCutWithholdingRow[]
+  total_remaining: string
+}
+
 export interface CycleCutPreview {
   reason: string
   can_cut: boolean
   blockers: CycleCutBlocker[]
+  withholdings_to_cancel?: CycleCutWithholdingsToCancel
   advance: {
     months: CycleCutPreviewMonth[]
     origins: CycleCutPreviewOrigin[]

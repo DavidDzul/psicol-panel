@@ -1591,8 +1591,8 @@ describe("AprobacionRefrendTable — divergence-reason follow-up (sdd/pago-adela
 });
 
 describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-baja-definitiva PR3, amendments #1987/#1988)", () => {
-  // EGRESADO/BAJA_DEFINITIVA cut guards return a structured "cut_blocked" /
-  // "pending_withholdings_required" result (no generic toast, same precedent
+  // EGRESADO/BAJA_DEFINITIVA cut guards return a structured "cut_blocked"
+  // result (no generic toast, same precedent
   // as divergence_required) — the parent must forward it to the dialog as a
   // prop AND keep the dialog open (no situationDialogs[key] = false), so
   // staff can read the blocking detail inline.
@@ -1626,20 +1626,11 @@ describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-
     expect(wrapper.findComponent(SituationEgresadoDialog).props("blockResult")).toEqual(blockResult);
   });
 
-  it("forwards the pending_withholdings_required result to SituationBajaDialog and keeps it open", async () => {
+  it("forwards the cut_blocked result to SituationBajaDialog and keeps it open", async () => {
     const blockResult = {
-      status: "pending_withholdings_required",
-      msg: "Tiene retenciones pendientes.",
-      withholdings: [
-        {
-          id: 1,
-          period_year: 2026,
-          period_month: 7,
-          withheld_amount: "500.00",
-          paid_amount: "0.00",
-          remaining_amount: "500.00",
-        },
-      ],
+      status: "cut_blocked",
+      msg: "Tiene noviembre 2026 pagado.",
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "PAID" }],
     };
     recordPaymentSituation.mockResolvedValueOnce(blockResult);
     const row = buildRow(31, "Baja Bloqueada", 1, 0);

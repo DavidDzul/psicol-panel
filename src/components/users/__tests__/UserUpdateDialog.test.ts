@@ -108,3 +108,80 @@ describe("UserUpdateDialog — tipo de usuario bloqueado", () => {
     expect((submitted![0][0] as { user_type: string }).user_type).toBe("BEC_ACTIVE");
   });
 });
+
+// sdd/retenciones-pendientes S7 (R7.3): deactivating a becario cancels pending
+// withholdings and advance payments, so the dialog asks for confirmation first.
+describe("UserUpdateDialog — confirmación de desactivación", () => {
+  const CONFIRM_BODY =
+    "Al desactivar a este usuario se cancelarán sus retenciones pendientes y sus pagos adelantados.";
+
+  const clickSave = async (w: ReturnType<typeof mount>) => {
+    const saveBtn = w
+      .findAllComponents({ name: "VBtn" })
+      .find((b) => b.text().includes("Actualizar"));
+    if (!saveBtn) throw new Error("Actualizar button not found");
+    await saveBtn.trigger("click");
+    await flushPromises();
+  };
+
+  const uncheckActive = async (w: ReturnType<typeof mount>) => {
+    const checkbox = w
+      .findAllComponents({ name: "VCheckbox" })
+      .find((c) => c.props("label") === "¿Permitir acceso a la plataforma?");
+    if (!checkbox) throw new Error("active checkbox not found");
+    checkbox.vm.$emit("update:modelValue", false);
+    await flushPromises();
+  };
+
+  const confirmationButton = (label: string) =>
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>(".v-dialog button")).find((b) =>
+      b.textContent?.includes(label),
+    );
+
+  it("asks for confirmation and submits only after confirming", async () => {
+    const w = await mountDialog({ ...baseUser, has_scholarship_profile: true });
+    await uncheckActive(w);
+    await clickSave(w);
+
+    expect(document.body.textContent).toContain(CONFIRM_BODY);
+    expect(w.emitted("submit")).toBeFalsy();
+
+    confirmationButton("Confirmar")!.click();
+    await flushPromises();
+
+    const submitted = w.emitted("submit");
+    expect(submitted).toBeTruthy();
+    expect((submitted![0][0] as { active: boolean }).active).toBe(false);
+  });
+
+  it("does not submit when the confirmation is cancelled", async () => {
+    const w = await mountDialog({ ...baseUser, has_scholarship_profile: true });
+    await uncheckActive(w);
+    await clickSave(w);
+
+    const cancelButtons = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>(".v-dialog button"),
+    ).filter((b) => b.textContent?.includes("Cancelar"));
+    cancelButtons[cancelButtons.length - 1].click();
+    await flushPromises();
+
+    expect(w.emitted("submit")).toBeFalsy();
+  });
+
+  it("submits directly when the user stays active", async () => {
+    const w = await mountDialog({ ...baseUser, has_scholarship_profile: true });
+    await clickSave(w);
+
+    expect(document.body.textContent).not.toContain(CONFIRM_BODY);
+    expect(w.emitted("submit")).toBeTruthy();
+  });
+
+  it("submits directly when deactivating a non-becario", async () => {
+    const w = await mountDialog({ ...baseUser, user_type: "ADMIN", has_scholarship_profile: false });
+    await uncheckActive(w);
+    await clickSave(w);
+
+    expect(document.body.textContent).not.toContain(CONFIRM_BODY);
+    expect(w.emitted("submit")).toBeTruthy();
+  });
+});

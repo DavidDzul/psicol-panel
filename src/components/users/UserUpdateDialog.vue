@@ -124,6 +124,7 @@
         </v-card-actions>
       </v-form>
     </v-card>
+    <ConfirmationDialog ref="deactivationConfirmation" />
   </v-dialog>
 </template>
 
@@ -131,7 +132,12 @@
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
+import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
+import {
+  DEACTIVATION_CONFIRMATION,
+  requiresDeactivationConfirmation,
+} from "@/utils/userDeactivation";
 import * as yup from "yup";
 import * as validations from "@/validations";
 import { becTypeArray } from "@/constants";
@@ -258,10 +264,19 @@ const close = () => {
   emit("update:modelValue", false);
 };
 
-const save = () => {
-  if (meta.value.valid) {
-    emit("submit", { ...values } as UserUpdateForm);
+const deactivationConfirmation = ref<InstanceType<typeof ConfirmationDialog> | null>(null);
+
+const save = async () => {
+  if (!meta.value.valid) return;
+  const form = { ...values } as UserUpdateForm;
+
+  // sdd/retenciones-pendientes S7: deactivating a becario cancels its pending
+  // withholdings and advance payments — never do that without confirmation.
+  if (props.editItem && requiresDeactivationConfirmation(props.editItem, form)) {
+    const confirmed = await deactivationConfirmation.value?.open(DEACTIVATION_CONFIRMATION);
+    if (!confirmed) return;
   }
+  emit("submit", form);
 };
 </script>
 

@@ -107,119 +107,10 @@ describe("SituationEgresadoDialog — blockResult (amendment #1988, no acknowled
     expect(body().text()).toContain("administration-panel");
   });
 
-  it("renders CYCLE_CUT_PENDING_WITHHOLDINGS's msg, lists the pending withholdings with amounts, and hints at Pago de meses retenidos", () => {
-    mountDialog({
-      status: "pending_withholdings_required",
-      msg: "El becario tiene retenciones pendientes.",
-      withholdings: [
-        {
-          id: 3,
-          period_year: 2026,
-          period_month: 7,
-          withheld_amount: "500.00",
-          paid_amount: "0.00",
-          remaining_amount: "500.00",
-          is_current_refrend: false,
-        },
-      ],
-    });
-
-    expect(body().text()).toContain("El becario tiene retenciones pendientes.");
-    expect(body().text()).toContain("Julio 2026");
-    expect(body().text()).toContain("$500.00");
-    expect(body().text()).toContain("Pago de meses retenidos");
-    expect(body().text()).not.toContain("Este mes");
-    expect(body().text()).not.toContain("Deshaz la resolución");
-  });
-
   it("renders nothing extra when blockResult is null", () => {
     mountDialog(null);
     expect(body().text()).not.toContain("retenciones pendientes");
     expect(body().text()).not.toContain("cobertura Telmex");
-  });
-});
-
-describe("SituationEgresadoDialog — own-month retention (amendment 6)", () => {
-  const msg =
-    "Este mes tiene una retención registrada; deshaga la resolución de este mes antes de marcar egreso o baja definitiva.";
-
-  it("own-month only: shows the Este mes chip and the undo instruction, not the Pago de meses retenidos hint", () => {
-    mountDialog({
-      status: "pending_withholdings_required",
-      msg,
-      withholdings: [
-        {
-          id: 1,
-          period_year: 2026,
-          period_month: 6,
-          withheld_amount: "100.00",
-          paid_amount: "0.00",
-          remaining_amount: "100.00",
-          is_current_refrend: true,
-        },
-      ],
-    });
-
-    expect(body().text()).toContain(msg);
-    expect(body().text()).toContain("Este mes");
-    expect(body().text()).toContain("Deshaz la resolución de este mes (quita la retención) antes de continuar.");
-    expect(body().text()).not.toContain("Pago de meses retenidos");
-  });
-
-  it("other-month only: no chip, only the Pago de meses retenidos hint", () => {
-    mountDialog({
-      status: "pending_withholdings_required",
-      msg: "El becario tiene retenciones pendientes.",
-      withholdings: [
-        {
-          id: 2,
-          period_year: 2026,
-          period_month: 2,
-          withheld_amount: "100.00",
-          paid_amount: "0.00",
-          remaining_amount: "100.00",
-          is_current_refrend: false,
-        },
-      ],
-    });
-
-    const chips = body().findAll(".v-chip");
-    expect(chips).toHaveLength(0);
-    expect(body().text()).toContain('Resuélvelas desde "Pago de meses retenidos" antes de continuar.');
-    expect(body().text()).not.toContain("Deshaz la resolución");
-  });
-
-  it("mixed: chip only on the current row and both instructions", () => {
-    mountDialog({
-      status: "pending_withholdings_required",
-      msg,
-      withholdings: [
-        {
-          id: 1,
-          period_year: 2026,
-          period_month: 6,
-          withheld_amount: "100.00",
-          paid_amount: "0.00",
-          remaining_amount: "100.00",
-          is_current_refrend: true,
-        },
-        {
-          id: 2,
-          period_year: 2026,
-          period_month: 2,
-          withheld_amount: "100.00",
-          paid_amount: "0.00",
-          remaining_amount: "100.00",
-          is_current_refrend: false,
-        },
-      ],
-    });
-
-    const chips = body().findAll(".v-chip");
-    expect(chips).toHaveLength(1);
-    expect(chips[0].text()).toBe("Este mes");
-    expect(body().text()).toContain("Deshaz la resolución de este mes (quita la retención) antes de continuar.");
-    expect(body().text()).toContain('Resuélvelas desde "Pago de meses retenidos" antes de continuar.');
   });
 });
 
@@ -264,6 +155,30 @@ describe("SituationEgresadoDialog — cut advance warning (S50-S52, S54)", () =>
     mountWith({ cutPreview: null });
     expect(body().text()).not.toContain("Al confirmar se cancelar");
     expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  const withholdingPreview = (base: Record<string, unknown>) => ({
+    ...base,
+    withholdings_to_cancel: {
+      rows: [
+        { id: 1, period_year: 2026, period_month: 8, withheld_amount: "1000.00", paid_amount: "250.00", remaining_amount: "750.00", is_current_refrend: false },
+        { id: 2, period_year: 2026, period_month: 9, withheld_amount: "500.00", paid_amount: "0.00", remaining_amount: "500.00", is_current_refrend: true },
+      ],
+      total_remaining: "1250.00",
+    },
+  });
+
+  it("shows the withholdings warning and keeps confirm enabled (S14)", () => {
+    mountWith({ cutPreview: withholdingPreview(cutPreview) });
+    expect(body().text()).toContain("Al confirmar se cancelarán las retenciones pendientes de este becario.");
+    expect(body().text()).toContain("Agosto 2026");
+    expect(body().text()).toContain("$1,250.00");
+    expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  it("shows no withholdings warning when the preview lists none", () => {
+    mountWith({ cutPreview });
+    expect(body().text()).not.toContain("retenciones pendientes");
   });
 
   it("does not disable confirm while loading or with blockers", () => {

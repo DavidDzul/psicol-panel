@@ -73,3 +73,11 @@ export interface UserUpdateForm {
   active: boolean;
   user_type: UserType;
 }
+
+// sdd/retenciones-pendientes S5/S7: returned by the user/graduate update
+// endpoints; null when the save was not an active true->false becario transition.
+export interface DeactivationEffects {
+  withholdings_cancelled: number;
+  advance_months_cancelled: number;
+  overpaid_amount: string;
+}
