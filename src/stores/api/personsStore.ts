@@ -3,7 +3,8 @@ import { isAxiosError } from "axios";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useAlertStore } from "@/stores/alert";
-import type { User, UserForm, UserUpdateForm } from "@/interfaces/user";
+import type { DeactivationEffects, User, UserForm, UserUpdateForm } from "@/interfaces/user";
+import { buildDeactivationSummary, getCycleCutBlockedMessage } from "@/utils/userDeactivation";
 import type {
   UsersResponse,
   UserResponse,
@@ -101,6 +102,7 @@ export const usePersonsStore = defineStore("personsStore", () => {
     try {
       const currentType = allPersons.value.get(id)?.user_type;
       let updated: User;
+      let effects: DeactivationEffects | null | undefined;
       if (currentType === "BEC_INACTIVE") {
         const res = await axios.patch<UpdateGraduateResponse>(
           `api/admin/graduates/${id}`,
@@ -108,6 +110,7 @@ export const usePersonsStore = defineStore("personsStore", () => {
           { headers: { accept: "application/json" } },
         );
         updated = res.data.updateGraduate;
+        effects = res.data.deactivation_effects;
       } else {
         const res = await axios.patch<UpdateUserResponse>(
           `api/admin/users/${id}`,
@@ -115,6 +118,7 @@ export const usePersonsStore = defineStore("personsStore", () => {
           { headers: { accept: "application/json" } },
         );
         updated = res.data.updateUser;
+        effects = res.data.deactivation_effects;
       }
       // Merge defensively: an API without the computed list flags must not
       // wipe the ones the row already carries.
@@ -127,8 +131,17 @@ export const usePersonsStore = defineStore("personsStore", () => {
         personDetails.value = { ...personDetails.value, ...updated };
       }
       showAlert({ title: "Información actualizada exitosamente.", status: "success" });
+      const summary = buildDeactivationSummary(effects);
+      if (summary) showAlert({ title: summary, status: "success" });
       return merged;
     } catch (error: unknown) {
+      // 409 CYCLE_CUT_BLOCKED: the API rolled everything back, so the user is
+      // still active. Surface its message (it already lists the months).
+      const blockedMsg = getCycleCutBlockedMessage(error);
+      if (blockedMsg) {
+        showAlert({ title: blockedMsg, status: "error" });
+        throw error;
+      }
       const msg = isAxiosError(error)
         ? ((error.response?.data as { message?: string })?.message ??
           "Error de red, intenta más tarde.")

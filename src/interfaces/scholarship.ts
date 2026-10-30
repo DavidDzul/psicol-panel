@@ -323,8 +323,18 @@ export interface ScholarshipWithholding {
   remaining_amount: string
   cause: string | null
   status: 'PENDING' | 'PAID' | 'CANCELLED'
+  // sdd/retenciones-pendientes S1: audit fields, NULL on legacy CANCELLED rows.
+  cancelled_at?: string | null
+  cancellation_reason?: WithholdingCancellationReason | null
+  cancelled_by?: { id: number; first_name: string; last_name: string } | null
   payments?: ScholarshipWithholdingPayment[]
 }
+
+export type WithholdingCancellationReason =
+  | 'CYCLE_CUT'
+  | 'EGRESO_RETICULA'
+  | 'USER_DEACTIVATED'
+  | 'RECLASSIFIED'
 
 export interface WithholdingPaymentInput {
   withholding_id: number

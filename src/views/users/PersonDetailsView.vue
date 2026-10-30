@@ -183,6 +183,26 @@
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
+
+        <!-- Panel 7 — Retenciones (becarios; egresados con perfil conservan su historial) -->
+        <v-expansion-panel
+          v-if="selectedPerson?.user_type === 'BEC_ACTIVE' || selectedPerson?.has_scholarship_profile"
+        >
+          <v-expansion-panel-title color="#f8f8f8">
+            <template #default="{ expanded }">
+              <PanelHeaderOptions
+                title="Retenciones"
+                :expanded="expanded"
+              />
+            </template>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <ScholarshipWithholdingsCard
+              v-if="selectedPerson"
+              :user-id="selectedPerson.id"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
       </v-expansion-panels>
     </v-col>
   </v-row>
@@ -215,6 +235,7 @@ import ScholarshipProfileCard from "@/components/scholarships/ScholarshipProfile
 import ScholarshipSemesterGradesCard from "@/components/scholarships/ScholarshipSemesterGradesCard.vue";
 import ScholarshipDocumentsCard from "@/components/scholarships/ScholarshipDocumentsCard.vue";
 import ScholarshipRefrendMiniList from "@/components/scholarships/ScholarshipRefrendMiniList.vue";
+import ScholarshipWithholdingsCard from "@/components/scholarships/ScholarshipWithholdingsCard.vue";
 
 const props = defineProps<{
   mode: PersonsMode;
