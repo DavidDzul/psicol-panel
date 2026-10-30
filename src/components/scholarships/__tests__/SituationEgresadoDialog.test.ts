@@ -81,7 +81,7 @@ describe("SituationEgresadoDialog — blockResult (amendment #1988, no acknowled
       status: "cut_blocked",
       msg: "Tiene noviembre y diciembre 2026 pagados por adelantado; resuélvelos antes de marcar egreso.",
       blocking_months: [
-        { period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" },
+        { period_year: 2026, period_month: 11, reason: "ABONOS_APPLIED" },
         { period_year: 2026, period_month: 12, reason: "PAID" },
       ],
     });
@@ -90,7 +90,7 @@ describe("SituationEgresadoDialog — blockResult (amendment #1988, no acknowled
       "Tiene noviembre y diciembre 2026 pagados por adelantado; resuélvelos antes de marcar egreso.",
     );
     expect(body().text()).toContain("Noviembre 2026");
-    expect(body().text()).toContain("Pagado por adelantado");
+    expect(body().text()).toContain("Con abonos aplicados");
     expect(body().text()).toContain("Diciembre 2026");
     expect(body().text()).toContain("Ya pagado");
   });

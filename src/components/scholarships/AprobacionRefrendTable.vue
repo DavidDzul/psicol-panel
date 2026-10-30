@@ -362,6 +362,7 @@
               item.has_retardos_discount || item.has_falta_discount
             "
             :advance-paid="item.advance_paid"
+            :has-active-advance="item.active_advance != null"
             :loading="situationLoadingId === item.refrend.id"
             @approve-full="onApproveFullPayment(item)"
             @clear-resolution="onClearResolution(item)"

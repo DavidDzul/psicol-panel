@@ -1600,7 +1600,7 @@ describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-
     const blockResult = {
       status: "cut_blocked",
       msg: "Tiene noviembre 2026 pagado por adelantado.",
-      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" }],
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "PAID" }],
     };
     recordPaymentSituation.mockResolvedValueOnce(blockResult);
     const row = buildRow(30, "Egresado Bloqueado", 1, 0);
@@ -1658,7 +1658,7 @@ describe("AprobacionRefrendTable — cycle-cut blockResult wiring (sdd/egresado-
     recordPaymentSituation.mockResolvedValueOnce({
       status: "cut_blocked",
       msg: "Bloqueado.",
-      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" }],
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "PAID" }],
     });
     const row = buildRow(32, "Reintento", 1, 0);
     const wrapper = mountTable([row]);

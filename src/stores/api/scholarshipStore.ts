@@ -21,6 +21,7 @@ import type {
   RecordSituationResult,
   ScholarshipWithholding,
   AdvancePaymentForm,
+  RevertAdvancePaymentResult,
   ScholarshipAdvancePayment,
   GenerateRefrendsResult,
   CutBlockingMonth,
@@ -295,8 +296,13 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
       usePersonsStore().patchPersonFlags(userId, { curriculum_uploaded: true });
       showAlert({ title: "Retícula guardada.", status: "success" });
       return profile;
-    } catch {
-      showAlert({ title: "Error al guardar retícula.", status: "error" });
+    } catch (error: unknown) {
+      // RETICULA_ADVANCE_CONFLICT (422) carries a fully-formed Spanish msg
+      // listing the conflicting advance months: show it verbatim.
+      const msg = isAxiosError(error)
+        ? ((error.response?.data as { msg?: string } | undefined)?.msg ?? "Error al guardar retícula.")
+        : "Error al guardar retícula.";
+      showAlert({ title: msg, status: "error" });
     }
   };
 
@@ -629,6 +635,31 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // Revert a recorded advance payment (sdd/revertir-pago-adelantado). Returns
+  // a discriminated result so the dialog can stay open and map `code` to its
+  // own Spanish copy; the server msg is also toasted, same as the record
+  // action. Success refreshes the active tables (origin amounts change).
+  const revertAdvancePayment = async (
+    id: number,
+    reason: string,
+  ): Promise<RevertAdvancePaymentResult> => {
+    try {
+      await axios.post(`api/admin/scholarship-refrends/${id}/advance-payment/revert`, { reason });
+      await _refreshActiveTables();
+      showAlert({ title: "Pago adelantado revertido.", status: "success" });
+      return { status: "success" };
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        const body = error.response?.data as { msg?: string; code?: string } | undefined;
+        const msg = body?.msg ?? "Error al revertir pago adelantado.";
+        showAlert({ title: msg, status: "error" });
+        return { status: "error", code: body?.code ?? null, msg };
+      }
+      showAlert({ title: "Error de red.", status: "error" });
+      return { status: "error", code: null, msg: "Error de red." };
+    }
+  };
+
   // ── Withholding ledger (retenciones individuales) ──────────────────────────
 
   const fetchPendingWithholdings = async (
@@ -743,6 +774,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     clearRefrendResolution,
     recordPaymentSituation,
     recordAdvancePayment,
+    revertAdvancePayment,
     bulkApprove,
     fetchPendingWithholdings,
     voidWithholdingPayment,

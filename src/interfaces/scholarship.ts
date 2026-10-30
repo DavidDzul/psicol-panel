@@ -266,6 +266,14 @@ export interface BulkRefrendRow {
   advance_paid_amount: string | null
   advance_paid_origin_year: number | null
   advance_paid_origin_month: number | null
+  // sdd/revertir-pago-adelantado (API S2/S7). Optional so older payloads and
+  // fixtures stay valid; the API always emits them on bulk rows.
+  // active_advance lives on the ORIGIN row only (null unless the header is
+  // ACTIVE); advance_revert_block is the first failing revert-eligibility
+  // code or null; advance_overpayment is set only on the cycle-cut row.
+  active_advance?: ActiveAdvance | null
+  advance_revert_block?: AdvanceRevertBlock | null
+  advance_overpayment?: AdvanceOverpayment | null
 }
 
 export interface BulkTableParams {
@@ -357,7 +365,7 @@ export interface RecordSituationForm {
 export interface CutBlockingMonth {
   period_year: number
   period_month: number
-  reason: 'ADVANCE_PAID' | 'PAID' | 'ABONOS_APPLIED'
+  reason: 'PAID' | 'ABONOS_APPLIED'
 }
 
 export interface CutActiveTelmexCoverage {
@@ -439,7 +447,7 @@ export interface ScholarshipAdvancePaymentMonth {
   period_month: number
   amount: string
   refrend_id: number
-  status: 'PENDING' | 'REACHED' | 'OVERRIDDEN'
+  status: 'PENDING' | 'REACHED' | 'OVERRIDDEN' | 'CANCELLED'
   reached_at: string | null
   settled_resolution_type: ResolutionType | null
   divergence_reason: string | null
@@ -458,6 +466,96 @@ export interface ScholarshipAdvancePayment {
   notes: string | null
   created_by_id: number | null
   months?: ScholarshipAdvancePaymentMonth[]
+}
+
+// ── Advance payment revert / cycle-cut cancellation ────────────────────────
+// (sdd/revertir-pago-adelantado; shapes are the API contract, amounts are
+// 2-decimal strings and months are numeric — labels are built in the panel)
+
+export interface ActiveAdvanceMonth {
+  id: number
+  period_year: number
+  period_month: number
+  amount: string
+  status: ScholarshipAdvancePaymentMonth['status']
+}
+
+export interface ActiveAdvance {
+  id: number
+  status: 'ACTIVE'
+  months_count: number
+  total_amount: string
+  months: ActiveAdvanceMonth[]
+}
+
+export type AdvanceRevertBlock =
+  | 'ADVANCE_NOT_FOUND'
+  | 'ADVANCE_CYCLE_CLOSED'
+  | 'ADVANCE_ORIGIN_PAID'
+  | 'ADVANCE_ORIGIN_LOCKED'
+  | 'ADVANCE_MONTH_SETTLED'
+  | 'ADVANCE_FUTURE_TELMEX_COVERED'
+  | 'ADVANCE_FUTURE_NOT_PRISTINE'
+
+export interface AdvanceOverpaymentMonth {
+  period_year: number
+  period_month: number
+  amount: string
+}
+
+export interface AdvanceOverpayment {
+  amount: string
+  months: AdvanceOverpaymentMonth[]
+  origin_period_year: number
+  origin_period_month: number
+}
+
+export type RevertAdvancePaymentResult =
+  | { status: 'success' }
+  | { status: 'error'; code: string | null; msg: string }
+
+export type CycleCutBlockerCode =
+  | 'CYCLE_ALREADY_CLOSED'
+  | 'CYCLE_CUT_OWN_ABONOS'
+  | 'CYCLE_CUT_BLOCKED'
+  | 'CYCLE_CUT_ACTIVE_TELMEX_COVERAGE'
+  | 'CYCLE_CUT_PENDING_WITHHOLDINGS'
+
+export interface CycleCutBlocker {
+  code: CycleCutBlockerCode
+  msg: string
+  data: Record<string, unknown> | null
+}
+
+export interface CycleCutPreviewMonth {
+  period_year: number
+  period_month: number
+  amount: string
+  is_cut_month: boolean
+  origin_period_year: number
+  origin_period_month: number
+}
+
+export interface CycleCutPreviewOrigin {
+  origin_period_year: number
+  origin_period_month: number
+  origin_paid: boolean
+  cancelled_amount: string
+  overpaid_amount: string
+  advance_payment_reduction: string
+}
+
+export interface CycleCutPreview {
+  reason: string
+  can_cut: boolean
+  blockers: CycleCutBlocker[]
+  advance: {
+    months: CycleCutPreviewMonth[]
+    origins: CycleCutPreviewOrigin[]
+    cancelled_amount: string
+    overpaid_amount: string
+    advance_payment_reduction: string
+  }
 }
 
 // ── Form interfaces ────────────────────────────────────────────────────────

@@ -148,7 +148,6 @@ export const finalResolutionChip = (
 // Shared by SituationEgresadoDialog.vue/SituationBajaDialog.vue so both
 // dialogs render the exact same wording for the same backend reason.
 export const CUT_BLOCK_REASON_LABELS: Record<string, string> = {
-  ADVANCE_PAID: "Pagado por adelantado",
   PAID: "Ya pagado",
   ABONOS_APPLIED: "Con abonos aplicados",
 };

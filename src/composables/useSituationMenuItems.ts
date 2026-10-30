@@ -79,6 +79,8 @@ export const SITUATION_MENU_ITEMS: SituationMenuItem[] = [
 export interface SituationMenuContext {
   /** Row's month was already paid in advance (`advance_paid`). */
   advancePaid?: boolean;
+  /** Row is an origin with an active advance (`active_advance != null`). */
+  hasActiveAdvance?: boolean;
 }
 
 // The API rejects RETENIDA on months paid in advance (use Sin pago 0%).
@@ -92,5 +94,11 @@ export const visibleSituationMenuItems = (
   items.filter(
     (item) =>
       !item.hidden &&
-      !(ctx.advancePaid && ADVANCE_PAID_EXCLUDED_KEYS.includes(item.key)),
+      !(ctx.advancePaid && ADVANCE_PAID_EXCLUDED_KEYS.includes(item.key)) &&
+      // One advance per origin and no chaining: an advance-covered month or
+      // an origin that already advanced cannot record another one.
+      !(
+        (ctx.advancePaid || ctx.hasActiveAdvance) &&
+        item.key === "PAGO_ADELANTADO"
+      ),
   );

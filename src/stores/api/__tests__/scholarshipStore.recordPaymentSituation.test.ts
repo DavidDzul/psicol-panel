@@ -87,8 +87,8 @@ describe("scholarshipStore.recordPaymentSituation", () => {
           code: "CYCLE_CUT_BLOCKED",
           data: {
             blocking_months: [
-              { period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" },
-              { period_year: 2026, period_month: 12, reason: "ADVANCE_PAID" },
+              { period_year: 2026, period_month: 11, reason: "PAID" },
+              { period_year: 2026, period_month: 12, reason: "PAID" },
             ],
           },
         },
@@ -107,8 +107,8 @@ describe("scholarshipStore.recordPaymentSituation", () => {
       status: "cut_blocked",
       msg: "Tiene noviembre y diciembre 2026 pagados por adelantado; resuélvelos antes de marcar egreso.",
       blocking_months: [
-        { period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" },
-        { period_year: 2026, period_month: 12, reason: "ADVANCE_PAID" },
+        { period_year: 2026, period_month: 11, reason: "PAID" },
+        { period_year: 2026, period_month: 12, reason: "PAID" },
       ],
     });
     expect(showAlertSpy).not.toHaveBeenCalled();

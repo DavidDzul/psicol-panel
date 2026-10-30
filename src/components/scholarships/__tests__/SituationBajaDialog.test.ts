@@ -101,14 +101,14 @@ describe("SituationBajaDialog — blockResult (amendment #1988, no acknowledge f
     mountDialog({
       status: "cut_blocked",
       msg: "Tiene noviembre 2026 pagado por adelantado; resuélvelo antes de marcar baja.",
-      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ADVANCE_PAID" }],
+      blocking_months: [{ period_year: 2026, period_month: 11, reason: "ABONOS_APPLIED" }],
     });
 
     expect(body().text()).toContain(
       "Tiene noviembre 2026 pagado por adelantado; resuélvelo antes de marcar baja.",
     );
     expect(body().text()).toContain("Noviembre 2026");
-    expect(body().text()).toContain("Pagado por adelantado");
+    expect(body().text()).toContain("Con abonos aplicados");
   });
 
   it("renders CYCLE_CUT_ACTIVE_TELMEX_COVERAGE's msg and points staff to Becas Telmex in administration-panel", () => {

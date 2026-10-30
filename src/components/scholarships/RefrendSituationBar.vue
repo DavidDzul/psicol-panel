@@ -109,6 +109,9 @@ const props = defineProps<{
   hasAttendanceDiscount?: boolean;
   // Month already paid in advance: "Beca retenida" is not offered.
   advancePaid?: boolean;
+  // Origin row that already has an active advance: "Pago adelantado" is not
+  // offered again (revert it first).
+  hasActiveAdvance?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -144,6 +147,9 @@ const quickActionLabel = computed(() =>
 // tested there) — entries flagged `hidden: true` stay in the catalog but are
 // not offered here.
 const visibleMenuItems = computed(() =>
-  visibleSituationMenuItems(undefined, { advancePaid: props.advancePaid }),
+  visibleSituationMenuItems(undefined, {
+    advancePaid: props.advancePaid,
+    hasActiveAdvance: props.hasActiveAdvance,
+  }),
 );
 </script>

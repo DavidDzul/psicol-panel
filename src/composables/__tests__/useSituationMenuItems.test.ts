@@ -64,6 +64,32 @@ describe("visibleSituationMenuItems", () => {
     expect(keys).toContain("DESCUENTO_DEFINITIVO");
   });
 
+  it("hides PAGO_ADELANTADO when the row is advance-covered (S19)", () => {
+    const keys = visibleSituationMenuItems(undefined, { advancePaid: true }).map(
+      (item) => item.key,
+    );
+
+    expect(keys).not.toContain("PAGO_ADELANTADO");
+  });
+
+  it("hides PAGO_ADELANTADO when the row already has an active advance (S18)", () => {
+    const keys = visibleSituationMenuItems(undefined, {
+      hasActiveAdvance: true,
+    }).map((item) => item.key);
+
+    expect(keys).not.toContain("PAGO_ADELANTADO");
+    expect(keys).toContain("RETENIDA");
+  });
+
+  it("offers PAGO_ADELANTADO when neither flag is set", () => {
+    expect(
+      visibleSituationMenuItems(undefined, {
+        advancePaid: false,
+        hasActiveAdvance: false,
+      }).map((item) => item.key),
+    ).toContain("PAGO_ADELANTADO");
+  });
+
   it("offers RETENIDA for non-advance rows", () => {
     expect(
       visibleSituationMenuItems(undefined, { advancePaid: false }).map(

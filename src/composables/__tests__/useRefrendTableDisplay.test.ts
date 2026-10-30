@@ -3,6 +3,7 @@ import {
   advancePaymentChip,
   advancePaymentRegisteredChip,
   BASE_HEADERS,
+  CUT_BLOCK_REASON_LABELS,
   finalResolutionChip,
   hasIncidencia,
   isLocked,
@@ -14,6 +15,12 @@ import {
   temporaryIncreaseChip,
 } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
+
+describe("CUT_BLOCK_REASON_LABELS", () => {
+  it("only labels the reasons the API still emits (ADVANCE_PAID no longer blocks a cut)", () => {
+    expect(Object.keys(CUT_BLOCK_REASON_LABELS).sort()).toEqual(["ABONOS_APPLIED", "PAID"]);
+  });
+});
 
 // ── Fixtures ──────────────────────────────────────────────────────────────
 
