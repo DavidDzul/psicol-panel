@@ -33,6 +33,7 @@ const recordPaymentSituation = vi
   .mockResolvedValue({ status: "success", refrend: {} });
 const recordAdvancePayment = vi.fn().mockResolvedValue(undefined);
 const clearRefrendResolution = vi.fn().mockResolvedValue(undefined);
+const fetchCycleCutPreview = vi.fn().mockResolvedValue(null);
 // approveFullPayment resolves to a discriminated result too (design D4 fix
 // 2026-09-27 — see the dedicated "divergence-reason follow-up" describe
 // block below for the divergence_required/error branches), same reasoning
@@ -45,6 +46,7 @@ vi.mock("@/stores/api/scholarshipStore", () => ({
     recordAdvancePayment,
     approveFullPayment,
     clearRefrendResolution,
+    fetchCycleCutPreview,
     bulkApprove: vi.fn(),
     pedagogiaResolve: vi.fn(),
   }),
@@ -1773,5 +1775,49 @@ describe("AprobacionRefrendTable — divergence-reason follow-up via the quick a
 
     expect(approveFullPayment).toHaveBeenLastCalledWith(71, "Autorizado por dirección.");
     expect(wrapper.findComponent(AdvanceDivergenceReasonDialog).props("modelValue")).toBe(false);
+  });
+});
+
+describe("AprobacionRefrendTable — cut preview wiring (sdd/revertir-pago-adelantado S10)", () => {
+  const preview = {
+    reason: "BAJA_DEFINITIVA",
+    can_cut: true,
+    blockers: [],
+    advance: { months: [], origins: [], cancelled_amount: "0.00", overpaid_amount: "0.00", advance_payment_reduction: "0.00" },
+  };
+
+  afterEach(() => {
+    fetchCycleCutPreview.mockReset();
+    fetchCycleCutPreview.mockResolvedValue(null);
+  });
+
+  it.each([
+    ["BAJA_DEFINITIVA", SituationBajaDialog],
+    ["EGRESADO", SituationEgresadoDialog],
+  ])("fetches the preview with (row id, %s) and forwards it to the dialog", async (key, Dialog) => {
+    fetchCycleCutPreview.mockResolvedValue(preview);
+    const row = buildRow(77, "Preview Row", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", key);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    expect(fetchCycleCutPreview).toHaveBeenCalledWith(row.refrend.id, key);
+    expect(wrapper.findComponent(Dialog).props("cutPreview")).toEqual(preview);
+  });
+
+  it("does not fetch the preview for other situations", async () => {
+    const row = buildRow(78, "No Preview", 1, 0);
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    await wrapper.findComponent(RefrendSituationBar).vm.$emit("open", "SIN_PAGO");
+    await wrapper.vm.$nextTick();
+
+    expect(fetchCycleCutPreview).not.toHaveBeenCalled();
   });
 });

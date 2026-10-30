@@ -16,6 +16,10 @@
           desactiva. Esta acción no se puede deshacer.
         </v-alert>
 
+        <!-- sdd/revertir-pago-adelantado S10 (R21): informational only, the
+             confirm button never depends on the preview. -->
+        <CycleCutAdvanceWarning :preview="cutPreview ?? null" :loading="cutPreviewLoading" />
+
         <!-- sdd/egresado-baja-definitiva PR3 (amendments #1987/#1988): same
              blocking display as SituationEgresadoDialog.vue — NO acknowledge
              checkbox, NO "se marcarán como Perdidas" copy (FORFEITED is out
@@ -33,8 +37,8 @@
 
           <template v-else-if="blockResult.status === 'cut_blocked' && blockResult.telmex_coverage">
             <div class="text-body-2">
-              Cancelá la cobertura Telmex en Becas Telmex (administration-panel) y
-              reintentá.
+              Cancela la cobertura Telmex en Becas Telmex (administration-panel) y
+              vuelve a intentarlo.
             </div>
           </template>
 
@@ -78,12 +82,15 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
 import CutPendingWithholdingsList from "@/components/scholarships/CutPendingWithholdingsList.vue";
-import type { CutBlockResult, RecordSituationForm } from "@/interfaces/scholarship";
+import CycleCutAdvanceWarning from "@/components/scholarships/CycleCutAdvanceWarning.vue";
+import type { CutBlockResult, CycleCutPreview, RecordSituationForm } from "@/interfaces/scholarship";
 import { CUT_BLOCK_REASON_LABELS, MONTHS_ES } from "@/composables/useRefrendTableDisplay";
 
 const props = defineProps<{
   loading?: boolean;
   blockResult?: CutBlockResult | null;
+  cutPreview?: CycleCutPreview | null;
+  cutPreviewLoading?: boolean;
 }>();
 const emit = defineEmits<{ submit: [form: RecordSituationForm] }>();
 const model = defineModel<boolean>();

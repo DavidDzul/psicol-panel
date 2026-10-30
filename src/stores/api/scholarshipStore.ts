@@ -22,6 +22,7 @@ import type {
   ScholarshipWithholding,
   AdvancePaymentForm,
   RevertAdvancePaymentResult,
+  CycleCutPreview,
   ScholarshipAdvancePayment,
   GenerateRefrendsResult,
   CutBlockingMonth,
@@ -660,6 +661,23 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     }
   };
 
+  // sdd/revertir-pago-adelantado S10: read-only cut preview. Errors resolve to
+  // null WITHOUT a toast (the dialog just hides the warning, S52).
+  const fetchCycleCutPreview = async (
+    id: number,
+    reason: "BAJA_DEFINITIVA" | "EGRESADO",
+  ): Promise<CycleCutPreview | null> => {
+    try {
+      const res = await axios.get<{ res: boolean; data: CycleCutPreview }>(
+        `api/admin/scholarship-refrends/${id}/cycle-cut-preview`,
+        { params: { reason } },
+      );
+      return res.data.data ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   // ── Withholding ledger (retenciones individuales) ──────────────────────────
 
   const fetchPendingWithholdings = async (
@@ -775,6 +793,7 @@ export const useScholarshipStore = defineStore("scholarshipStore", () => {
     recordPaymentSituation,
     recordAdvancePayment,
     revertAdvancePayment,
+    fetchCycleCutPreview,
     bulkApprove,
     fetchPendingWithholdings,
     voidWithholdingPayment,

@@ -233,3 +233,68 @@ describe("SituationBajaDialog — own-month retention (amendment 6)", () => {
     expect(body().text()).toContain('Resuélvelas desde "Pago de meses retenidos" antes de continuar.');
   });
 });
+
+describe("SituationBajaDialog — cut advance warning (S50-S52, S54)", () => {
+  const cutPreview = {
+    reason: "BAJA_DEFINITIVA",
+    can_cut: true,
+    blockers: [],
+    advance: {
+      months: [
+        { period_year: 2026, period_month: 4, amount: "2500.00", is_cut_month: true, origin_period_year: 2026, origin_period_month: 3 },
+        { period_year: 2026, period_month: 5, amount: "2500.00", is_cut_month: false, origin_period_year: 2026, origin_period_month: 3 },
+      ],
+      origins: [
+        { origin_period_year: 2026, origin_period_month: 3, origin_paid: true, cancelled_amount: "5000.00", overpaid_amount: "5000.00", advance_payment_reduction: "0.00" },
+      ],
+      cancelled_amount: "5000.00",
+      overpaid_amount: "5000.00",
+      advance_payment_reduction: "0.00",
+    },
+  };
+
+  const mountWith = (props: Record<string, unknown>) => {
+    wrapper = mount(SituationBajaDialog, {
+      props: { modelValue: true, loading: false, blockResult: null, ...props },
+      global: { plugins: [vuetify] },
+      attachTo: document.body,
+    });
+  };
+
+  const confirmBtn = () => body().findAll("button").find((b) => b.text().includes("Confirmar baja"))!;
+
+  it("shows the warning and keeps confirm enabled once a cause is chosen (S51)", async () => {
+    mountWith({ cutPreview });
+    await selectCause("Bajo promedio");
+    expect(body().text()).toContain("Al confirmar se cancelarán los meses adelantados abril y mayo.");
+    expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  it("shows no warning without a preview and confirm still depends only on the form (S50, S52)", async () => {
+    mountWith({ cutPreview: null });
+    await selectCause("Bajo promedio");
+    expect(body().text()).not.toContain("Al confirmar se cancelarán");
+    expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  it("does not disable confirm while the preview is loading", async () => {
+    mountWith({ cutPreview: null, cutPreviewLoading: true });
+    await selectCause("Bajo promedio");
+    expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  it("does not disable confirm when the preview carries blockers", async () => {
+    mountWith({ cutPreview: { ...cutPreview, can_cut: false, blockers: [{ code: "CYCLE_CUT_PENDING_WITHHOLDINGS", msg: "x", data: {} }] } });
+    await selectCause("Bajo promedio");
+    expect(confirmBtn().attributes("disabled")).toBeUndefined();
+  });
+
+  it("uses 'tú' in the Telmex hint, no voseo (S54)", () => {
+    mountWith({
+      blockResult: { status: "cut_blocked", msg: "Bloqueado", telmex_coverage: { coverage_id: 1, status: "ACTIVA", start_period: "2026-01" } },
+    });
+    expect(body().text()).toContain("Cancela la cobertura Telmex");
+    expect(body().text()).toContain("vuelve a intentarlo");
+    expect(body().text()).not.toContain("Cancelá");
+  });
+});

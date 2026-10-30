@@ -450,12 +450,16 @@
       v-model="situationDialogs.BAJA_DEFINITIVA"
       :loading="situationSubmitLoading"
       :block-result="cutBlockResult"
+      :cut-preview="cutPreview"
+      :cut-preview-loading="cutPreviewLoading"
       @submit="onSituationSubmit"
     />
     <SituationEgresadoDialog
       v-model="situationDialogs.EGRESADO"
       :loading="situationSubmitLoading"
       :block-result="cutBlockResult"
+      :cut-preview="cutPreview"
+      :cut-preview-loading="cutPreviewLoading"
       @submit="onSituationSubmit"
     />
     <SituationPagoAdelantadoDialog
@@ -531,6 +535,7 @@ import SituationDescuentoDefinitivoDialog from "@/components/scholarships/Situat
 import SituationPagoMesesDialog from "@/components/scholarships/SituationPagoMesesDialog.vue";
 import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.vue";
 import SituationEgresadoDialog from "@/components/scholarships/SituationEgresadoDialog.vue";
+import { useCycleCutPreview } from "@/composables/useCycleCutPreview";
 import SituationPagoAdelantadoDialog from "@/components/scholarships/SituationPagoAdelantadoDialog.vue";
 import ConfirmationDialog from "@/components/shared/ConfirmationDialog.vue";
 import { useScholarshipStore } from "@/stores/api/scholarshipStore";
@@ -930,6 +935,12 @@ const activeSituationKey = ref<SituationKey | null>(null);
 // on every fresh open so a stale block from a PREVIOUS attempt never leaks
 // into a new one.
 const cutBlockResult = ref<CutBlockResult | null>(null);
+const {
+  preview: cutPreview,
+  loading: cutPreviewLoading,
+  load: loadCutPreview,
+  reset: resetCutPreview,
+} = useCycleCutPreview((id, reason) => store.fetchCycleCutPreview(id, reason));
 
 const openSituationDialog = (
   item: BulkRefrendRow,
@@ -938,6 +949,13 @@ const openSituationDialog = (
   activeRow.value = item;
   activeSituationKey.value = type;
   cutBlockResult.value = null;
+  // sdd/revertir-pago-adelantado S10 (R21): advance-cancellation warning.
+  // Stale responses are discarded inside the composable (S53).
+  if (type === "BAJA_DEFINITIVA" || type === "EGRESADO") {
+    void loadCutPreview(item.refrend.id, type);
+  } else {
+    resetCutPreview();
+  }
   situationDialogs.value[type] = true;
 };
 
