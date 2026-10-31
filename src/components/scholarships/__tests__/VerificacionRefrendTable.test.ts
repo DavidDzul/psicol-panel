@@ -298,14 +298,14 @@ describe(
 describe(
   "VerificacionRefrendTable — columns follow the toggle (amendment #1956)",
   () => {
-    it("shows the Completa column set (Clases/F.mes/Ret.acum./Recalcular) when the toggle is off (default)", async () => {
+    it("shows the Completa column set (Clases/Faltas/Ret.acum./Recalcular) when the toggle is off (default)", async () => {
       const wrapper = mountTable([buildRow(50, "Uno", 0)]);
       await wrapper.vm.$nextTick();
       await wrapper.vm.$nextTick();
 
       const headers = wrapper.findAll("th").map((th) => th.text().trim());
       expect(headers).toContain("Clases");
-      expect(headers).toContain("F.mes");
+      expect(headers).toContain("Faltas");
       expect(headers).toContain("Ret.acum.");
       expect(headers).toContain("Recalcular");
       expect(headers).not.toContain("Respuesta");
@@ -320,7 +320,7 @@ describe(
       expect(headers).toContain("Respuesta");
       expect(headers).toContain("¿Notificado?");
       expect(headers).not.toContain("Clases");
-      expect(headers).not.toContain("F.mes");
+      expect(headers).not.toContain("Faltas");
       expect(headers).not.toContain("Ret.acum.");
       expect(headers).not.toContain("Recalcular");
     });
