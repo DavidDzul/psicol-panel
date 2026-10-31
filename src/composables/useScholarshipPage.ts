@@ -12,8 +12,13 @@ export function useScholarshipPage() {
   const { filteredCampus } = storeToRefs(useAuthStore());
   const sedeGeneration = useSedeRefrendGeneration();
 
-  const selectedYear         = ref<number>(new Date().getFullYear());
-  const selectedMonth        = ref<number>(new Date().getMonth() + 1);
+  // Refrends are generated one month ahead: default to NEXT month, rolling
+  // December over to January of the following year (explicit year/month, not
+  // Date arithmetic, so the rollover is obvious).
+  const today                = new Date();
+  const currentMonth         = today.getMonth() + 1;
+  const selectedYear         = ref<number>(currentMonth === 12 ? today.getFullYear() + 1 : today.getFullYear());
+  const selectedMonth        = ref<number>(currentMonth === 12 ? 1 : currentMonth + 1);
   const selectedCampus       = ref<string | null>(null);
   const selectedGenerationId = ref<number | null>(null);
   const generateDialog = ref<boolean>(false);
