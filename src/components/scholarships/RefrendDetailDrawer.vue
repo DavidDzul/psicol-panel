@@ -3,7 +3,7 @@
     :model-value="modelValue"
     location="right"
     temporary
-    width="540"
+    :width="drawerWidth"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="row">
@@ -68,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { useDisplay } from "vuetify";
 import ScholarshipAttendanceSummary from "@/components/scholarships/ScholarshipAttendanceSummary.vue";
 import {
   resolutionCauseLabel,
@@ -84,8 +86,12 @@ import type { BulkRefrendRow } from "@/interfaces/scholarship";
 // ScholarshipAttendanceSummary). The recalcular action moved out to its own
 // row column in VerificacionRefrendTable.vue. R. Aprobación moved back to its own
 // icon+modal table column (see VerificacionRefrendTable.vue /
-// IncidentDetailIcon.vue). Widened (420px → 540px) per explicit request,
-// even though content shrank.
+// IncidentDetailIcon.vue). Width is 3/4 of the viewport (was 540px) so the
+// attendance table with entry/exit times has room.
+const { width: viewportWidth } = useDisplay();
+const drawerWidth = computed<number>(() =>
+  Math.round(viewportWidth.value * 0.75),
+);
 
 const props = defineProps<{
   modelValue: boolean;

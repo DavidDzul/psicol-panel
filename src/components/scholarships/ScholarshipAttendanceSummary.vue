@@ -136,6 +136,8 @@
         <thead>
           <tr>
             <th class="text-caption font-weight-semibold">Clase</th>
+            <th class="text-caption font-weight-semibold">Entrada</th>
+            <th class="text-caption font-weight-semibold">Salida</th>
             <th class="text-caption font-weight-semibold">Estado</th>
             <th class="text-caption font-weight-semibold">Observaciones</th>
             <th class="text-caption font-weight-semibold text-center">
@@ -157,6 +159,8 @@
                 {{ formatDate(rec.class_date) }}
               </div>
             </td>
+            <td class="text-body-2">{{ formatTime(rec.check_in) }}</td>
+            <td class="text-body-2">{{ formatTime(rec.check_out) }}</td>
             <td>
               <v-chip
                 :color="statusColor(rec.status)"
@@ -256,7 +260,13 @@ const formatDate = (date: string | null): string => {
   return dayjs(date).format("DD/MM/YYYY");
 };
 
-const rowClass = (status: string): string => {
+// The API returns TIME columns as "HH:mm:ss" (or "HH:mm"); show HH:mm.
+const formatTime = (time: string | null | undefined): string => {
+  const match = time?.match(/^(\d{2}):(\d{2})/);
+  return match ? `${match[1]}:${match[2]}` : "—";
+};
+
+const rowClass =(status: string): string => {
   const map: Record<string, string> = {
     LATE: "row-late",
     JUSTIFIED_LATE: "row-late-justified",
