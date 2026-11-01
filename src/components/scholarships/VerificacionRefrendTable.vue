@@ -510,7 +510,7 @@ const hasAcademicDiscount = (item: BulkRefrendRow): boolean =>
 const VERIFICACION_COMPLETA_HEADERS = [
   { title: "Incidencia", key: "verificacion", sortable: false },
   { title: "Clases", key: "attendance_total", width: 65, sortable: true },
-  { title: "F.mes", key: "month_absent", width: 75, sortable: true },
+  { title: "Faltas", key: "month_absent", width: 75, sortable: true },
   {
     title: "Ret.acum.",
     key: "semester_lates_unconsumed",
