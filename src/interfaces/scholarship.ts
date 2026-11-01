@@ -611,6 +611,8 @@ export interface AttendanceSummaryRecord {
   class_date: string | null
   class_name: string | null
   status: string
+  check_in: string | null
+  check_out: string | null
   observations: string | null
   late_penalty_consumed: boolean
 }
