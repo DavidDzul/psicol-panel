@@ -3,6 +3,7 @@ import {
   advancePaymentChip,
   advancePaymentRegisteredChip,
   BASE_HEADERS,
+  CAUSE_LABELS,
   CUT_BLOCK_REASON_LABELS,
   finalResolutionChip,
   hasIncidencia,
@@ -19,6 +20,12 @@ import type { BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarshi
 describe("CUT_BLOCK_REASON_LABELS", () => {
   it("only labels the reasons the API still emits (ADVANCE_PAID no longer blocks a cut)", () => {
     expect(Object.keys(CUT_BLOCK_REASON_LABELS).sort()).toEqual(["ABONOS_APPLIED", "PAID"]);
+  });
+});
+
+describe("CAUSE_LABELS", () => {
+  it("labels the accumulated-lates SIN_PAGO cause", () => {
+    expect(CAUSE_LABELS.RETARDOS_ACUMULADOS).toBe("Retardos acumulados");
   });
 });
 

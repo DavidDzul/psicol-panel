@@ -50,6 +50,34 @@ describe("SituationSinPagoDialog — resulting amount", () => {
   });
 });
 
+describe("SituationSinPagoDialog — causes", () => {
+  it('offers "Retardos acumulados" and submits it as RETARDOS_ACUMULADOS', async () => {
+    wrapper = mount(SituationSinPagoDialog, {
+      props: { modelValue: true, loading: false },
+      global: { plugins: [vuetify] },
+      attachTo: document.body,
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const radio = body().find('input[value="RETARDOS_ACUMULADOS"]');
+    expect(radio.exists()).toBe(true);
+    expect(body().text()).toContain("Retardos acumulados");
+
+    await radio.setValue(true);
+    const confirm = body()
+      .findAll("button")
+      .find((b) => b.text().includes("Confirmar"));
+    await confirm!.trigger("click");
+
+    expect(wrapper.emitted("submit")?.[0]?.[0]).toEqual({
+      resolution_type: "SIN_PAGO",
+      resolution_cause: "RETARDOS_ACUMULADOS",
+      resolution_notes: null,
+    });
+  });
+});
+
 describe("SituationSinPagoDialog — Telmex split", () => {
   const open = async (telmexCoveredAmount?: string | number | null) => {
     wrapper = mount(SituationSinPagoDialog, {

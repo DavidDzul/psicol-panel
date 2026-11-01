@@ -155,6 +155,7 @@ export const CUT_BLOCK_REASON_LABELS: Record<string, string> = {
 
 export const CAUSE_LABELS: Record<string, string> = {
   FALTAS_FI: "Faltas a F.I.",
+  RETARDOS_ACUMULADOS: "Retardos acumulados",
   SIN_ENTREVISTA_CALIFICACIONES: "Sin entrevista de calificaciones",
   NO_ENTREGO_CALIFICACIONES_PROVISIONALES: "No entregó cal. provisionales",
   NO_ENTREGO_CALIFICACIONES_ORIGINALES: "No entregó cal. originales",
