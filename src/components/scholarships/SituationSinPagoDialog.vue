@@ -14,6 +14,7 @@
         <div class="text-caption font-weight-medium text-medium-emphasis mb-2">CAUSA</div>
         <v-radio-group v-model="form.resolution_cause" class="mt-0 mb-3" hide-details>
           <v-radio label="Faltas a F.I." value="FALTAS_FI" color="grey-darken-2" />
+          <v-radio label="Retardos acumulados" value="RETARDOS_ACUMULADOS" color="grey-darken-2" />
           <v-radio label="Sin entrevista de calificaciones" value="SIN_ENTREVISTA_CALIFICACIONES" color="grey-darken-2" />
           <v-radio label="No entregó calificaciones provisionales" value="NO_ENTREGO_CALIFICACIONES_PROVISIONALES" color="grey-darken-2" />
           <v-radio label="No entregó calificaciones originales" value="NO_ENTREGO_CALIFICACIONES_ORIGINALES" color="grey-darken-2" />
