@@ -98,6 +98,59 @@ describe("ScholarshipRefrendMiniList", () => {
     expect(chipTexts(wrapper)).toEqual(["Listo para pago"]);
   });
 
+  const net = (overrides: Record<string, unknown> = {}) => ({
+    beca: "0.00",
+    apoyo: "0.00",
+    pago_iu: "0.00",
+    temporary_increase: "0.00",
+    telmex_coverage: "0.00",
+    pending_and_advance: "0.00",
+    total: "0.00",
+    nominal: { beca: "0.00", apoyo: "0.00", pago_iu: "0.00", temporary_increase: "0.00" },
+    ...overrides,
+  });
+
+  const subtitle = (wrapper: Awaited<ReturnType<typeof mountList>>["wrapper"]) =>
+    wrapper.find(".v-list-item-subtitle").text();
+
+  it("shows the net Beca and Apoyo instead of base_amount", async () => {
+    const { wrapper } = await mountList([
+      buildRefrend(1, {
+        base_amount: "1800",
+        net_breakdown: net({
+          beca: "1545.45",
+          apoyo: "154.55",
+          nominal: { beca: "1800.00", apoyo: "200.00", pago_iu: "0.00", temporary_increase: "0.00" },
+        }),
+      }),
+    ]);
+    const text = subtitle(wrapper);
+    expect(text).toContain("Beca: $1,545.45");
+    expect(text).toContain("Apoyo: $154.55");
+    expect(text).not.toContain("$1,800.00");
+  });
+
+  it("shows the net Pago IU for a TELMEX_IU refrend", async () => {
+    const { wrapper } = await mountList([
+      buildRefrend(1, {
+        snapshot_scholarship_type: "TELMEX_IU",
+        base_amount: "350",
+        net_breakdown: net({
+          pago_iu: "315.00",
+          nominal: { beca: "0.00", apoyo: "0.00", pago_iu: "350.00", temporary_increase: "0.00" },
+        }),
+      }),
+    ]);
+    const text = subtitle(wrapper);
+    expect(text).toContain("Pago IU: $315.00");
+    expect(text).not.toContain("Apoyo");
+  });
+
+  it("falls back to base_amount when the refrend has no net_breakdown", async () => {
+    const { wrapper } = await mountList([buildRefrend(1, { base_amount: "1000" })]);
+    expect(subtitle(wrapper)).toContain("Beca: $1,000.00");
+  });
+
   it("does not navigate when a row is clicked", async () => {
     const { wrapper, push } = await mountList([buildRefrend(7)]);
     await wrapper.find(".v-list-item").trigger("click");

@@ -18,7 +18,7 @@ import SituationBajaDialog from "@/components/scholarships/SituationBajaDialog.v
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import RevertAdvancePaymentDialog from "@/components/scholarships/RevertAdvancePaymentDialog.vue";
 import { VTooltip } from "vuetify/components";
-import type { ActiveAdvance, BulkRefrendRow, ScholarshipRefrend } from "@/interfaces/scholarship";
+import type { ActiveAdvance, BulkRefrendRow, NetBreakdown, ScholarshipRefrend } from "@/interfaces/scholarship";
 
 // recordPaymentSituation/recordAdvancePayment hit axios directly (no
 // repository seam) — mocked at the module boundary so the "close the right
@@ -1014,45 +1014,104 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     return row;
   };
 
-  it('computes and shows "Beca" as gross - apoyo - aumento temporal when active', async () => {
+  // sdd/descuento-beca-apoyo PR6: Beca / Apoyo / Pago IU are the NET values
+  // the API computes (net_breakdown); the nominal is a secondary caption.
+  // The client no longer derives anything from snapshot_gross_amount.
+  const netBreakdown = (
+    overrides: Partial<NetBreakdown> = {},
+  ): NetBreakdown => ({
+    beca: "0.00",
+    apoyo: "0.00",
+    pago_iu: "0.00",
+    temporary_increase: "0.00",
+    telmex_coverage: "0.00",
+    pending_and_advance: "0.00",
+    total: "0.00",
+    nominal: { beca: "0.00", apoyo: "0.00", pago_iu: "0.00", temporary_increase: "0.00" },
+    ...overrides,
+  });
+
+  it('shows the NET "Beca" from net_breakdown with the nominal as a caption', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["monthly_amount"]));
-    const row = buildRow(47, "Monto Mensual Calculado", 1, 0);
+    const row = buildRow(47, "Beca Neta", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      // Gross math would give 1200 - 300 - 200 = 700; the API says 650 net.
+      snapshot_gross_amount: "1200",
+      snapshot_monto_apoyo: "300",
+      snapshot_temporary_increase_amount: "200",
+      net_breakdown: netBreakdown({
+        beca: "650.00",
+        nominal: { beca: "700.00", apoyo: "300.00", pago_iu: "0.00", temporary_increase: "200.00" },
+      }),
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = findRowByText(wrapper, "Beca Neta").text();
+    expect(text).toContain(fmt(650));
+    expect(text).toContain(`Nominal ${fmt(700)}`);
+  });
+
+  it('shows no nominal caption when the net equals the nominal', async () => {
+    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["monthly_amount"]));
+    const row = buildRow(48, "Beca Sin Descuento", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      net_breakdown: netBreakdown({
+        beca: "1000.00",
+        nominal: { beca: "1000.00", apoyo: "0.00", pago_iu: "0.00", temporary_increase: "0.00" },
+      }),
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = findRowByText(wrapper, "Beca Sin Descuento").text();
+    expect(text).toContain(fmt(1000));
+    expect(text).not.toContain("Nominal");
+  });
+
+  it('shows the NET "Apoyo" with the nominal as a caption', async () => {
+    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["snapshot_monto_apoyo"]));
+    const row = buildRow(46, "Apoyo Neto", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_monto_apoyo: "200",
+      net_breakdown: netBreakdown({
+        apoyo: "154.55",
+        nominal: { beca: "0.00", apoyo: "200.00", pago_iu: "0.00", temporary_increase: "0.00" },
+      }),
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = findRowByText(wrapper, "Apoyo Neto").text();
+    expect(text).toContain(fmt(154.55));
+    expect(text).toContain(`Nominal ${fmt(200)}`);
+  });
+
+  it('shows "—" for Beca / Apoyo / Pago IU when the row carries no net_breakdown', async () => {
+    localStorage.setItem(
+      OPTIONAL_COLUMNS_KEY,
+      JSON.stringify(["monthly_amount", "snapshot_monto_apoyo", "iu_payment_amount"]),
+    );
+    const row = buildRow(45, "Sin Desglose", 1, 0);
     row.refrend = {
       ...row.refrend,
       snapshot_gross_amount: "1200",
       snapshot_monto_apoyo: "300",
-      snapshot_temporary_increase_amount: "200",
-      final_amount: "150",
+      net_breakdown: undefined,
     };
     const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick();
 
-    // 1200 - 300 - 200 = 700
-    expect(wrapper.text()).toContain(fmt(700));
-  });
-
-  it('shows "Beca" equal to "Base" when a refrend has no apoyo and no aumento temporal', async () => {
-    localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(["monthly_amount"]));
-    const row = buildRow(48, "Sin Apoyo Ni Aumento", 1, 0);
-    row.refrend = {
-      ...row.refrend,
-      snapshot_gross_amount: "1000",
-      snapshot_monto_apoyo: "0",
-      snapshot_temporary_increase_amount: null,
-      final_amount: "250",
-    };
-    const wrapper = mountTable([row]);
-    await wrapper.vm.$nextTick();
-    await wrapper.vm.$nextTick();
-
-    const rowEl = findRowByText(wrapper, "Sin Apoyo Ni Aumento");
-    const values = currencyValuesInRow(rowEl);
-    // With only "Beca" visible, the row's currency cells in order
-    // are [Beca, Base, Final] — both Beca and Base show
-    // the full gross amount (1000).
-    expect(values[0]).toBe(1000);
-    expect(values[1]).toBe(1000);
+    const text = findRowByText(wrapper, "Sin Desglose").text();
+    expect(text).not.toContain(fmt(700));
+    expect(text).not.toContain(fmt(300));
   });
 
   // sdd/scholarship-telmex-iu-split follow-up: "Beca" only
@@ -1062,7 +1121,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
   // type-blind subtraction produced a number matching no real field
   // (reported live: Pago IU 350, Apoyo 100 → showed "250", not derived from
   // anything real). "Beca" must show "—" for non-IU types instead.
-  it('shows "Beca" as "—" for a TELMEX_IU refrend (the derivation only applies to IU)', async () => {
+  it('shows "Beca" as "—" for a TELMEX_IU refrend (the API reports a zero beca)', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['monthly_amount']))
     const row = buildRow(50, 'Telmex IU Sin Monto Mensual', 1, 0)
     row.refrend = {
@@ -1072,6 +1131,10 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
       snapshot_monto_apoyo: '100',
       snapshot_temporary_increase_amount: null,
       final_amount: '350',
+      net_breakdown: netBreakdown({
+        pago_iu: '350.00',
+        nominal: { beca: '0.00', apoyo: '0.00', pago_iu: '350.00', temporary_increase: '0.00' },
+      }),
     }
     const wrapper = mountTable([row])
     await wrapper.vm.$nextTick()
@@ -1082,7 +1145,7 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     expect(rowEl.text()).not.toContain(fmt(250))
   })
 
-  it('shows "Pago IU" as gross - aumento temporal for a TELMEX_IU refrend', async () => {
+  it('shows the NET "Pago IU" with the nominal caption for a TELMEX_IU refrend', async () => {
     localStorage.setItem(OPTIONAL_COLUMNS_KEY, JSON.stringify(['iu_payment_amount']))
     const row = buildRow(51, 'Telmex IU Con Pago IU', 1, 0)
     row.refrend = {
@@ -1092,13 +1155,18 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
       snapshot_monto_apoyo: '100',
       snapshot_temporary_increase_amount: '200',
       final_amount: '550',
+      net_breakdown: netBreakdown({
+        pago_iu: '315.00',
+        nominal: { beca: '0.00', apoyo: '0.00', pago_iu: '350.00', temporary_increase: '200.00' },
+      }),
     }
     const wrapper = mountTable([row])
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
 
-    // 550 - 200 = 350
-    expect(wrapper.text()).toContain(fmt(350))
+    const text = findRowByText(wrapper, 'Telmex IU Con Pago IU').text()
+    expect(text).toContain(fmt(315))
+    expect(text).toContain(`Nominal ${fmt(350)}`)
   })
 
   it('shows both "Beca" and "Pago IU" as "—" for a pure TELMEX refrend', async () => {
@@ -1171,6 +1239,13 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
       snapshot_temporary_increase_amount: "200",
       snapshot_temporary_increase_reason: "Ajuste",
       final_amount: "999",
+      // No discount: net == nominal, so the cells keep adding up to Base.
+      net_breakdown: netBreakdown({
+        beca: "700.00",
+        apoyo: "300.00",
+        temporary_increase: "200.00",
+        nominal: { beca: "700.00", apoyo: "300.00", pago_iu: "0.00", temporary_increase: "200.00" },
+      }),
     };
     const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
