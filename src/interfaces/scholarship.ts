@@ -139,6 +139,25 @@ export interface ScholarshipLateConsumption {
   attendance_id: number
 }
 
+// All values are "0.00" decimal strings. Invariant (API): beca + apoyo +
+// pago_iu + temporary_increase + telmex_coverage + pending_and_advance ==
+// total == total_to_pay. `nominal` is the pre-discount value of each part.
+export interface NetBreakdown {
+  beca: string
+  apoyo: string
+  pago_iu: string
+  temporary_increase: string
+  telmex_coverage: string
+  pending_and_advance: string
+  total: string
+  nominal: {
+    beca: string
+    apoyo: string
+    pago_iu: string
+    temporary_increase: string
+  }
+}
+
 export interface ScholarshipRefrend {
   id: number
   user_id: number
@@ -182,6 +201,10 @@ export interface ScholarshipRefrend {
   final_amount: string
   amount_pending_from_previous: string
   total_to_pay: string
+  // sdd/descuento-beca-apoyo: NET split of the month's payable (after the
+  // academic/penalty discount). Optional because only bulk-table and
+  // GET /users/{id}/scholarship-refrends carry it — show/index do not.
+  net_breakdown?: NetBreakdown | null
   // Origin-refrend advance-payment indicator (sdd/pago-adelantado, design
   // D6). Lives on the refrend itself (a real column, `RecordAdvancePaymentAction`
   // writes it), unlike advance_paid/advance_paid_amount below which come

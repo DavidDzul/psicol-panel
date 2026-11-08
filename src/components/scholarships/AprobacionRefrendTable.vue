@@ -249,18 +249,15 @@
 
       <!-- Columnas opcionales (ocultas por default): desglose informativo
            que ya está incluido en "Base" — ver amountOrDash() por la
-           nulabilidad asimétrica entre estos campos, y monthlyAmount() por
-           cómo se deriva "Beca" sin un campo de backend propio. -->
+           nulabilidad asimétrica entre estos campos. Beca / Apoyo / Pago IU
+           muestran el monto NETO que calcula la API (net_breakdown) y el
+           nominal como leyenda secundaria. -->
       <template #item.monthly_amount="{ item }">
-        <span class="text-caption text-medium-emphasis">{{
-          amountOrDash(monthlyAmount(item.refrend))
-        }}</span>
+        <NetAmountDisplay :cell="netAmountCell(item.refrend.net_breakdown, 'beca')" />
       </template>
 
       <template #item.iu_payment_amount="{ item }">
-        <span class="text-caption text-medium-emphasis">{{
-          amountOrDash(iuPaymentAmount(item.refrend))
-        }}</span>
+        <NetAmountDisplay :cell="netAmountCell(item.refrend.net_breakdown, 'pago_iu')" />
       </template>
 
       <template #item.telmex_covered_amount="{ item }">
@@ -270,13 +267,22 @@
       </template>
 
       <template #item.snapshot_monto_apoyo="{ item }">
-        <span class="text-caption text-medium-emphasis">{{
-          amountOrDash(item.refrend.snapshot_monto_apoyo)
-        }}</span>
+        <NetAmountDisplay :cell="netAmountCell(item.refrend.net_breakdown, 'apoyo')" />
       </template>
 
       <template #item.snapshot_temporary_increase_amount="{ item }">
-        <TemporaryIncreaseChip :row="item" />
+        <div class="d-flex flex-column">
+          <TemporaryIncreaseChip
+            :row="item"
+            :net-amount="netAmountCell(item.refrend.net_breakdown, 'aumento').net"
+          />
+          <span
+            v-if="netAmountCell(item.refrend.net_breakdown, 'aumento').nominal !== null"
+            class="text-caption text-disabled"
+          >
+            Nominal {{ fmt(netAmountCell(item.refrend.net_breakdown, "aumento").nominal as string) }}
+          </span>
+        </div>
       </template>
 
       <template #item.base_amount="{ item }">
@@ -563,6 +569,8 @@ import PendingWithholdingChip from "@/components/scholarships/PendingWithholding
 import AdvancePaymentChip from "@/components/scholarships/AdvancePaymentChip.vue";
 import TemporaryIncreaseChip from "@/components/scholarships/TemporaryIncreaseChip.vue";
 import TelmexCoverageChip from "@/components/scholarships/TelmexCoverageChip.vue";
+import NetAmountDisplay from "@/components/scholarships/NetAmountDisplay.vue";
+import { netAmountCell } from "@/utils/netAmountCell";
 import AdvancePaymentRegisteredChip from "@/components/scholarships/AdvancePaymentRegisteredChip.vue";
 import AdvanceDivergenceReasonDialog from "@/components/scholarships/AdvanceDivergenceReasonDialog.vue";
 import AdvanceOverpaymentChip from "@/components/scholarships/AdvanceOverpaymentChip.vue";
@@ -832,43 +840,10 @@ const headers = computed(() => [
 const amountOrDash = (value: string | null): string =>
   value !== null && Number(value) > 0 ? fmt(value) : "—";
 
-// Derived "Beca" — IU ONLY (sdd/scholarship-telmex-iu-split
-// follow-up). Before that change, snapshot_gross_amount always composed as
-// monthly_amount + monto_apoyo + increase, so subtracting the other two
-// components out of gross reconstructed the exact monthly base for every
-// refrend. That composition is now type-conditional (design D2): for
-// TELMEX_IU, gross = iu_payment_amount + increase, and monto_apoyo is
-// Telmex-covered bookkeeping that was never part of gross — subtracting it
-// here would produce a number that matches no real field. So this column is
-// IU-only; TELMEX_IU's payable base has its own column (see
-// iuPaymentAmount() below), and TELMEX has no such concept at all (its gross
-// is the temporary increase alone, sdd/scholarship-telmex-iu-split design D2).
-//
-// Edge case: older/incomplete refrends without a frozen snapshot_gross_amount
-// fall back to base_amount in the "Base" cell (see #item.base_amount below),
-// but there is nothing to derive Beca from in that case — it renders
-// "—" rather than a value that could silently disagree with "Base".
-const monthlyAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
-  if (refrend.snapshot_scholarship_type !== "IU") return null;
-  if (refrend.snapshot_gross_amount === null) return null;
-  const gross = Number(refrend.snapshot_gross_amount);
-  const apoyo = Number(refrend.snapshot_monto_apoyo ?? 0);
-  const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
-  return String(gross - apoyo - increase);
-};
-
-// Derived "Pago IU" — TELMEX_IU ONLY. gross = iu_payment_amount + increase
-// for this type (design D2), so subtracting the increase back out
-// reconstructs the exact per-becario IU complement without a dedicated
-// snapshot column, same reconstruction principle as monthlyAmount() above,
-// just for the one component TELMEX_IU's gross is actually built from.
-const iuPaymentAmount = (refrend: BulkRefrendRow["refrend"]): string | null => {
-  if (refrend.snapshot_scholarship_type !== "TELMEX_IU") return null;
-  if (refrend.snapshot_gross_amount === null) return null;
-  const gross = Number(refrend.snapshot_gross_amount);
-  const increase = Number(refrend.snapshot_temporary_increase_amount ?? 0);
-  return String(gross - increase);
-};
+// "Beca" / "Apoyo" / "Pago IU" are NOT derived here anymore
+// (sdd/descuento-beca-apoyo): the API returns them already net of the
+// academic/penalty discount in `refrend.net_breakdown`, and the cells read
+// them through netAmountCell(). Rows without a breakdown render "—".
 
 // Derived "Cob. Telmex" — gated on snapshot_telmex_coverage_id, NOT on
 // snapshot_telmex_covered_amount alone (sdd/telmex-cobertura-iu PR6, same

@@ -24,6 +24,6 @@ import { computed } from "vue";
 import { temporaryIncreaseChip } from "@/composables/useRefrendTableDisplay";
 import type { BulkRefrendRow } from "@/interfaces/scholarship";
 
-const props = defineProps<{ row: BulkRefrendRow }>();
-const chip = computed(() => temporaryIncreaseChip(props.row));
+const props = defineProps<{ row: BulkRefrendRow; netAmount?: string | null }>();
+const chip = computed(() => temporaryIncreaseChip(props.row, props.netAmount));
 </script>

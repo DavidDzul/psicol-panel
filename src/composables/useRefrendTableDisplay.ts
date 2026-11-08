@@ -425,8 +425,14 @@ export const advanceOverpaymentChip = (
 
 export const temporaryIncreaseChip = (
   row: BulkRefrendRow,
+  // Optional NET override (net_breakdown.temporary_increase). `undefined`
+  // keeps the legacy nominal snapshot; `null` means "no net available".
+  netAmount?: string | null,
 ): { label: string; tooltip: string } | null => {
-  const amountRaw = row.refrend.snapshot_temporary_increase_amount;
+  const amountRaw =
+    netAmount === undefined
+      ? row.refrend.snapshot_temporary_increase_amount
+      : netAmount;
   const raw = Number(amountRaw ?? 0);
   if (!Number.isFinite(raw) || raw <= 0) return null;
   const amount = fmt(amountRaw as string);

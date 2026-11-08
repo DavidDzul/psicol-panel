@@ -6,7 +6,7 @@
       <v-list-item
         v-for="refrend in items"
         :key="refrend.id"
-        :subtitle="`${baseAmountLabel(refrend.snapshot_scholarship_type)}: ${fmt(refrend.base_amount)} · Descuento: ${refrend.discount_percentage}% · Final: ${fmt(refrend.final_amount)}`"
+        :subtitle="subtitle(refrend)"
       >
         <template #title>
           <span class="text-body-2 font-weight-medium">{{ monthLabel(refrend) }}</span>
@@ -58,6 +58,22 @@ const months = [
 
 const monthLabel = (r: ScholarshipRefrend): string =>
   `${months[r.period_month - 1]} ${r.period_year}`;
+
+// sdd/descuento-beca-apoyo: show the NET Beca (Pago IU for TELMEX_IU) and
+// Apoyo computed by the API. Refrends without net_breakdown fall back to the
+// nominal base_amount so the list never renders blank amounts.
+const subtitle = (r: ScholarshipRefrend): string => {
+  const label = baseAmountLabel(r.snapshot_scholarship_type);
+  const nb = r.net_breakdown;
+  const component = r.snapshot_scholarship_type === "TELMEX_IU" ? "pago_iu" : "beca";
+  const parts = [`${label}: ${fmt(nb ? nb[component] : r.base_amount)}`];
+  if (nb && Number(nb.nominal.apoyo) > 0) parts.push(`Apoyo: ${fmt(nb.apoyo)}`);
+  parts.push(
+    `Descuento: ${r.discount_percentage}%`,
+    `Final: ${fmt(r.final_amount)}`,
+  );
+  return parts.join(" · ");
+};
 
 const fmt = (v: string | number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(v));
