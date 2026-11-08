@@ -51,6 +51,14 @@ describe("netAmountCell", () => {
     expect(netAmountCell(nb, "beca")).toEqual({ net: "0.00", nominal: "1800.00" });
   });
 
+  it("maps the aumento component to temporary_increase", () => {
+    const nb = breakdown({
+      temporary_increase: "483.33",
+      nominal: { beca: "0.00", apoyo: "0.00", pago_iu: "0.00", temporary_increase: "500.00" },
+    });
+    expect(netAmountCell(nb, "aumento")).toEqual({ net: "483.33", nominal: "500.00" });
+  });
+
   it("returns nulls when the breakdown is absent", () => {
     expect(netAmountCell(undefined, "beca")).toEqual({ net: null, nominal: null });
     expect(netAmountCell(null, "apoyo")).toEqual({ net: null, nominal: null });

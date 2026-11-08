@@ -1,6 +1,6 @@
 import type { NetBreakdown } from "@/interfaces/scholarship";
 
-export type NetComponent = "beca" | "apoyo" | "pago_iu";
+export type NetComponent = "beca" | "apoyo" | "pago_iu" | "aumento";
 
 export interface NetAmountCell {
   /** Net amount to show as the primary value; null renders as "—". */
@@ -22,8 +22,9 @@ export function netAmountCell(
   component: NetComponent,
 ): NetAmountCell {
   if (!breakdown) return EMPTY;
-  const net = breakdown[component];
-  const nominal = breakdown.nominal[component];
+  const key = component === "aumento" ? "temporary_increase" : component;
+  const net = breakdown[key];
+  const nominal = breakdown.nominal[key];
   if (Number(net) === 0 && Number(nominal) === 0) return EMPTY;
   return {
     net,

@@ -973,6 +973,16 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
       ...row.refrend,
       snapshot_temporary_increase_amount: "150.50",
       snapshot_temporary_increase_reason: "Ajuste especial",
+      net_breakdown: {
+        beca: "0.00",
+        apoyo: "0.00",
+        pago_iu: "0.00",
+        temporary_increase: "150.50",
+        telmex_coverage: "0.00",
+        pending_and_advance: "0.00",
+        total: "150.50",
+        nominal: { beca: "0.00", apoyo: "0.00", pago_iu: "0.00", temporary_increase: "150.50" },
+      },
     };
     const wrapper = mountTable([row]);
     await wrapper.vm.$nextTick();
@@ -1071,6 +1081,45 @@ describe("AprobacionRefrendTable — optional columns (Apoyo / Aumento temporal)
     const text = findRowByText(wrapper, "Beca Sin Descuento").text();
     expect(text).toContain(fmt(1000));
     expect(text).not.toContain("Nominal");
+  });
+
+  // verify-warning fix: Aumento must show the NET increase (spec S3.1:
+  // beca 2000 / apoyo 500 / increase 500 / fixed $100 => 1933.33 / 483.34 / 483.33).
+  it('shows the NET "Aumento" from net_breakdown with the nominal as a caption', async () => {
+    const row = buildRow(60, "Aumento Neto", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_temporary_increase_amount: "500",
+      snapshot_temporary_increase_reason: "Ajuste especial",
+      net_breakdown: netBreakdown({
+        beca: "1933.33",
+        apoyo: "483.34",
+        temporary_increase: "483.33",
+        nominal: { beca: "2000.00", apoyo: "500.00", pago_iu: "0.00", temporary_increase: "500.00" },
+      }),
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = findRowByText(wrapper, "Aumento Neto").text();
+    expect(text).toContain(fmt(483.33));
+    expect(text).toContain(`Nominal ${fmt(500)}`);
+  });
+
+  it('shows "—" for Aumento when the row carries no net_breakdown', async () => {
+    const row = buildRow(61, "Aumento Sin Desglose", 1, 0);
+    row.refrend = {
+      ...row.refrend,
+      snapshot_temporary_increase_amount: "500",
+      net_breakdown: undefined,
+    };
+    const wrapper = mountTable([row]);
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+
+    const text = findRowByText(wrapper, "Aumento Sin Desglose").text();
+    expect(text).not.toContain(fmt(500));
   });
 
   it('shows the NET "Apoyo" with the nominal as a caption', async () => {

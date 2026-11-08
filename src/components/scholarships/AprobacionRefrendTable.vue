@@ -271,7 +271,18 @@
       </template>
 
       <template #item.snapshot_temporary_increase_amount="{ item }">
-        <TemporaryIncreaseChip :row="item" />
+        <div class="d-flex flex-column">
+          <TemporaryIncreaseChip
+            :row="item"
+            :net-amount="netAmountCell(item.refrend.net_breakdown, 'aumento').net"
+          />
+          <span
+            v-if="netAmountCell(item.refrend.net_breakdown, 'aumento').nominal !== null"
+            class="text-caption text-disabled"
+          >
+            Nominal {{ fmt(netAmountCell(item.refrend.net_breakdown, "aumento").nominal as string) }}
+          </span>
+        </div>
       </template>
 
       <template #item.base_amount="{ item }">
