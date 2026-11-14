@@ -169,12 +169,13 @@ const class_end_time = computed(() => {
     : null;
 });
 
+// "" (not null) keeps the form string-typed; `required` still rejects it.
 watch(class_start_time, (val) => {
-  setFieldValue("class_start_time", val);
+  setFieldValue("class_start_time", val ?? "");
 });
 
 watch(class_end_time, (val) => {
-  setFieldValue("class_end_time", val);
+  setFieldValue("class_end_time", val ?? "");
 });
 // Inicializa valores al abrir modal
 watch(
@@ -182,12 +183,11 @@ watch(
   (value) => {
     if (value) {
       if (props.editItem) {
-        console.log(props.editItem);
         setValues({
           class_status: props.editItem.status,
-          class_start_time: props.editItem.check_in,
-          class_end_time: props.editItem.check_out,
-          class_observation: props.editItem.observations,
+          class_start_time: props.editItem.check_in ?? "",
+          class_end_time: props.editItem.check_out ?? "",
+          class_observation: props.editItem.observations ?? "",
         });
 
         if (props.editItem.check_in) {

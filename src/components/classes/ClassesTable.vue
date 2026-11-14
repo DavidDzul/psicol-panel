@@ -25,13 +25,6 @@
         </v-btn>
       </v-toolbar>
     </template>
-    <template #[`item.generation_active`]="{ item }">
-      <v-icon v-if="item.generation_active" color="success">mdi-check</v-icon>
-      <v-icon v-else color="error">mdi-close</v-icon>
-    </template>
-    <template #[`item.campus`]="{ item }">
-      {{ campusMap.get(item.campus).text }}
-    </template>
     <template #[`item.date`]="{ item }">
       {{ dayjs(item.date).format("DD-MM-YYYY") }}
     </template>
@@ -91,7 +84,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import dayjs from "dayjs";
-import { campusMap } from "@/constants";
 import type { ClassEntity } from "@/interfaces/class";
 
 interface Props {
