@@ -9,6 +9,10 @@ import { useGenerationsStore } from "@/stores/api/generationStore";
 import type { ClassEntity } from "@/interfaces/class";
 import type { Generation } from "@/interfaces/generation";
 import type { LinkInterface } from "@/interfaces/link.interface";
+import {
+  buildClassListParams,
+  buildYearOptions,
+} from "@/utils/classPeriodFilter";
 
 export const useClassPageStore = defineStore("classPage", () => {
   const { setLoading } = useAppStore();
@@ -39,6 +43,14 @@ export const useClassPageStore = defineStore("classPage", () => {
       href: "/clases",
     },
   ]);
+
+  const now = new Date();
+  const year = ref<number | null>(now.getFullYear());
+  // 0 = "Todos los meses"
+  const month = ref<number | null>(now.getMonth() + 1);
+  const yearOptions = computed<number[]>(() =>
+    buildYearOptions(new Date().getFullYear()),
+  );
 
   const createDialog = ref<boolean>(false);
   const editClass = ref<ClassEntity | undefined>(undefined);
@@ -135,12 +147,23 @@ export const useClassPageStore = defineStore("classPage", () => {
     });
   });
 
-  const searchData = async (form: unknown): Promise<void> => {
+  const searchData = async (form: {
+    campus: string;
+    generation_id: number;
+  }): Promise<void> => {
+    if (!form) return;
     loading.value = true;
-    if (form) {
-      await fetchClasses(form);
+    try {
+      await fetchClasses(
+        buildClassListParams({
+          ...form,
+          year: year.value,
+          month: month.value,
+        }),
+      );
+    } finally {
+      loading.value = false;
     }
-    loading.value = false;
   };
 
   return {
@@ -154,6 +177,9 @@ export const useClassPageStore = defineStore("classPage", () => {
     filteredCampus,
     reportModal,
     classTable,
+    year,
+    month,
+    yearOptions,
     onCreateClass,
     openCreateDialog,
     openUpdateDialog,

@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert";
 import type { User } from "@/interfaces/user";
 import type { ClassEntity, ClassAttendance } from "@/interfaces/class";
+import type { ClassListParams } from "@/utils/classPeriodFilter";
 import type {
   ClassListResponse,
   ClassDetailResponse,
@@ -24,7 +25,7 @@ export const useClassStore = defineStore("classStore", () => {
   const classDetail = ref<ClassEntity | null>(null);
   const usersByFilters = ref<User[] | null>(null);
 
-  const fetchClasses = async (form: unknown): Promise<ClassListResponse | undefined> => {
+  const fetchClasses = async (form: ClassListParams): Promise<ClassListResponse | undefined> => {
     try {
       const res = await axios.get<ClassListResponse>("api/admin/class", {
         params: form,
