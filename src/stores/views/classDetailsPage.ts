@@ -90,6 +90,8 @@ export const useClassDetailsPageStore = defineStore("classDetailsPage", () => {
   const users = computed<User[]>(() => usersByFilters.value ?? []);
 
   const openAssignDialog = (): void => {
+    // Drop eligible users cached from a previously viewed class.
+    usersByFilters.value = null;
     assignDialog.value = true;
   };
 

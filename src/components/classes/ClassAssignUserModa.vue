@@ -16,47 +16,19 @@
       </v-toolbar>
 
       <v-card-text>
-        <!-- Filtros -->
-        <v-row class="mb-4">
-          <v-col cols="12" md="4">
-            <v-select
-              clearable
-              :items="userCampus"
-              v-model="campus"
-              item-title="text"
-              item-value="value"
-              label="Sede"
-            />
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <v-select
-              clearable
-              :items="filteredGenerations"
-              v-model="generation_id"
-              item-title="generation_name"
-              item-value="id"
-              label="Generación"
-            />
-          </v-col>
-
-          <v-col cols="12" md="4" class="d-flex align-center">
-            <v-btn
-              density="comfortable"
-              color="grey"
-              prepend-icon="mdi-magnify"
-              @click="applyFilters"
-            >
-              Buscar
-            </v-btn>
-          </v-col>
-        </v-row>
+        <v-alert
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+          text="La asistencia nueva se registra como Falta; si no se registra entrada contará como falta injustificada en el refrendo."
+        />
 
         <!-- Tabla -->
         <v-data-table
           density="compact"
           :headers="headers"
-          :items="users"
+          :items="rows"
           class="elevation-0"
           :loading="loading"
           item-value="id"
@@ -70,11 +42,11 @@
                     <v-checkbox
                       :indeterminate="
                         selectedUsers.length > 0 &&
-                        selectedUsers.length < users.length
+                        selectedUsers.length < rows.length
                       "
                       :model-value="
-                        selectedUsers.length === users.length &&
-                        users.length > 0
+                        selectedUsers.length === rows.length &&
+                        rows.length > 0
                       "
                       @update:model-value="toggleAll"
                       :ripple="false"
@@ -94,9 +66,24 @@
           <template #[`item.id`]="{ item }">
             <v-checkbox
               :ripple="false"
+              :data-user-id="item.id"
+              :disabled="item.locked"
               :model-value="!!usersMap[item.id]"
               @update:model-value="toggleUser($event, item.id)"
             />
+          </template>
+
+          <template #[`item.last_name`]="{ item }">
+            {{ item.last_name }}
+            <v-chip
+              v-if="item.notEligible"
+              size="x-small"
+              color="warning"
+              label
+              class="ml-2"
+            >
+              No elegible
+            </v-chip>
           </template>
 
           <template #no-data>No hay usuarios disponibles</template>
@@ -119,18 +106,20 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import type { SelectOption } from "@/constants";
-import type { Generation } from "@/interfaces/generation";
 import type { User } from "@/interfaces/user";
-import type { AssignedUserId, AssignUsersFilter } from "@/interfaces/class";
+import type {
+  ClassAttendance,
+  ClassEntity,
+  AssignUsersFilter,
+} from "@/interfaces/class";
+import { mergeAssignableUsers } from "@/utils/mergeAssignableUsers";
 
 interface Props {
   modelValue: boolean
   loading: boolean
+  classData: ClassEntity | null
   users: User[]
-  assignedUserIds: AssignedUserId[]
-  userCampus: SelectOption[]
-  generations: Generation[]
+  attendances: ClassAttendance[]
 }
 
 interface Emits {
@@ -142,16 +131,13 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   loading: false,
+  classData: null,
   users: () => [],
-  assignedUserIds: () => [],
-  userCampus: () => [],
-  generations: () => [],
+  attendances: () => [],
 });
 
 const emit = defineEmits<Emits>();
 
-const generation_id = ref<number | null>(null);
-const campus = ref<string | null>(null);
 const usersMap = ref<Record<number, true>>({});
 
 const headers = [
@@ -160,21 +146,32 @@ const headers = [
   { title: "Apellidos", key: "last_name" },
 ];
 
-const filteredGenerations = computed<Generation[]>(() =>
-  props.generations.filter((g) => g.campus === campus.value)
-);
+const rows = computed(() => mergeAssignableUsers(props.users, props.attendances));
 
+// Existing attendees are selected by default so saving unchanged is a no-op.
 watch(
-  () => [props.modelValue, props.assignedUserIds] as const,
-  ([open, assigned]) => {
-    if (open && assigned.length) {
-      usersMap.value = Object.assign(
-        {},
-        ...assigned.map((a) => ({ [Number(a.user_id)]: true as const }))
+  () => [props.modelValue, props.attendances] as const,
+  ([open, attendances]) => {
+    if (open) {
+      usersMap.value = Object.fromEntries(
+        attendances.map((a) => [a.user.id, true as const]),
       );
-    } else if (!open) {
+    } else {
       usersMap.value = {};
     }
+  },
+  { immediate: true }
+);
+
+// Ask the container for the eligible users of the class each time the modal opens.
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (!open || !props.classData) return;
+    emit("findUsers", {
+      campus: props.classData.campus ?? null,
+      generation_id: props.classData.generation_id ?? null,
+    });
   },
   { immediate: true }
 );
@@ -183,16 +180,12 @@ const selectedUsers = computed<number[]>(() => Object.keys(usersMap.value).map(N
 
 const toggleAll = (checked: boolean | null): void => {
   if (checked) {
-    usersMap.value = Object.assign(
-      {},
-      ...props.users.map((u) => ({ [u.id]: true as const }))
-    );
+    usersMap.value = Object.fromEntries(rows.value.map((r) => [r.id, true as const]));
   } else {
-    const clone: Record<number, true> = { ...usersMap.value };
-    props.users.forEach((u) => {
-      delete clone[u.id];
-    });
-    usersMap.value = clone;
+    // Locked rows (already checked in) cannot be unassigned.
+    usersMap.value = Object.fromEntries(
+      rows.value.filter((r) => r.locked && usersMap.value[r.id]).map((r) => [r.id, true as const]),
+    );
   }
 };
 
@@ -206,13 +199,6 @@ const toggleUser = (checked: boolean | null, id: number): void => {
 };
 
 const close = (): void => emit("update:modelValue", false);
-
-const applyFilters = (): void => {
-  emit("findUsers", {
-    campus: campus.value,
-    generation_id: generation_id.value,
-  });
-};
 
 const save = (): void => {
   emit("submit", selectedUsers.value);

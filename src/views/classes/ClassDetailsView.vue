@@ -13,10 +13,9 @@
       />
       <ClassAssignUserModa
         v-model="assignDialog"
-        :user-campus="filteredCampus"
-        :generations="generations"
+        :class-data="classDetail"
         :users="users"
-        :assigned-user-ids="attendances"
+        :attendances="attendances"
         @findUsers="searchUsers"
         @submit="onAssignUsersToClass"
       />
@@ -47,8 +46,6 @@ const {
   classDetail,
   attendances,
   assignDialog,
-  filteredCampus,
-  generations,
   users,
   updateDialog,
   editItem,
