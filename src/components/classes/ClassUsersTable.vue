@@ -56,12 +56,12 @@
 
     <template #item.status="{ item }">
       <v-chip
-        :color="attendanceStatusMap[item.status]?.color || 'grey'"
+        :color="getAttendanceStatusInfo(item.status)?.color || 'grey'"
         text-color="white"
         size="small"
         label
       >
-        {{ attendanceStatusMap[item.status]?.label || item.status }}
+        {{ getAttendanceStatusInfo(item.status)?.label || item.status }}
       </v-chip>
     </template>
     <template #item.check_in="{ item }">
@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { attendanceStatusMap } from "@/constants";
+import { getAttendanceStatusInfo } from "@/utils/attendanceStatus";
 import dayjs from "dayjs";
 import type { ClassEntity, ClassAttendance } from "@/interfaces/class";
 

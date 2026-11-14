@@ -10,9 +10,9 @@ interface NumberOption {
   text: string
 }
 
-type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'JUSTIFIED_LATE' | 'JUSTIFIED_ABSENCE' | 'LATE'
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'JUSTIFIED_LATE' | 'JUSTIFIED_ABSENCE' | 'LATE'
 
-interface AttendanceStatusInfo {
+export interface AttendanceStatusInfo {
   label: string
   color: string
 }
