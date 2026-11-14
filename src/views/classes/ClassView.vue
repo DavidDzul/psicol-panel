@@ -1,7 +1,7 @@
 <template>
   <BreadCrumbs :items="links" />
   <v-row>
-    <v-col cols="12" md="4">
+    <v-col cols="12" md="3">
       <v-select
         clearable
         :items="filteredCampus"
@@ -14,7 +14,7 @@
       />
     </v-col>
 
-    <v-col cols="12" md="4">
+    <v-col cols="12" md="3">
       <v-select
         clearable
         :items="filteredGenerations"
@@ -26,13 +26,33 @@
         prepend-icon="mdi-account-group"
       />
     </v-col>
-    <v-col cols="12" md="2" class="d-flex align-center pt-md-0 pb-3">
+    <v-col cols="6" md="2">
+      <v-select
+        :items="yearOptions"
+        v-model="year"
+        label="Año"
+        density="compact"
+        prepend-icon="mdi-calendar"
+      />
+    </v-col>
+
+    <v-col cols="6" md="2">
+      <v-select
+        :items="monthOptions"
+        v-model="month"
+        item-title="title"
+        item-value="value"
+        label="Mes"
+        density="compact"
+      />
+    </v-col>
+    <v-col cols="12" md="1" class="d-flex align-center pt-md-0 pb-3">
       <v-btn color="grey" block @click="search">
         <v-icon>mdi-file-search</v-icon> BUSCAR
       </v-btn>
     </v-col>
 
-    <v-col cols="12" md="2" class="d-flex align-center pt-md-0 pb-3">
+    <v-col cols="12" md="1" class="d-flex align-center pt-md-0 pb-3">
       <v-btn color="warning" block @click="openReportModal">
         <v-icon start>mdi-file-download</v-icon>
         REPORTE
@@ -91,6 +111,8 @@ import ClassesTable from "@/components/classes/ClassesTable.vue";
 import ClassCreateDialog from "@/components/classes/ClassCreateDialog.vue";
 import ClassUpdateDialog from "@/components/classes/ClassUpdateDialog.vue";
 import ReportSemesterModal from "@/components/classes/ReportSemesterModal.vue";
+import { monthBirth } from "@/constants";
+import { ALL_MONTHS } from "@/utils/classPeriodFilter";
 
 const {
   links,
@@ -102,6 +124,9 @@ const {
   filteredCampus,
   reportModal,
   classTable,
+  year,
+  month,
+  yearOptions,
 } = storeToRefs(useClassPageStore());
 const {
   openCreateDialog,
@@ -119,6 +144,11 @@ const confirmationDialog = ref();
 const campus = ref(null);
 const generation_id = ref(null);
 
+const monthOptions = [
+  { title: "Todos los meses", value: ALL_MONTHS },
+  ...monthBirth.map((m) => ({ title: m.text, value: m.value })),
+];
+
 const filteredGenerations = computed(() =>
   generations.value.filter((g) => g.campus === campus.value),
 );
@@ -132,6 +162,9 @@ watch(
   },
   { immediate: true },
 );
+
+// Re-run the search when the period changes (no-op until campus + generation are set).
+watch([year, month], () => search());
 
 watch(campus, (newCampusValue, oldCampusValue) => {
   if (newCampusValue !== oldCampusValue) {
