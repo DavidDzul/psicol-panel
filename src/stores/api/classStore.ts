@@ -18,13 +18,16 @@ import type {
 
 interface ApiErrorBody {
   message?: string;
-  errors?: { date?: string[] };
+  errors?: Record<string, string[] | undefined>;
 }
 
-// Server copy wins (USERS_NOT_ELIGIBLE_FOR_CLASS, duplicate date 422); generic text otherwise.
+// Field error first: Laravel 8 ValidationException always sends the generic English
+// `message` ("The given data was invalid."), the real copy lives in `errors`.
+// Then `message` (USERS_NOT_ELIGIBLE_FOR_CLASS has no `errors`), then the fallback.
 const resolveErrorMessage = (error: unknown, fallback: string): string => {
   const body = (error as { response?: { data?: ApiErrorBody } })?.response?.data;
-  return body?.message || body?.errors?.date?.[0] || fallback;
+  const firstFieldError = Object.values(body?.errors ?? {}).find((messages) => messages?.length)?.[0];
+  return firstFieldError || body?.message || fallback;
 };
 
 export const useClassStore = defineStore("classStore", () => {

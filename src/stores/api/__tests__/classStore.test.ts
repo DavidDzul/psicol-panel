@@ -38,10 +38,18 @@ describe("classStore error alerts", () => {
     });
   });
 
-  it("prefers message over errors.date[0] when both exist", async () => {
+  // Laravel 8 ValidationException always sends the generic English `message`;
+  // the field error carries the real (Spanish) copy, so it must win.
+  it("prefers the field error over Laravel's generic message (real 422 body)", async () => {
     rejectWith({ message: "The given data was invalid.", errors: { date: ["Ya existe una clase para esa sede, generación y fecha."] } });
     await expect(useClassStore().createClass({})).rejects.toBeTruthy();
-    expect(showAlert.mock.calls[0][0].title).toBe("The given data was invalid.");
+    expect(showAlert.mock.calls[0][0].title).toBe("Ya existe una clase para esa sede, generación y fecha.");
+  });
+
+  it("uses the first error of any field, not only date", async () => {
+    rejectWith({ message: "The given data was invalid.", errors: { end_time: ["La hora de fin debe ser posterior al inicio."] } });
+    await expect(useClassStore().createClass({})).rejects.toBeTruthy();
+    expect(showAlert.mock.calls[0][0].title).toBe("La hora de fin debe ser posterior al inicio.");
   });
 
   it("falls back to the generic copy when the error has no response", async () => {
