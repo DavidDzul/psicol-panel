@@ -26,7 +26,7 @@
         prepend-icon="mdi-account-group"
       />
     </v-col>
-    <v-col cols="6" md="2">
+    <v-col cols="6" md="3">
       <v-select
         :items="yearOptions"
         v-model="year"
@@ -36,7 +36,7 @@
       />
     </v-col>
 
-    <v-col cols="6" md="2">
+    <v-col cols="6" md="3">
       <v-select
         :items="monthOptions"
         v-model="month"
@@ -46,14 +46,14 @@
         density="compact"
       />
     </v-col>
-    <v-col cols="12" md="1" class="d-flex align-center pt-md-0 pb-3">
-      <v-btn color="grey" block @click="search">
-        <v-icon>mdi-file-search</v-icon> BUSCAR
+  </v-row>
+  <v-row class="mt-0">
+    <v-col cols="12" class="d-flex flex-wrap justify-end ga-2 pt-0">
+      <v-btn color="grey" @click="search">
+        <v-icon start>mdi-file-search</v-icon>
+        BUSCAR
       </v-btn>
-    </v-col>
-
-    <v-col cols="12" md="1" class="d-flex align-center pt-md-0 pb-3">
-      <v-btn color="warning" block @click="openReportModal">
+      <v-btn color="warning" @click="openReportModal">
         <v-icon start>mdi-file-download</v-icon>
         REPORTE
       </v-btn>
