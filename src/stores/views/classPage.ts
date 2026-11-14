@@ -78,13 +78,16 @@ export const useClassPageStore = defineStore("classPage", () => {
 
   const onCreateClass = async (form: unknown): Promise<void> => {
     loading.value = true;
-    if (form) {
-      const res = await createClass(form);
-      if (res) {
-        createDialog.value = false;
+    try {
+      if (form) {
+        const res = await createClass(form);
+        if (res) {
+          createDialog.value = false;
+        }
       }
+    } finally {
+      loading.value = false;
     }
-    loading.value = false;
   };
 
   const onUpdateClass = async (form: unknown): Promise<void> => {

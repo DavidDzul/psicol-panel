@@ -16,6 +16,17 @@ import type {
   AttendanceOperationResponse,
 } from "@/interfaces/api";
 
+interface ApiErrorBody {
+  message?: string;
+  errors?: { date?: string[] };
+}
+
+// Server copy wins (USERS_NOT_ELIGIBLE_FOR_CLASS, duplicate date 422); generic text otherwise.
+const resolveErrorMessage = (error: unknown, fallback: string): string => {
+  const body = (error as { response?: { data?: ApiErrorBody } })?.response?.data;
+  return body?.message || body?.errors?.date?.[0] || fallback;
+};
+
 export const useClassStore = defineStore("classStore", () => {
   const router = useRouter();
   const { showAlert } = useAlertStore();
@@ -93,7 +104,7 @@ export const useClassStore = defineStore("classStore", () => {
     } catch (error: any) {
       console.error(error);
       showAlert({
-        title: "Error al guardar la información, intente nuevamente.",
+        title: resolveErrorMessage(error, "Error al guardar la información, intente nuevamente."),
         status: "error",
       });
       throw error;
@@ -192,7 +203,7 @@ export const useClassStore = defineStore("classStore", () => {
     } catch (error: any) {
       console.error(error);
       showAlert({
-        title: "Error al guardar la información, intente nuevamente.",
+        title: resolveErrorMessage(error, "Error al guardar la información, intente nuevamente."),
         status: "error",
       });
       throw error;
