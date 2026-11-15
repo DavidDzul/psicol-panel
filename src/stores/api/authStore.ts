@@ -27,6 +27,8 @@ export const useAuthStore = defineStore("authStore", () => {
   const userProfile = ref<UserProfile>();
   const openUserProfileDialog = ref<boolean>(false);
   const permissions = ref<string[]>([]);
+  // True once /permissions answered, so route guards can tell "not loaded yet" from "has none".
+  const permissionsLoaded = ref<boolean>(false);
   const canViewAllCampuses = ref<boolean>(false);
 
   const openUserDialog = (): void => {
@@ -110,6 +112,7 @@ export const useAuthStore = defineStore("authStore", () => {
       );
 
       permissions.value = response.data.permissions;
+      permissionsLoaded.value = true;
       // The server is the source of truth; role check only when the key is absent (older API).
       canViewAllCampuses.value =
         response.data.can_view_all_campuses ?? hasGlobalCampusRole();
@@ -256,6 +259,7 @@ export const useAuthStore = defineStore("authStore", () => {
     openUserProfileDialog,
     // PERMISSIONS
     permissions,
+    permissionsLoaded,
     readUsers,
     createUsers,
     editUsers,
