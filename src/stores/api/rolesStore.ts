@@ -11,7 +11,6 @@ export const useRolesStore = defineStore("rolesStore", () => {
   const { showAlert } = useAlertStore();
 
   const resRoles = ref<Map<number, Role>>(new Map());
-  const resRolesAdmin = ref<Map<number, Role>>(new Map());
   const resPermissions = ref<Map<number, Permission>>(new Map());
 
   const fetchRoles = async (): Promise<RolesResponse | undefined> => {
@@ -21,19 +20,6 @@ export const useRolesStore = defineStore("rolesStore", () => {
         headers: { accept: "application/json" },
       });
       resRoles.value = new Map(res.data.roles.map((m) => [m.id, m]));
-      return res.data;
-    } catch (error: any) {
-      console.error("Error al obtener roles:", error);
-    }
-  };
-
-  const fetchAdminRoles = async (): Promise<RolesResponse | undefined> => {
-    try {
-      const res = await axios.get<RolesResponse>("api/admin/roles", {
-        params: { type: "ADMIN" },
-        headers: { accept: "application/json" },
-      });
-      resRolesAdmin.value = new Map(res.data.roles.map((m) => [m.id, m]));
       return res.data;
     } catch (error: any) {
       console.error("Error al obtener roles:", error);
@@ -81,10 +67,8 @@ export const useRolesStore = defineStore("rolesStore", () => {
 
   return {
     resRoles,
-    resRolesAdmin,
     resPermissions,
     fetchRoles,
-    fetchAdminRoles,
     fetchPermissions,
     updateRole,
   };
