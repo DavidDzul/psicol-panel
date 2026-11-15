@@ -12,7 +12,9 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
   const { setLoading } = useAppStore();
 
   const {
-    filteredCampus,
+    userProfile,
+    canViewAllCampuses,
+    businessCampusOptions,
     readBusiness,
     createBusinessPermission,
     editBusiness,
@@ -48,6 +50,8 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
     },
   ]);
 
+  const ownCampus = computed<string | undefined>(() => userProfile.value?.campus);
+
   const business = computed<Business[]>(() => [...resBusiness.value.values()]);
 
   const openCreateDialog = (): void => {
@@ -78,7 +82,9 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
     business,
     createDialog,
     loadingCreate,
-    filteredCampus,
+    ownCampus,
+    canViewAllCampuses,
+    businessCampusOptions,
     readBusiness,
     createBusinessPermission,
     editBusiness,

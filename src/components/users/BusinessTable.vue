@@ -19,40 +19,20 @@
           label="Buscar"
           :clearable="true"
         ></v-text-field>
-        <v-menu min-width="300px" :close-on-content-click="false">
-          <template v-slot:activator="{ props }">
-            <v-tooltip location="top">
-              <template v-slot:activator="{ props: tooltip }">
-                <v-btn
-                  color="warning"
-                  v-bind="mergeProps(props, tooltip)"
-                  variant="text"
-                  icon="mdi-filter"
-                />
-              </template>
-              <span>Filtros</span>
-            </v-tooltip>
-          </template>
-
-          <v-card>
-            <v-card-title> <small>Seleccionar filtros</small> </v-card-title>
-            <v-divider></v-divider>
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" lg="12">
-                  <v-select
-                    clearable
-                    :items="userCampus"
-                    v-model="campus"
-                    item-title="text"
-                    item-value="value"
-                    label="Sede"
-                  ></v-select>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-menu>
+        <v-select
+          v-model="campus"
+          class="mr-3"
+          style="max-width: 220px"
+          :items="userCampus"
+          item-title="text"
+          item-value="value"
+          label="Sede"
+          placeholder="Todas las sedes"
+          density="compact"
+          hide-details
+          :clearable="!campusLocked"
+          :disabled="campusLocked"
+        ></v-select>
 
         <v-spacer></v-spacer>
 
@@ -113,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, mergeProps } from "vue";
+import { computed, ref, watch } from "vue";
 
 import { roleMap } from "@/constants";
 import type { SelectOption } from "@/constants";
@@ -126,6 +106,8 @@ interface Props {
   create: boolean;
   edit: boolean;
   userCampus: SelectOption[];
+  defaultCampus?: string;
+  campusLocked?: boolean;
 }
 
 interface Emits {
@@ -141,10 +123,25 @@ const props = withDefaults(defineProps<Props>(), {
   create: false,
   edit: false,
   userCampus: () => [],
+  defaultCampus: undefined,
+  campusLocked: false,
 });
 
 const search = ref<string>("");
 const campus = ref<string | null>(null);
+
+// Initialise the selector once, even when the user profile arrives after mount.
+// A locked selector only displays the own campus; the server already scoped the rows.
+let campusInitialised = false;
+watch(
+  () => props.defaultCampus,
+  (value) => {
+    if (campusInitialised || !value) return;
+    campusInitialised = true;
+    campus.value = value;
+  },
+  { immediate: true },
+);
 
 const emit = defineEmits<Emits>();
 
@@ -185,7 +182,8 @@ const headers = computed(() => [
 
 const filteredTable = computed(() => {
   return props.business.filter((map) => {
-    const campusMatch = campus.value ? map.campus === campus.value : true;
+    if (props.campusLocked || !campus.value) return true;
+    const campusMatch = map.campus === campus.value;
     return campusMatch;
   });
 });

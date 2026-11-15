@@ -10,14 +10,16 @@
         :read="readBusiness"
         :create="createBusinessPermission"
         :edit="editBusiness"
-        :user-campus="filteredCampus"
+        :user-campus="businessCampusOptions"
+        :default-campus="ownCampus"
+        :campus-locked="!canViewAllCampuses"
       />
     </v-col>
   </v-row>
 
   <BusinessCreateDialog
     v-model="createDialog"
-    :user-campus="filteredCampus"
+    :user-campus="businessCampusOptions"
     :loading="loadingCreate"
     @submit="onSaveBusiness"
   />
@@ -38,7 +40,9 @@ const {
   business,
   createDialog,
   loadingCreate,
-  filteredCampus,
+  ownCampus,
+  canViewAllCampuses,
+  businessCampusOptions,
   readBusiness,
   createBusinessPermission,
   editBusiness,
