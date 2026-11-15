@@ -27,6 +27,7 @@ export const useAuthStore = defineStore("authStore", () => {
   const userProfile = ref<UserProfile>();
   const openUserProfileDialog = ref<boolean>(false);
   const permissions = ref<string[]>([]);
+  const canViewAllCampuses = ref<boolean>(false);
 
   const openUserDialog = (): void => {
     openUserProfileDialog.value = true;
@@ -109,6 +110,9 @@ export const useAuthStore = defineStore("authStore", () => {
       );
 
       permissions.value = response.data.permissions;
+      // The server is the source of truth; role check only when the key is absent (older API).
+      canViewAllCampuses.value =
+        response.data.can_view_all_campuses ?? hasGlobalCampusRole();
       return permissions;
     } catch (error: unknown) {
       console.error("Error fetching user permissions:", error);
@@ -161,6 +165,17 @@ export const useAuthStore = defineStore("authStore", () => {
   const isRoot = computed<boolean>(() => {
     return userProfile.value?.roles.some((r) => r.name === "ROOT") ?? false;
   });
+
+  const hasGlobalCampusRole = (): boolean =>
+    userProfile.value?.roles.some(
+      (r) => r.name === "ROOT" || r.name === "ROOT_JOB",
+    ) ?? false;
+
+  const businessCampusOptions = computed<SelectOption[]>(() =>
+    canViewAllCampuses.value
+      ? campusArray
+      : campusArray.filter((c) => c.value === userProfile.value?.campus),
+  );
 
   const filteredCampus = computed<SelectOption[]>(() => {
     if (
@@ -236,6 +251,8 @@ export const useAuthStore = defineStore("authStore", () => {
     userProfile,
     userInitials,
     filteredCampus,
+    canViewAllCampuses,
+    businessCampusOptions,
     openUserProfileDialog,
     // PERMISSIONS
     permissions,

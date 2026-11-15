@@ -18,7 +18,7 @@ export interface UpdateUserResponse { updateUser: User; res: unknown; deactivati
 
 // Auth
 export interface LoginResponse { token: string }
-export interface PermissionsListResponse { permissions: string[] }
+export interface PermissionsListResponse { permissions: string[]; can_view_all_campuses?: boolean }
 export interface UpdateProfileResponse { user: User; res: unknown }
 
 // Graduates
