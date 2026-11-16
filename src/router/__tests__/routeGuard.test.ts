@@ -29,6 +29,7 @@ vi.mock("@/views/auth/LoginView.vue", () => stub);
 vi.mock("@/views/HomeView.vue", () => stub);
 vi.mock("@/views/NotFound.vue", () => stub);
 vi.mock("@/views/roles/RolesView.vue", () => stub);
+vi.mock("@/views/administrators/StaffAdministratorsView.vue", () => stub);
 vi.mock("@/views/users/BusinessDetailsView.vue", () => stub);
 vi.mock("@/views/classes/ClassDetailsView.vue", () => stub);
 
@@ -94,6 +95,23 @@ describe("route permission guard", () => {
 
     expect(await visit("/roles")).toBe("/roles");
     expect(await visit("/empresas/5")).toBe("/empresas/5");
+  });
+
+  describe("/administradores", () => {
+    it("redirects a non-ROOT user without PS_MANAGE_ADMINS", async () => {
+      await loggedIn("ROOT_JOB", ["PS_ROLES"]);
+      expect(await visit("/administradores")).toBe("/");
+    });
+
+    it("opens for ROOT even without the permission row", async () => {
+      await loggedIn("ROOT", []);
+      expect(await visit("/administradores")).toBe("/administradores");
+    });
+
+    it("opens for a user holding PS_MANAGE_ADMINS", async () => {
+      await loggedIn("ROOT_JOB", ["PS_MANAGE_ADMINS"]);
+      expect(await visit("/administradores")).toBe("/administradores");
+    });
   });
 
   it.each([

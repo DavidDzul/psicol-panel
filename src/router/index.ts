@@ -171,6 +171,13 @@ const routes = [
           catchReload(import("@/views/classes/ClassDetailsView.vue")),
       },
       {
+        path: "/administradores",
+        name: "StaffAdministratorsView",
+        meta: { permission: "PS_MANAGE_ADMINS" },
+        component: () =>
+          catchReload(import("@/views/administrators/StaffAdministratorsView.vue")),
+      },
+      {
         path: "/avisos",
         name: "NoticesView",
         meta: { permission: "PS_NOTICES" },
