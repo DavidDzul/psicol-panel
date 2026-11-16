@@ -14,7 +14,14 @@
 
       <v-window v-model="tab" class="mt-4">
         <v-window-item value="administrators">
-          <p class="text-body-2">Próximamente: gestión de administradores.</p>
+          <v-alert v-if="adminsLoadFailed" type="error" variant="tonal" density="compact" class="mb-2">
+            No se pudieron cargar los administradores. Intenta nuevamente.
+          </v-alert>
+          <StaffAdministratorsTable
+            :administrators="administrators"
+            :loading="adminsLoading"
+            @create="openCreateAdministrator"
+          />
         </v-window-item>
         <v-window-item value="roles">
           <v-alert v-if="loadFailed" type="error" variant="tonal" density="compact" class="mb-2">
@@ -29,6 +36,14 @@
     </v-col>
   </v-row>
 
+  <CreateStaffAdministratorDialog
+    v-model="createAdminDialog"
+    :roles="assignableRoles"
+    :loading="creatingAdmin"
+    :server-error="createAdminError"
+    @submit="createAdministrator"
+  />
+  <StaffCredentialsDialog :credentials="credentials" @close="closeCredentials" />
   <CreateStaffRoleDialog v-model="createDialog" :server-error="createError" @submit="createRole" />
   <EditStaffRolePermissionsDialog
     v-model="editDialog"
@@ -49,9 +64,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import StaffRolesTable from "@/components/staff/StaffRolesTable.vue";
+import StaffAdministratorsTable from "@/components/staff/StaffAdministratorsTable.vue";
+import CreateStaffAdministratorDialog from "@/components/staff/CreateStaffAdministratorDialog.vue";
+import StaffCredentialsDialog from "@/components/staff/StaffCredentialsDialog.vue";
 import CreateStaffRoleDialog from "@/components/staff/CreateStaffRoleDialog.vue";
 import EditStaffRolePermissionsDialog from "@/components/staff/EditStaffRolePermissionsDialog.vue";
 import { useStaffRolesPage } from "@/composables/useStaffRolesPage";
+import { useStaffAdministratorsPage } from "@/composables/useStaffAdministratorsPage";
 
 const tab = ref<"administrators" | "roles">("administrators");
 
@@ -80,5 +99,23 @@ const {
   cancelConfirm,
 } = useStaffRolesPage();
 
-onMounted(load);
+const {
+  administrators,
+  assignableRoles,
+  loading: adminsLoading,
+  loadFailed: adminsLoadFailed,
+  createDialog: createAdminDialog,
+  createError: createAdminError,
+  creating: creatingAdmin,
+  credentials,
+  load: loadAdministrators,
+  openCreate: openCreateAdministrator,
+  createAdministrator,
+  closeCredentials,
+} = useStaffAdministratorsPage();
+
+onMounted(() => {
+  void load();
+  void loadAdministrators();
+});
 </script>

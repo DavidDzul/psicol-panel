@@ -37,7 +37,9 @@ describe("StaffAdministratorsView", () => {
       Promise.resolve({
         data: url.endsWith("/permissions")
           ? { res: true, modules: [] }
-          : { res: true, roles: [] },
+          : url.endsWith("staff-administrators")
+            ? { res: true, administrators: [] }
+            : { res: true, roles: [] },
       }),
     );
     wrapper = mount(StaffAdministratorsView, {
@@ -50,6 +52,7 @@ describe("StaffAdministratorsView", () => {
     expect(text).toContain("Administradores");
     expect(text).toContain("Roles y permisos");
     expect(text).toContain("vuelve a iniciar sesión");
+    expect(get).toHaveBeenCalledWith("api/admin/staff-administrators", expect.anything());
     expect(get).toHaveBeenCalledWith("api/admin/staff-roles", expect.anything());
     expect(get).toHaveBeenCalledWith("api/admin/staff-roles/permissions", expect.anything());
   });
