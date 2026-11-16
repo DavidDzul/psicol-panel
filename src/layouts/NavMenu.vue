@@ -1,9 +1,9 @@
 <template>
   <v-list density="compact" nav class="nav-list">
-    <template v-for="(item, i) in links" :key="i">
+    <template v-for="(item, i) in visibleLinks" :key="i">
       <!-- GROUP -->
       <v-list-group
-        v-if="item.group && (!item.key || can(item.key))"
+        v-if="item.group"
         :value="item.text"
       >
         <template #activator="{ props }">
@@ -17,7 +17,6 @@
 
         <template v-for="(subItem, j) in item.links" :key="j">
           <v-list-item
-            v-if="!subItem.key || can(subItem.key)"
             :to="subItem.link"
             :title="subItem.text"
             density="compact"
@@ -28,7 +27,7 @@
 
       <!-- SINGLE -->
       <v-list-item
-        v-else-if="!item.key || can(item.key)"
+        v-else
         :to="item.link"
         :title="item.text"
         :prepend-icon="item.icon"
@@ -41,10 +40,11 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/api/authStore";
+import { visibleNavItems } from "@/utils/navVisibility";
 
-const { permissions } = storeToRefs(useAuthStore());
+const { permissions, isRoot } = storeToRefs(useAuthStore());
 
 const links = ref([
   {
@@ -108,13 +108,15 @@ const links = ref([
       { text: "Roles", link: "/roles", key: "PS_ROLES" },
       { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
       { text: "Avisos", link: "/avisos", key: "PS_NOTICES" },
+      { text: "Administradores", link: "/administradores", key: "PS_MANAGE_ADMINS" },
     ],
   },
 ]);
 
-const can = (permission) => {
-  return !permission || permissions.value.includes(permission);
-};
+// ROOT sees every entry; everyone else is filtered by permission (see navVisibility).
+const visibleLinks = computed(() =>
+  visibleNavItems(links.value, permissions.value, isRoot.value),
+);
 </script>
 
 <style lang="scss" scoped>
