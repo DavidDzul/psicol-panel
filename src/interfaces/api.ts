@@ -8,6 +8,7 @@ import type { ClassEntity, ClassAttendance } from './class'
 import type { Generation } from './generation'
 import type { Notice } from './notice'
 import type { Role, Permission } from './role'
+import type { StaffRole, StaffPermissionModule, StaffAdministrator } from './staff'
 
 // Users
 export interface UsersResponse { users: User[] }
@@ -116,3 +117,11 @@ export interface AttendanceSummaryResponse { res: boolean; data: AttendanceSumma
 export interface SemesterGradesResponse { res: boolean; data: ScholarshipSemesterGrade[] }
 export interface SemesterGradeResponse { res: boolean; data: ScholarshipSemesterGrade }
 export interface AdvancePaymentResponse { data: ScholarshipAdvancePayment }
+
+// Staff administrators (PS_MANAGE_ADMINS)
+export interface StaffRolesResponse { res: boolean; roles: StaffRole[] }
+export interface StaffRoleResponse { res: boolean; role: StaffRole }
+export interface StaffPermissionsResponse { res: boolean; modules: StaffPermissionModule[] }
+export interface StaffAdministratorsResponse { res: boolean; administrators: StaffAdministrator[] }
+export interface StaffAdministratorResponse { res: boolean; administrator: StaffAdministrator }
+export interface StaffMessageResponse { res: boolean; msg: string }
