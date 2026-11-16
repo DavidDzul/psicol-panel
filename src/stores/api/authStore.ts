@@ -58,8 +58,11 @@ export const useAuthStore = defineStore("authStore", () => {
       await router.push({ path: "/" });
     } catch (error: unknown) {
       console.error("Error en login:", error);
+      const throttled = isAxiosError(error) && error.response?.status === 429;
       showAlert({
-        title: "Error al iniciar sesión, verifica tu usuario y/o contraseña.",
+        title: throttled
+          ? "Demasiados intentos. Espera un minuto e intenta de nuevo."
+          : "Error al iniciar sesión, verifica tu usuario y/o contraseña.",
         status: "error",
       });
     }
@@ -81,6 +84,25 @@ export const useAuthStore = defineStore("authStore", () => {
           status: "error",
         });
       });
+  };
+
+  // Called by the axios 401 interceptor: the server no longer accepts our token
+  // (expired, revoked or account deactivated). No-op when already signed out so
+  // concurrent 401s only redirect once.
+  const handleUnauthorized = (message?: string): void => {
+    if (!token.value && !localStorage.getItem("token")) return;
+    loggedUser.value = false;
+    userProfile.value = undefined;
+    permissions.value = [];
+    permissionsLoaded.value = false;
+    token.value = "";
+    localStorage.removeItem("token");
+    delete axios.defaults.headers.common["Authorization"];
+    showAlert({
+      title: message || "Tu sesión expiró. Inicia sesión nuevamente.",
+      status: "error",
+    });
+    void router.push("/auth/login");
   };
 
   const getProfile = async (authToken: string): Promise<void> => {
@@ -243,6 +265,7 @@ export const useAuthStore = defineStore("authStore", () => {
   return {
     login,
     logout,
+    handleUnauthorized,
     getProfile,
     openUserDialog,
     updateUserProfile,
