@@ -21,7 +21,16 @@
             :administrators="administrators"
             :loading="adminsLoading"
             @create="openCreateAdministrator"
-          />
+          >
+            <template #actions="{ administrator }">
+              <StaffAdministratorActions
+                :administrator="administrator"
+                @assign="openAssign(administrator)"
+                @reset="openReset(administrator)"
+                @toggle="askToggleActive(administrator)"
+              />
+            </template>
+          </StaffAdministratorsTable>
         </v-window-item>
         <v-window-item value="roles">
           <v-alert v-if="loadFailed" type="error" variant="tonal" density="compact" class="mb-2">
@@ -42,6 +51,27 @@
     :loading="creatingAdmin"
     :server-error="createAdminError"
     @submit="createAdministrator"
+  />
+  <AssignStaffRoleDialog
+    :target="assignTarget"
+    :roles="assignableRoles"
+    :loading="assigning"
+    :server-error="assignError"
+    @submit="assignRole"
+    @close="closeAssign"
+  />
+  <ResetStaffPasswordDialog
+    :target="resetTarget"
+    :loading="resetting"
+    :server-error="resetError"
+    @submit="resetPassword"
+    @close="closeReset"
+  />
+  <ConfirmStaffActiveDialog
+    :target="activeTarget"
+    :loading="togglingActive"
+    @confirm="confirmToggleActive"
+    @cancel="cancelToggleActive"
   />
   <StaffCredentialsDialog :credentials="credentials" @close="closeCredentials" />
   <CreateStaffRoleDialog v-model="createDialog" :server-error="createError" @submit="createRole" />
@@ -66,6 +96,10 @@ import { onMounted, ref } from "vue";
 import StaffRolesTable from "@/components/staff/StaffRolesTable.vue";
 import StaffAdministratorsTable from "@/components/staff/StaffAdministratorsTable.vue";
 import CreateStaffAdministratorDialog from "@/components/staff/CreateStaffAdministratorDialog.vue";
+import StaffAdministratorActions from "@/components/staff/StaffAdministratorActions.vue";
+import AssignStaffRoleDialog from "@/components/staff/AssignStaffRoleDialog.vue";
+import ResetStaffPasswordDialog from "@/components/staff/ResetStaffPasswordDialog.vue";
+import ConfirmStaffActiveDialog from "@/components/staff/ConfirmStaffActiveDialog.vue";
 import StaffCredentialsDialog from "@/components/staff/StaffCredentialsDialog.vue";
 import CreateStaffRoleDialog from "@/components/staff/CreateStaffRoleDialog.vue";
 import EditStaffRolePermissionsDialog from "@/components/staff/EditStaffRolePermissionsDialog.vue";
@@ -101,6 +135,23 @@ const {
 
 const {
   administrators,
+  assignTarget,
+  assignError,
+  assigning,
+  openAssign,
+  closeAssign,
+  assignRole,
+  resetTarget,
+  resetError,
+  resetting,
+  openReset,
+  closeReset,
+  resetPassword,
+  activeTarget,
+  togglingActive,
+  askToggleActive,
+  cancelToggleActive,
+  confirmToggleActive,
   assignableRoles,
   loading: adminsLoading,
   loadFailed: adminsLoadFailed,
