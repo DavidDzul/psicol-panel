@@ -61,6 +61,7 @@ const links = ref([
     links: [
       { text: "Checador", link: "/checador", key: "PS_CHECK" },
       { text: "Sesiones de F.", link: "/clases", key: "PS_CLASSES" },
+      { text: "Avisos", link: "/avisos", key: "PS_NOTICES" },
     ],
   },
   {
@@ -86,6 +87,8 @@ const links = ref([
         link: "/postulaciones",
         key: "PS_APPLICATION",
       },
+      { text: "Roles", link: "/roles", key: "PS_ROLES" },
+      { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
     ],
   },
   {
@@ -105,9 +108,6 @@ const links = ref([
     key: "PS_GROUP_CONFIG",
     links: [
       { text: "Generaciones", link: "/generaciones", key: "PS_GENERATIONS" },
-      { text: "Roles", link: "/roles", key: "PS_ROLES" },
-      { text: "Áreas e informes", link: "/datos", key: "PS_GRAPHICS" },
-      { text: "Avisos", link: "/avisos", key: "PS_NOTICES" },
       { text: "Administradores", link: "/administradores", key: "PS_MANAGE_ADMINS" },
     ],
   },
