@@ -72,12 +72,12 @@
               : '',
         }"
       >
-        {{ statusApplicationMap.get(item.status).text }}
+        {{ statusApplicationMap.get(item.status)?.text ?? item.status }}
       </p>
     </template>
     <template #[`item.rejected_reason`]="{ item }">
       <span v-if="item.rejected_reason !== 'OTHER'">
-        {{ rejectedReasonMap.get(item.rejected_reason).text }}
+        {{ rejectedReasonMap.get(item.rejected_reason ?? '')?.text ?? item.rejected_reason ?? '' }}
       </span>
       <span v-else> {{ item.rejected_other }} </span>
     </template>
@@ -126,6 +126,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import type { DataTableHeader } from "vuetify";
 import dayjs from "dayjs";
 
 import { statusApplicationMap, rejectedReasonMap } from "@/constants";
@@ -155,8 +156,8 @@ interface Emits {
 
 const emit = defineEmits<Emits>();
 
-const headers = computed(() => {
-  const baseHeaders = [
+const headers = computed<DataTableHeader[]>(() => {
+  const baseHeaders: DataTableHeader[] = [
     { title: "ID", key: "id" },
     { title: "Vacante", key: "vacant_id" },
     { title: "Usuario", key: "user_id" },

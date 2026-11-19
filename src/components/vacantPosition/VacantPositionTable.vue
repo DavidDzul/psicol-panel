@@ -85,7 +85,7 @@
       {{ rolesMap.get(item.name).text }}
     </template> -->
     <template #[`item.category`]="{ item }">
-      {{ vacantTypeMap.get(item.category).text }}
+      {{ vacantTypeMap.get(item.category)?.text ?? item.category }}
     </template>
     <template #[`item.status`]="{ item }">
       <v-icon v-if="item.status" color="success">mdi-check</v-icon>
@@ -157,6 +157,7 @@
 
 <script setup lang="ts">
 import { computed, ref, mergeProps } from "vue";
+import type { DataTableHeader } from "vuetify";
 import dayjs from "dayjs";
 
 import { vacantTypeMap } from "@/constants";
@@ -191,7 +192,7 @@ const emit = defineEmits<Emits>();
 
 const search = ref<string>("");
 
-const headers = computed(() => [
+const headers = computed<DataTableHeader[]>(() => [
   {
     title: "ID",
     key: "id",
@@ -221,11 +222,6 @@ const headers = computed(() => [
     key: "actions",
   },
 ]);
-
-const formattedHistory = (time: string): string => {
-  const date = dayjs(time);
-  return dayjs().to(date);
-};
 
 const showItem = (item: VacantPosition): void => {
   emit("show", item.id);

@@ -31,13 +31,13 @@
         {{ getAreaName(item.area_id) }}
     </template>
     <template #[`item.user_type`]="{ item }">
-      {{ userTypeMap.get(item.user_type).text }}
+      {{ userTypeMap.get(item.user_type)?.text ?? item.user_type }}
     </template>
     <template #[`item.campus`]="{ item }">
-      {{ campusMap.get(item.campus).text }}
+      {{ campusMap.get(item.campus)?.text ?? item.campus }}
     </template>
     <template #['item.job_type']="{ item }">
-        {{ jobTypeMap.get(item.job_type).text }}
+        {{ jobTypeMap.get(item.job_type)?.text ?? item.job_type }}
     </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">
@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { DataTableHeader } from "vuetify";
 import type { CandidateData, Area } from "@/interfaces/data";
 import { campusMap, userTypeMap, jobTypeMap } from "@/constants";
 
@@ -96,11 +97,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const search = ref<string>("");
-
-interface DataTableHeader {
-  title: string;
-  key: string;
-}
 
 const headers: DataTableHeader[] = [
   { title: "ID", key: "id" },
