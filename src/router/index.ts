@@ -32,7 +32,7 @@ const routes = [
     name: "AuthLayout",
     component: () => catchReload(import("@/layouts/AuthLayout.vue")),
     redirect: "auth/login",
-    beforeEnter: async (to) => {
+    beforeEnter: async () => {
       const authStore = useAuthStore();
       const { getProfile } = authStore;
       const { loggedUser } = storeToRefs(authStore);
@@ -45,7 +45,7 @@ const routes = [
         return "/";
       }
 
-      await getProfile(token, to);
+      await getProfile(token);
       return true;
     },
     children: [

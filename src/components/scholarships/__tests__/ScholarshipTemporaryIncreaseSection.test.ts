@@ -53,6 +53,10 @@ const baseProfile: ScholarshipProfile = {
   reticula_file_path: null,
   reticula_original_name: null,
   egreso_administrativo: null,
+  iu_payment_amount: null,
+  cycle_closed_period: null,
+  cycle_closure_reason: null,
+  config_set_at: null,
   created_at: "2026-01-01",
   updated_at: "2026-01-01",
 };

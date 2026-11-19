@@ -44,7 +44,8 @@ const formMenuStart = ref<boolean>(false);
 const fromDate = ref<string | null>(null);
 const textDate = ref<string>("");
 
-const getFormatDate = (date: string): void => {
+const getFormatDate = (date: string | null): void => {
+  if (!date) return;
   fromDate.value = date;
   formMenuStart.value = false;
   textDate.value = dayjs(fromDate.value).format("DD-MM-YYYY");

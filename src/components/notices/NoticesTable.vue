@@ -34,7 +34,7 @@
       <v-icon v-else color="error">mdi-close</v-icon>
     </template>
     <template #[`item.campus`]="{ item }">
-      {{ campusMap.get(item.campus).text }}
+      {{ campusMap.get(item.campus)?.text ?? item.campus }}
     </template>
     <template #[`item.actions`]="{ item }">
       <div style="width: 100%; text-align: right">

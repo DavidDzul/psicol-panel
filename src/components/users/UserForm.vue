@@ -5,18 +5,18 @@
       <v-col cols="12" md="8">
         <v-list density="comfortable">
           <v-list-item title="ID" :subtitle="user.id" />
-          <v-list-item title="Matrícula" :subtitle="user.enrollment" />
+          <v-list-item title="Matrícula" :subtitle="user.enrollment ?? undefined" />
           <v-list-item title="Nombre(s):" :subtitle="user.first_name" />
           <v-list-item title="Apellidos:" :subtitle="user.last_name" />
           <v-list-item title="Correo electrónico:" :subtitle="user.email" />
           <v-list-item title="Número de celular:" :subtitle="user.phone" />
           <v-list-item
             title="Tipo de usuario:"
-            :subtitle="becTypeMap.get(user.user_type).text"
+            :subtitle="becTypeMap.get(user.user_type)?.text ?? user.user_type"
           />
           <v-list-item
             title="Sede:"
-            :subtitle="campusMap.get(user.campus).text"
+            :subtitle="campusMap.get(user.campus)?.text ?? user.campus"
           />
           <v-list-item
             title="¿Acceso a la plataforma?"
