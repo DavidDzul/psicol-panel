@@ -36,6 +36,7 @@ export const businessPassword = () =>
 export const businessUpdatePassword = () =>
   yup
     .string()
+    .transform((curr, orig) => (orig === "" ? undefined : curr))
     .min(8, "La contraseña debe tener al menos 8 caracteres")
     .label("Contraseña")
 export const businessPhone = () =>

@@ -87,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import { omitEmptyPassword } from "@/utils/omitEmptyPassword";
 import { toTypedSchema } from "@vee-validate/yup";
 import { type FieldState, useForm } from "vee-validate";
 import { watch } from "vue";
@@ -187,7 +188,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", { ...values } as UserProfileForm);
+    emit("submit", omitEmptyPassword({ ...values } as UserProfileForm));
   }
 };
 </script>

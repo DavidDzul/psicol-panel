@@ -129,6 +129,7 @@
 </template>
 
 <script setup lang="ts">
+import { omitEmptyPassword } from "@/utils/omitEmptyPassword";
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
@@ -268,7 +269,7 @@ const deactivationConfirmation = ref<InstanceType<typeof ConfirmationDialog> | n
 
 const save = async () => {
   if (!meta.value.valid) return;
-  const form = { ...values } as UserUpdateForm;
+  const form = omitEmptyPassword({ ...values } as UserUpdateForm);
 
   // sdd/retenciones-pendientes S7: deactivating a becario cancels its pending
   // withholdings and advance payments — never do that without confirmation.

@@ -122,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+import { omitEmptyPassword } from "@/utils/omitEmptyPassword";
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
@@ -223,7 +224,7 @@ const close = () => {
 
 const save = () => {
   if (meta.value.valid) {
-    emit("submit", { ...values } as BusinessUpdateForm);
+    emit("submit", omitEmptyPassword({ ...values } as BusinessUpdateForm));
   }
 };
 </script>

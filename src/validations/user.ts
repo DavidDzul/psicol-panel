@@ -17,7 +17,13 @@ export const email = () =>
   yup.string().required("Campo requerido").label("Correo electrónico");
 export const password = () =>
   yup.string().required().min(6).label("Contraseña");
-export const updatePassword = () => yup.string().min(6).label("Contraseña");
+// A cleared field ("") means "keep the current password", same as never typed.
+export const updatePassword = () =>
+  yup
+    .string()
+    .transform((curr, orig) => (orig === "" ? undefined : curr))
+    .min(6)
+    .label("Contraseña");
 export const confirmation = () =>
   yup
     .string()

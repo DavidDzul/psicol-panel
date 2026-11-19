@@ -22,6 +22,9 @@ describe("business validators", () => {
     it("is optional", () => {
       expect(valid(v.businessUpdatePassword(), undefined)).toBe(true);
     });
+    it("treats a cleared field (empty string) as no value", () => {
+      expect(valid(v.businessUpdatePassword(), "")).toBe(true);
+    });
     it("rejects a 7-char password", () => {
       expect(valid(v.businessUpdatePassword(), "abc1234")).toBe(false);
     });
