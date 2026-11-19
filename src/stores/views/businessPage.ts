@@ -5,7 +5,7 @@ import { computed, onBeforeMount, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/api/authStore";
 
-import type { Business } from "@/interfaces/business";
+import type { Business, BusinessCreateForm } from "@/interfaces/business";
 import type { LinkInterface } from "@/interfaces/link.interface";
 
 export const useBusinessPageStore = defineStore("businessPage", () => {
@@ -62,7 +62,7 @@ export const useBusinessPageStore = defineStore("businessPage", () => {
     router.push("empresas/" + id);
   };
 
-  const onSaveBusiness = async (form: unknown): Promise<void> => {
+  const onSaveBusiness = async (form: BusinessCreateForm): Promise<void> => {
     loadingCreate.value = true;
     if (form) {
       try {

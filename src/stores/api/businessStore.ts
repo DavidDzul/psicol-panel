@@ -1,16 +1,48 @@
 import axios from "@/axiosConfig";
+import { isAxiosError } from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert";
-import type { Business, BusinessData, BusinessAgreement } from "@/interfaces/business";
+import type {
+  Business,
+  BusinessData,
+  BusinessAgreement,
+  BusinessCreateForm,
+  BusinessUpdateForm,
+  BusinessDataForm,
+  AgreementForm,
+} from "@/interfaces/business";
 import type {
   BusinessListResponse,
   GetBusinessResponse,
   GetBusinessDataResponse,
   GetBusinessAgreementsResponse,
   BusinessSearchResponse,
+  CreateBusinessResponse,
+  UpdateBusinessResponse,
+  UpdateBusinessDataResponse,
+  CreateAgreementResponse,
 } from "@/interfaces/api";
+
+interface ApiErrorBody {
+  errors?: Record<string, string[]>;
+  message?: string;
+}
+
+// The API serializes user_id as a string in some payloads; normalize it at the
+// boundary so strict comparisons against numeric ids work.
+const normalizeBusinessData = (data: BusinessData): BusinessData => ({
+  ...data,
+  user_id: Number(data.user_id),
+});
+
+const normalizeBusiness = (business: Business): Business => ({
+  ...business,
+  business_data: business.business_data
+    ? normalizeBusinessData(business.business_data)
+    : null,
+});
 
 export const useBusinessStore = defineStore("BusinessStore", () => {
   const router = useRouter();
@@ -26,9 +58,11 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
       const res = await axios.get<BusinessListResponse>("api/admin/business", {
         headers: { accept: "application/json" },
       });
-      resBusiness.value = new Map(res.data.business.map((m) => [m.id, m]));
+      resBusiness.value = new Map(
+        res.data.business.map((m) => [m.id, normalizeBusiness(m)]),
+      );
       return res.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error en usuarios:", error);
     }
   };
@@ -43,9 +77,10 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
           headers: { accept: "application/json" },
         },
       );
-      resBusinessDetails.value = res.data.business;
-      return res.data;
-    } catch (error: any) {
+      const business = normalizeBusiness(res.data.business);
+      resBusinessDetails.value = business;
+      return { ...res.data, business };
+    } catch (error: unknown) {
       console.error("Error al obtener al usuario:", error);
     }
   };
@@ -60,9 +95,10 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
           headers: { accept: "application/json" },
         },
       );
-      resBusinessData.value = res.data.data;
-      return res.data;
-    } catch (error: any) {
+      const data = normalizeBusinessData(res.data.data);
+      resBusinessData.value = data;
+      return { ...res.data, data };
+    } catch (error: unknown) {
       console.error("Error al obtener al usuario:", error);
     }
   };
@@ -81,16 +117,22 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         res.data.agreements.map((m) => [m.id, m]),
       );
       return res.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error al obtener al usuario:", error);
     }
   };
 
-  const createBusiness = async (form: unknown): Promise<unknown> => {
+  const createBusiness = async (
+    form: BusinessCreateForm,
+  ): Promise<CreateBusinessResponse["res"] | undefined> => {
     try {
-      const param = await axios.post("api/admin/business", form, {
-        headers: { accept: "application/json" },
-      });
+      const param = await axios.post<CreateBusinessResponse>(
+        "api/admin/business",
+        form,
+        {
+          headers: { accept: "application/json" },
+        },
+      );
 
       if (param) {
         showAlert({
@@ -98,16 +140,14 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
           status: "success",
         });
 
-        resBusiness.value.set(
-          param.data.createBusiness.id,
-          param.data.createBusiness,
-        );
+        const created = normalizeBusiness(param.data.createBusiness);
+        resBusiness.value.set(created.id, created);
         return param.data.res;
       }
-    } catch (error: any) {
-      if (error.response) {
+    } catch (error: unknown) {
+      if (isAxiosError<ApiErrorBody>(error) && error.response) {
         const errorData = error.response.data;
-        if (errorData.errors) {
+        if (errorData?.errors) {
           const errorMessages = Object.values(errorData.errors)
             .flat()
             .join("\n");
@@ -117,7 +157,7 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
           });
         } else {
           showAlert({
-            title: errorData.message || "Ocurrió un error inesperado.",
+            title: errorData?.message || "Ocurrió un error inesperado.",
             status: "error",
           });
         }
@@ -131,31 +171,38 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
     }
   };
 
-  const updateBusiness = async (form: unknown, id: number): Promise<unknown> => {
+  const updateBusiness = async (
+    form: BusinessUpdateForm,
+    id: number,
+  ): Promise<UpdateBusinessResponse["res"] | undefined> => {
     try {
       const currentBusiness = resBusiness.value.get(id);
       const currentBusinessData = currentBusiness?.business_data || null;
 
-      const param = await axios.put(`api/admin/business/${id}`, form, {
-        headers: { accept: "application/json" },
-      });
+      const param = await axios.put<UpdateBusinessResponse>(
+        `api/admin/business/${id}`,
+        form,
+        {
+          headers: { accept: "application/json" },
+        },
+      );
       if (param) {
         showAlert({
           title: "Información guardada exitosamente.",
           status: "success",
         });
 
-        const updatedBusiness = param.data.updateBusiness;
-
-        if (!updatedBusiness.business_data) {
-          updatedBusiness.business_data = currentBusinessData;
-        }
+        const updatedBusiness = normalizeBusiness({
+          ...param.data.updateBusiness,
+          business_data:
+            param.data.updateBusiness.business_data ?? currentBusinessData,
+        });
 
         resBusiness.value.set(updatedBusiness.id, updatedBusiness);
         resBusinessDetails.value = updatedBusiness;
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al guardar la información, intente nuevamente.",
@@ -166,13 +213,17 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
   };
 
   const updateBusinessData = async (
-    form: unknown,
+    form: BusinessDataForm,
     id: number,
-  ): Promise<unknown> => {
+  ): Promise<UpdateBusinessDataResponse["res"] | undefined> => {
     try {
-      const param = await axios.put(`api/admin/businessData/${id}`, form, {
-        headers: { accept: "application/json" },
-      });
+      const param = await axios.put<UpdateBusinessDataResponse>(
+        `api/admin/businessData/${id}`,
+        form,
+        {
+          headers: { accept: "application/json" },
+        },
+      );
 
       if (param) {
         showAlert({
@@ -180,17 +231,20 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
           status: "success",
         });
 
+        const updatedData = normalizeBusinessData(param.data.updateData);
         const currentBusiness = resBusiness.value.get(id);
 
         if (currentBusiness) {
-          currentBusiness.business_data = param.data.updateData;
-          resBusiness.value.set(id, { ...currentBusiness });
+          resBusiness.value.set(id, {
+            ...currentBusiness,
+            business_data: updatedData,
+          });
         }
 
-        resBusinessData.value = param.data.updateData;
+        resBusinessData.value = updatedData;
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al guardar la información, intente nuevamente.",
@@ -201,11 +255,11 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
   };
 
   const createAgreement = async (
-    form: unknown,
+    form: AgreementForm,
     id: number,
-  ): Promise<unknown> => {
+  ): Promise<CreateAgreementResponse["res"] | undefined> => {
     try {
-      const param = await axios.post(
+      const param = await axios.post<CreateAgreementResponse>(
         `api/admin/business/${id}/agreement`,
         form,
         {
@@ -223,7 +277,7 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
         );
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al guardar la información, intente nuevamente.",

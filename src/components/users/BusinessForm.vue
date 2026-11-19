@@ -1,5 +1,5 @@
 <template>
-  <v-container class="user-details-list" fluid>
+  <v-container v-if="business" class="user-details-list" fluid>
     <v-row>
       <!-- Primera columna -->
       <v-col cols="12" md="8">
@@ -8,14 +8,14 @@
           <v-list-item title="Nombre(s):" :subtitle="business.first_name" />
           <v-list-item title="Apellidos:" :subtitle="business.last_name" />
           <v-list-item title="Correo electrónico:" :subtitle="business.email" />
-          <v-list-item title="Número de celular:" :subtitle="business.phone" />
+          <v-list-item title="Número de celular:" :subtitle="business.phone ?? ''" />
           <v-list-item
             title="Puesto de trabajo:"
-            :subtitle="business.workstation"
+            :subtitle="business.workstation ?? ''"
           />
           <v-list-item
             title="Sede:"
-            :subtitle="campusMap.get(business.campus).text"
+            :subtitle="campusLabel"
           />
         </v-list>
       </v-col>
@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { campusMap } from "@/constants";
 import type { Business } from "@/interfaces/business";
 
@@ -33,6 +34,11 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   business: null,
+});
+
+const campusLabel = computed<string>(() => {
+  const campus = props.business?.campus ?? "";
+  return campusMap.get(campus)?.text ?? campus;
 });
 </script>
 

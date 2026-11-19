@@ -27,13 +27,13 @@
             title="Giro:"
             :subtitle="
               business?.bs_line !== 'OTHER'
-                ? lineBusinessMap.get(business?.bs_line)?.text
-                : business?.bs_other_line
+                ? lineBusinessMap.get(business?.bs_line ?? '')?.text
+                : (business?.bs_other_line ?? '')
             "
           />
           <v-list-item
             title="Enlace de información:"
-            :subtitle="business?.bs_website"
+            :subtitle="business?.bs_website ?? ''"
           />
         </v-list>
       </v-col>

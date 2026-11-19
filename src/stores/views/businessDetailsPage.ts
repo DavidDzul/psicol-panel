@@ -5,7 +5,14 @@ import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
-import type { Business, BusinessData, BusinessAgreement } from "@/interfaces/business";
+import type {
+  Business,
+  BusinessData,
+  BusinessAgreement,
+  BusinessDataForm,
+  BusinessUpdateForm,
+  AgreementForm,
+} from "@/interfaces/business";
 import type { LinkInterface } from "@/interfaces/link.interface";
 
 export const useBusinessDetailsPageStore = defineStore(
@@ -107,7 +114,7 @@ export const useBusinessDetailsPageStore = defineStore(
       agreementDialog.value = true;
     };
 
-    const onUpdateBusinessData = async (form: unknown): Promise<void> => {
+    const onUpdateBusinessData = async (form: BusinessDataForm): Promise<void> => {
       loadingUpdate.value = true;
       if (!form && !businessData) return;
       try {
@@ -121,7 +128,7 @@ export const useBusinessDetailsPageStore = defineStore(
       loadingUpdate.value = false;
     };
 
-    const onUpdateBusiness = async (form: unknown): Promise<void> => {
+    const onUpdateBusiness = async (form: BusinessUpdateForm): Promise<void> => {
       loadingUpdate.value = true;
       if (!form && !selectedBusiness) return;
       try {
@@ -135,7 +142,7 @@ export const useBusinessDetailsPageStore = defineStore(
       loadingUpdate.value = false;
     };
 
-    const onCreateAgreement = async (form: unknown): Promise<void> => {
+    const onCreateAgreement = async (form: AgreementForm): Promise<void> => {
       loadingCreate.value = true;
       if (!form && !selectedBusiness) return;
       try {
