@@ -30,8 +30,12 @@ export const useStaffRolesStore = defineStore("staffRolesStore", () => {
     throw error;
   };
 
+  // Both tabs of the administrators view load roles on mount: concurrent calls
+  // share the in-flight request; a call after it settles fetches again.
+  let rolesInFlight: Promise<boolean> | null = null;
+
   // Reads never throw: they return false so the page can show its own state.
-  const fetchRoles = async (): Promise<boolean> => {
+  const requestRoles = async (): Promise<boolean> => {
     try {
       const res = await axios.get<StaffRolesResponse>(BASE, { headers });
       roles.value = res.data.roles;
@@ -40,6 +44,13 @@ export const useStaffRolesStore = defineStore("staffRolesStore", () => {
       console.error("Error al obtener roles de administración:", error);
       return false;
     }
+  };
+
+  const fetchRoles = (): Promise<boolean> => {
+    rolesInFlight ??= requestRoles().finally(() => {
+      rolesInFlight = null;
+    });
+    return rolesInFlight;
   };
 
   const fetchCatalog = async (): Promise<boolean> => {

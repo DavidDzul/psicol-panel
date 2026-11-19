@@ -43,6 +43,31 @@ describe("staffRolesStore reads", () => {
     expect(store.catalog).toEqual(modules);
   });
 
+  it("concurrent fetchRoles calls share one request", async () => {
+    get.mockResolvedValue({ data: { res: true, roles: [role] } });
+    const store = useStaffRolesStore();
+    const results = await Promise.all([store.fetchRoles(), store.fetchRoles()]);
+    expect(results).toEqual([true, true]);
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it("a later fetchRoles call refetches once the previous one settled", async () => {
+    get.mockResolvedValue({ data: { res: true, roles: [role] } });
+    const store = useStaffRolesStore();
+    await store.fetchRoles();
+    await store.fetchRoles();
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it("a failed fetchRoles does not block the next call", async () => {
+    get.mockRejectedValueOnce(new Error("boom"));
+    get.mockResolvedValueOnce({ data: { res: true, roles: [role] } });
+    const store = useStaffRolesStore();
+    expect(await store.fetchRoles()).toBe(false);
+    expect(await store.fetchRoles()).toBe(true);
+    expect(store.roles).toEqual([role]);
+  });
+
   it("reads return false instead of throwing", async () => {
     get.mockRejectedValue(new Error("boom"));
     const store = useStaffRolesStore();
