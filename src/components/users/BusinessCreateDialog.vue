@@ -60,8 +60,7 @@
                       v-model="phone"
                       v-bind="phoneProps"
                       label="Número de celular"
-                      :rules="[rules.required, rules.validPhone]"
-                      required
+                      :rules="[rules.validPhone]"
                       @keypress="onlyNumbers"
                     ></v-text-field>
                   </v-col>
@@ -301,12 +300,12 @@ const { defineField, meta, values, setValues, resetForm } = useForm({
   validationSchema: toTypedSchema(
     yup.object({
       role: validations.role(),
-      campus: validations.campus(),
-      first_name: validations.first_name(),
-      last_name: validations.last_name(),
-      email: validations.email(),
-      password: validations.updatePassword(),
-      phone: validations.phone(),
+      campus: validations.businessCampus(),
+      first_name: validations.businessFirstName(),
+      last_name: validations.businessLastName(),
+      email: validations.businessEmail(),
+      password: validations.businessPassword(),
+      phone: validations.businessPhone(),
       workstation: validations.workstation(),
 
       bs_name: validations.bs_name(),
@@ -376,8 +375,6 @@ const validateStep1 = computed(() => {
     last_name.value &&
     email.value &&
     campus.value &&
-    phone.value &&
-    workstation.value &&
     role.value
     ? false
     : true;
@@ -434,8 +431,11 @@ const back = () => {
 const rules = {
   required: (value: string) => !!value || "Este campo es obligatorio",
   validYear: (value: string) => /^\d{4}$/.test(value) || "El año debe tener 4 dígitos",
-  validPhone: (value: string) =>
-    /^\d{10}$/.test(value) || "El número de celular debe tener 10 dígitos",
+  // Phone is optional (nullable in the API); validate the format only when present.
+  validPhone: (value: string | null) =>
+    !value ||
+    /^\d{10}$/.test(value) ||
+    "El número de celular debe tener 10 dígitos",
   maxLength: (value: string) =>
     value.length <= 350 || "Máximo 350 caracteres permitidos",
 };

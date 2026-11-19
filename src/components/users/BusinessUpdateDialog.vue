@@ -44,8 +44,7 @@
                   v-model="phone"
                   v-bind="phoneProps"
                   label="Número de celular"
-                  :rules="[rules.required, rules.validPhone]"
-                  required
+                  :rules="[rules.validPhone]"
                   @keypress="onlyNumbers"
                 ></v-text-field>
               </v-col>
@@ -154,17 +153,25 @@ const vuetifyConfig = (state: FieldState<unknown>) => ({
 const { defineField, meta, values, setValues, resetForm } = useForm<BusinessUpdateForm>({
   validationSchema: toTypedSchema(
     yup.object({
-      first_name: validations.first_name(),
-      last_name: validations.last_name(),
-      email: validations.email(),
-      password: validations.updatePassword(),
-      phone: validations.phone(),
+      first_name: validations.businessFirstName(),
+      last_name: validations.businessLastName(),
+      email: validations.businessUpdateEmail(),
+      password: validations.businessUpdatePassword(),
+      phone: validations.businessPhone(),
       workstation: validations.workstation(),
       role: validations.role(),
       active: validations.user_active(),
     })
   ),
 });
+
+const rules = {
+  // Phone is optional (nullable in the API); validate the format only when present.
+  validPhone: (value: string | null) =>
+    !value ||
+    /^\d{10}$/.test(value) ||
+    "El número de celular debe tener 10 dígitos",
+};
 
 const onlyNumbers = (event: KeyboardEvent) => {
   const charCode = event.which ? event.which : event.keyCode;
@@ -199,7 +206,7 @@ watch(
           last_name: props.editItem.last_name,
           email: props.editItem.email,
           phone: props.editItem.phone,
-          workstation: props.editItem.workstation ?? "",
+          workstation: props.editItem.workstation,
           active: !!props.editItem.active,
           role: props.editItem.role.name,
         });
