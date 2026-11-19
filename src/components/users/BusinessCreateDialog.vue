@@ -233,7 +233,7 @@
                   <v-col cols="12" md="12">
                     <DatePickerInput
                       v-model="end_date"
-                      :input-text="'Fecha de término'"
+                      :input-text="'Fecha de fin'"
                     />
                   </v-col>
                 </v-row>
