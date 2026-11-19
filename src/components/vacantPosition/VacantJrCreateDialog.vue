@@ -525,7 +525,6 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
@@ -534,11 +533,10 @@ import * as yup from "yup";
 
 import * as validations from "@/validations";
 import { modeArray, daysValue } from "@/constants";
-import { useBusinessSearchStore } from "@/stores/views/businessSearch";
+import { useBusinessAutocomplete } from "@/composables/useBusinessAutocomplete";
 import type { VacantJrForm } from "@/interfaces/vacant";
 
-const { businessList } = storeToRefs(useBusinessSearchStore());
-const { getBusiness } = useBusinessSearchStore();
+const { searchQuery, selectedBusiness, businessList } = useBusinessAutocomplete();
 
 const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
@@ -695,7 +693,7 @@ const validateStep2 = computed(() => {
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [value: VacantJrForm & { id: string }];
+  submit: [value: VacantJrForm & { id: number }];
 }>();
 
 watch(
@@ -745,23 +743,6 @@ const startHourError = computed(() => errors.value.start_hour);
 const startMinuteError = computed(() => errors.value.start_minute);
 const endHourError = computed(() => errors.value.end_hour);
 const endMinuteError = computed(() => errors.value.end_minute);
-
-const searchQuery = ref("");
-const selectedBusiness = ref<string | null>(null);
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-watch(searchQuery, (newQuery) => {
-  clearTimeout(timeout);
-
-  if (!newQuery || newQuery.length < 3) {
-    businessList.value = [];
-    return;
-  }
-
-  timeout = setTimeout(() => {
-    getBusiness(newQuery);
-  }, 500);
-});
 
 const save = () => {
   if (meta.value.valid && selectedBusiness.value) {

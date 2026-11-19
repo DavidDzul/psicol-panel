@@ -6,6 +6,12 @@ export interface Business extends User {
   business_data: BusinessData;
 }
 
+export interface BusinessSearchItem {
+  id: number;
+  user_id: number;
+  bs_name: string;
+}
+
 export interface BusinessData {
   id: number;
   user_id: string;

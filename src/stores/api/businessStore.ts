@@ -9,6 +9,7 @@ import type {
   GetBusinessResponse,
   GetBusinessDataResponse,
   GetBusinessAgreementsResponse,
+  BusinessSearchResponse,
 } from "@/interfaces/api";
 
 export const useBusinessStore = defineStore("BusinessStore", () => {
@@ -232,14 +233,23 @@ export const useBusinessStore = defineStore("BusinessStore", () => {
     }
   };
 
-  const searchBusiness = async (): Promise<unknown> => {
+  const searchBusiness = async (
+    search: string,
+  ): Promise<BusinessSearchResponse | undefined> => {
     try {
-      const res = await axios.get(`api/admin/search`, {
+      const res = await axios.get<BusinessSearchResponse>("api/admin/search", {
+        params: { search },
         headers: { accept: "application/json" },
       });
-      console.log(res);
-      return res;
-    } catch (error: any) {
+      // Normalize at the boundary: ids must be numbers for strict comparison.
+      return {
+        businesses: res.data.businesses.map((b) => ({
+          ...b,
+          id: Number(b.id),
+          user_id: Number(b.user_id),
+        })),
+      };
+    } catch (error: unknown) {
       console.error("Error:", error);
     }
   };

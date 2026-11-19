@@ -535,19 +535,17 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
 import * as yup from "yup";
 import * as validations from "@/validations";
-import { useBusinessSearchStore } from "@/stores/views/businessSearch";
+import { useBusinessAutocomplete } from "@/composables/useBusinessAutocomplete";
 import { modeArray, daysValue } from "@/constants";
 import type { VacantPracticeForm } from "@/interfaces/vacant";
 
-const { businessList } = storeToRefs(useBusinessSearchStore());
-const { getBusiness } = useBusinessSearchStore();
+const { searchQuery, selectedBusiness, businessList } = useBusinessAutocomplete();
 
 const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
@@ -723,7 +721,7 @@ const validateStep2 = computed(() => {
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [value: VacantPracticeForm & { id: string }];
+  submit: [value: VacantPracticeForm & { id: number }];
 }>();
 
 watch(
@@ -782,23 +780,6 @@ const onlyNumbers = (event: KeyboardEvent) => {
     event.preventDefault();
   }
 };
-
-const searchQuery = ref("");
-const selectedBusiness = ref<string | null>(null);
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-watch(searchQuery, (newQuery) => {
-  clearTimeout(timeout);
-
-  if (!newQuery || newQuery.length < 3) {
-    businessList.value = [];
-    return;
-  }
-
-  timeout = setTimeout(() => {
-    getBusiness(newQuery);
-  }, 500);
-});
 
 const save = () => {
   if (meta.value.valid && selectedBusiness.value) {

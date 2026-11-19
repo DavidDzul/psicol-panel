@@ -699,12 +699,11 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
 import { toTypedSchema } from "@vee-validate/yup";
 import type { FieldState } from "vee-validate";
 import { useForm } from "vee-validate";
 import { computed, ref, watch } from "vue";
-import { useBusinessSearchStore } from "@/stores/views/businessSearch";
+import { useBusinessAutocomplete } from "@/composables/useBusinessAutocomplete";
 
 import * as yup from "yup";
 
@@ -713,8 +712,7 @@ import * as validations from "@/validations";
 import { daysValue, modeArray } from "@/constants";
 import type { VacantForm } from "@/interfaces/vacant";
 
-const { businessList } = storeToRefs(useBusinessSearchStore());
-const { getBusiness } = useBusinessSearchStore();
+const { searchQuery, selectedBusiness, businessList } = useBusinessAutocomplete();
 
 const vuetifyConfig = (state: FieldState<unknown>) => ({
   props: {
@@ -729,7 +727,7 @@ interface Props {
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void;
-  (e: "submit", value: VacantForm & { id: string }): void;
+  (e: "submit", value: VacantForm & { id: number }): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -930,7 +928,7 @@ const validateStep3 = computed(() => {
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [value: VacantForm & { id: string }];
+  submit: [value: VacantForm & { id: number }];
 }>();
 
 watch(
@@ -979,23 +977,6 @@ const startHourError = computed(() => errors.value.start_hour);
 const startMinuteError = computed(() => errors.value.start_minute);
 const endHourError = computed(() => errors.value.end_hour);
 const endMinuteError = computed(() => errors.value.end_minute);
-
-const searchQuery = ref("");
-const selectedBusiness = ref<string | null>(null);
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-watch(searchQuery, (newQuery) => {
-  clearTimeout(timeout);
-
-  if (!newQuery || newQuery.length < 3) {
-    businessList.value = [];
-    return;
-  }
-
-  timeout = setTimeout(() => {
-    getBusiness(newQuery);
-  }, 500);
-});
 
 const save = () => {
   if (meta.value.valid && selectedBusiness.value) {

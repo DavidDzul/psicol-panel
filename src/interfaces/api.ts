@@ -1,6 +1,6 @@
 import type { User, DeactivationEffects } from './user'
 import type { Graduate } from './graduate'
-import type { Business, BusinessData, BusinessAgreement } from './business'
+import type { Business, BusinessData, BusinessAgreement, BusinessSearchItem } from './business'
 import type { VacantPosition } from './vacant'
 import type { JobApplication } from './jobApplication'
 import type { Area, CandidateData } from './data'
@@ -9,6 +9,8 @@ import type { Generation } from './generation'
 import type { Notice } from './notice'
 import type { Role, Permission } from './role'
 import type { StaffRole, StaffPermissionModule, StaffAdministrator } from './staff'
+
+export interface BusinessSearchResponse { businesses: BusinessSearchItem[] }
 
 // Users
 export interface UsersResponse { users: User[] }
