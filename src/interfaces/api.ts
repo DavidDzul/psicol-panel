@@ -1,7 +1,7 @@
 import type { User, DeactivationEffects } from './user'
 import type { Graduate } from './graduate'
 import type { Business, BusinessData, BusinessAgreement, BusinessSearchItem } from './business'
-import type { VacantPosition } from './vacant'
+import type { VacantPosition, VacantPositionDetail } from './vacant'
 import type { JobApplication } from './jobApplication'
 import type { Area, CandidateData } from './data'
 import type { ClassEntity, ClassAttendance } from './class'
@@ -42,14 +42,14 @@ export interface CreateAgreementResponse { agreement: BusinessAgreement; res: un
 
 // Vacant positions
 export interface VacantPositionsResponse { positions: VacantPosition[] }
-export interface ShowVacantResponse { vacant: VacantPosition }
-export interface UpdateVacantResponse { updateVacant: VacantPosition; res: unknown }
-export interface UpdatePracticeResponse { updatePractice: VacantPosition; res: unknown }
-export interface UpdateVacantJrResponse { updateVacantJr: VacantPosition; res: unknown }
-export interface StatusVacantResponse { vacant: VacantPosition; res: unknown }
-export interface CreateVacantResponse { createVacant: VacantPosition; res: unknown }
-export interface CreateVacantJrResponse { createVacantJr: VacantPosition; res: unknown }
-export interface CreatePracticeResponse { createPractice: VacantPosition; res: unknown }
+export interface ShowVacantResponse { vacant: VacantPositionDetail }
+export interface UpdateVacantResponse { updateVacant: VacantPositionDetail; res: boolean }
+export interface UpdatePracticeResponse { updatePractice: VacantPositionDetail; res: boolean }
+export interface UpdateVacantJrResponse { updateVacantJr: VacantPositionDetail; res: boolean }
+export interface StatusVacantResponse { vacant: VacantPositionDetail; res: boolean }
+export interface CreateVacantResponse { createVacant: VacantPositionDetail; res: boolean }
+export interface CreateVacantJrResponse { createVacantJr: VacantPositionDetail; res: boolean }
+export interface CreatePracticeResponse { createPractice: VacantPositionDetail; res: boolean }
 
 // Job applications
 export interface ApplicationsResponse { applications: JobApplication[] }

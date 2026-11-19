@@ -1,7 +1,9 @@
+export type JobApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
 export interface JobApplication {
   id: number
   user_id: number
-  status: string
+  status: JobApplicationStatus
   rejected_reason: string | null
   rejected_other: string | null
   created_at: string

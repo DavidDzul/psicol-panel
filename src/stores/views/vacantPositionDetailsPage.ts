@@ -5,7 +5,13 @@ import { useAppStore } from "@/stores/app";
 import { computed, onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
-import type { VacantPosition } from "@/interfaces/vacant";
+import type {
+  VacantDisabledPayload,
+  VacantForm,
+  VacantJrForm,
+  VacantPositionDetail,
+  VacantPracticeForm,
+} from "@/interfaces/vacant";
 import type { LinkInterface } from "@/interfaces/link.interface";
 
 export const useVacantPositionDetailsPageStore = defineStore(
@@ -63,7 +69,7 @@ export const useVacantPositionDetailsPageStore = defineStore(
       }
     };
 
-    const selectedVacant = computed<VacantPosition | null>(
+    const selectedVacant = computed<VacantPositionDetail | null>(
       () => resVacantDetails.value,
     );
 
@@ -91,12 +97,12 @@ export const useVacantPositionDetailsPageStore = defineStore(
         updateDialog.value = true;
       } else if (selectedVacant.value.category === "PROFESSIONAL_PRACTICE") {
         updatePracticeDialog.value = true;
-      } else if ((selectedVacant.value.category as string) === "JR_POSITION") {
+      } else if (selectedVacant.value.category === "JR_POSITION") {
         updateJrDialog.value = true;
       }
     };
 
-    const onUpdateVacantLaboral = async (form: unknown): Promise<void> => {
+    const onUpdateVacantLaboral = async (form: VacantForm): Promise<void> => {
       loadingUpdate.value = true;
       if (!selectedVacant.value && !form) return;
       try {
@@ -110,7 +116,9 @@ export const useVacantPositionDetailsPageStore = defineStore(
       loadingUpdate.value = false;
     };
 
-    const onUpdateVacantPractice = async (form: unknown): Promise<void> => {
+    const onUpdateVacantPractice = async (
+      form: VacantPracticeForm,
+    ): Promise<void> => {
       loadingUpdate.value = true;
       if (!selectedVacant.value && !form) return;
       try {
@@ -127,7 +135,7 @@ export const useVacantPositionDetailsPageStore = defineStore(
       loadingUpdate.value = false;
     };
 
-    const onUpdateVacantJunior = async (form: unknown): Promise<void> => {
+    const onUpdateVacantJunior = async (form: VacantJrForm): Promise<void> => {
       loadingUpdate.value = true;
       if (!selectedVacant.value && !form) return;
       try {
@@ -147,7 +155,9 @@ export const useVacantPositionDetailsPageStore = defineStore(
       disabledDialog.value = true;
     };
 
-    const onDisabledVacant = async (form: unknown): Promise<void> => {
+    const onDisabledVacant = async (
+      form: VacantDisabledPayload,
+    ): Promise<void> => {
       if (!selectedVacant.value) return;
       loadingDisabled.value = true;
       try {

@@ -3,18 +3,66 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlertStore } from "@/stores/alert";
-import type { VacantPosition } from "@/interfaces/vacant";
+import { apiErrorMessage } from "@/utils/apiErrorMessage";
+import type {
+  VacantDisabledPayload,
+  VacantForm,
+  VacantJrForm,
+  VacantPracticeForm,
+  VacantPosition,
+  VacantPositionDetail,
+} from "@/interfaces/vacant";
 import type {
   VacantPositionsResponse,
   ShowVacantResponse,
+  UpdateVacantResponse,
+  UpdatePracticeResponse,
+  UpdateVacantJrResponse,
+  StatusVacantResponse,
+  CreateVacantResponse,
+  CreateVacantJrResponse,
+  CreatePracticeResponse,
 } from "@/interfaces/api";
+
+const SAVE_ERROR_FALLBACK =
+  "Error al guardar la información, intente nuevamente.";
+
+// The API may serialize ids as strings; the panel compares them strictly.
+const normalizeRow = (row: VacantPosition): VacantPosition => ({
+  ...row,
+  user_id: Number(row.user_id),
+  business: row.business
+    ? { ...row.business, user_id: Number(row.business.user_id) }
+    : null,
+});
+
+const normalizeDetail = (
+  detail: VacantPositionDetail,
+): VacantPositionDetail => ({
+  ...detail,
+  user_id: Number(detail.user_id),
+  ...(detail.business
+    ? {
+        business: {
+          ...detail.business,
+          user_id: Number(detail.business.user_id),
+        },
+      }
+    : {}),
+});
+
+// Update/create responses may omit the business, the index row allows null.
+const toRow = (detail: VacantPositionDetail): VacantPosition => ({
+  ...detail,
+  business: detail.business ?? null,
+});
 
 export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
   const router = useRouter();
   const { showAlert } = useAlertStore();
 
   const resPositions = ref<Map<number, VacantPosition>>(new Map());
-  const resVacantDetails = ref<VacantPosition | null>(null);
+  const resVacantDetails = ref<VacantPositionDetail | null>(null);
 
   const fetchVacantPositions = async (): Promise<
     VacantPositionsResponse | undefined
@@ -26,9 +74,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           headers: { accept: "application/json" },
         },
       );
-      resPositions.value = new Map(res.data.positions.map((m) => [m.id, m]));
+      const positions = res.data.positions.map(normalizeRow);
+      resPositions.value = new Map(positions.map((m) => [m.id, m]));
       return res.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error:", error);
     }
   };
@@ -43,19 +92,20 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           headers: { accept: "application/json" },
         },
       );
-      resVacantDetails.value = res.data.vacant;
-      return res.data;
-    } catch (error: any) {
+      const vacant = normalizeDetail(res.data.vacant);
+      resVacantDetails.value = vacant;
+      return { ...res.data, vacant };
+    } catch (error: unknown) {
       console.error("Error al obtener la vacante:", error);
     }
   };
 
   const updateVacantLaboral = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.put(
+      const param = await axios.put<UpdateVacantResponse>(
         `api/admin/vacantPositions/${id}/updateVacant`,
         form,
         {
@@ -68,14 +118,12 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.updateVacant.id,
-          param.data.updateVacant,
-        );
-        resVacantDetails.value = param.data.updateVacant;
+        const detail = normalizeDetail(param.data.updateVacant);
+        resPositions.value.set(detail.id, toRow(detail));
+        resVacantDetails.value = detail;
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al actualizar la información, intente nuevamente.",
@@ -87,10 +135,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
 
   const updateVacantPractice = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantPracticeForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.put(
+      const param = await axios.put<UpdatePracticeResponse>(
         `api/admin/vacantPositions/${id}/updatePractice`,
         form,
         {
@@ -103,14 +151,12 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.updatePractice.id,
-          param.data.updatePractice,
-        );
-        resVacantDetails.value = param.data.updatePractice;
+        const detail = normalizeDetail(param.data.updatePractice);
+        resPositions.value.set(detail.id, toRow(detail));
+        resVacantDetails.value = detail;
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al actualizar la información, intente nuevamente.",
@@ -122,10 +168,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
 
   const updateVacantJr = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantJrForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.put(
+      const param = await axios.put<UpdateVacantJrResponse>(
         `api/admin/vacantPositions/${id}/updateVacantJr`,
         form,
         {
@@ -138,14 +184,12 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.updateVacantJr.id,
-          param.data.updateVacantJr,
-        );
-        resVacantDetails.value = param.data.updateVacantJr;
+        const detail = normalizeDetail(param.data.updateVacantJr);
+        resPositions.value.set(detail.id, toRow(detail));
+        resVacantDetails.value = detail;
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al actualizar la información, intente nuevamente.",
@@ -155,9 +199,12 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
     }
   };
 
-  const statusVacant = async (id: number, form: unknown): Promise<unknown> => {
+  const statusVacant = async (
+    id: number,
+    form: VacantDisabledPayload,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.put(
+      const param = await axios.put<StatusVacantResponse>(
         `api/admin/vacantPositions/${id}/status`,
         form,
         {
@@ -169,13 +216,14 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           title: "Estatus actualizado exitosamente.",
           status: "success",
         });
-        resPositions.value.set(param.data.vacant.id, param.data.vacant);
+        const detail = normalizeDetail(param.data.vacant);
+        resPositions.value.set(detail.id, toRow(detail));
         if (resVacantDetails.value && resVacantDetails.value.id === id) {
-          resVacantDetails.value = param.data.vacant;
+          resVacantDetails.value = detail;
         }
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al actualizar la información, intente nuevamente.",
@@ -185,23 +233,26 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
     }
   };
 
-  const resetVacant = async (id: number): Promise<unknown> => {
+  const resetVacant = async (id: number): Promise<boolean | undefined> => {
     try {
-      const param = await axios.put(`api/admin/vacantPositions/${id}/reset`, {
-        headers: { accept: "application/json" },
-      });
+      const param = await axios.put<StatusVacantResponse>(
+        `api/admin/vacantPositions/${id}/reset`,
+        null,
+        { headers: { accept: "application/json" } },
+      );
       if (param) {
         showAlert({
           title: "Estatus actualizado exitosamente.",
           status: "success",
         });
-        resPositions.value.set(param.data.vacant.id, param.data.vacant);
+        const detail = normalizeDetail(param.data.vacant);
+        resPositions.value.set(detail.id, toRow(detail));
         if (resVacantDetails.value && resVacantDetails.value.id === id) {
-          resVacantDetails.value = param.data.vacant;
+          resVacantDetails.value = detail;
         }
         return param.data.res;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       showAlert({
         title: "Error al actualizar la información, intente nuevamente.",
@@ -213,10 +264,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
 
   const createVacantLaboral = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.post(
+      const param = await axios.post<CreateVacantResponse>(
         `api/admin/vacantPositions/${id}/storeVacant`,
         form,
         {
@@ -229,18 +280,13 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.createVacant.id,
-          param.data.createVacant,
-        );
+        const detail = normalizeDetail(param.data.createVacant);
+        resPositions.value.set(detail.id, toRow(detail));
         return param.data.res;
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.msg ||
-        "Error al guardar la información, intente nuevamente.";
+    } catch (error: unknown) {
       showAlert({
-        title: errorMessage,
+        title: apiErrorMessage(error, SAVE_ERROR_FALLBACK),
         status: "error",
       });
       throw error;
@@ -249,10 +295,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
 
   const createVacantJunior = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantJrForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.post(
+      const param = await axios.post<CreateVacantJrResponse>(
         `api/admin/vacantPositions/${id}/storeVacantJr`,
         form,
         {
@@ -265,18 +311,13 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.createVacantJr.id,
-          param.data.createVacantJr,
-        );
+        const detail = normalizeDetail(param.data.createVacantJr);
+        resPositions.value.set(detail.id, toRow(detail));
         return param.data.res;
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.msg ||
-        "Error al guardar la información, intente nuevamente.";
+    } catch (error: unknown) {
       showAlert({
-        title: errorMessage,
+        title: apiErrorMessage(error, SAVE_ERROR_FALLBACK),
         status: "error",
       });
       throw error;
@@ -285,10 +326,10 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
 
   const createVacantPractice = async (
     id: number,
-    form: unknown,
-  ): Promise<unknown> => {
+    form: VacantPracticeForm,
+  ): Promise<boolean | undefined> => {
     try {
-      const param = await axios.post(
+      const param = await axios.post<CreatePracticeResponse>(
         `api/admin/vacantPositions/${id}/storePractice`,
         form,
         {
@@ -301,18 +342,13 @@ export const useVacantPositionStore = defineStore("vacantPositionStore", () => {
           status: "success",
         });
 
-        resPositions.value.set(
-          param.data.createPractice.id,
-          param.data.createPractice,
-        );
+        const detail = normalizeDetail(param.data.createPractice);
+        resPositions.value.set(detail.id, toRow(detail));
         return param.data.res;
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.msg ||
-        "Error al guardar la información, intente nuevamente.";
+    } catch (error: unknown) {
       showAlert({
-        title: errorMessage,
+        title: apiErrorMessage(error, SAVE_ERROR_FALLBACK),
         status: "error",
       });
       throw error;

@@ -6,7 +6,13 @@ import { computed, onBeforeMount, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/api/authStore";
 
-import type { VacantPosition } from "@/interfaces/vacant";
+import type {
+  VacantDisabledPayload,
+  VacantForm,
+  VacantJrForm,
+  VacantPosition,
+  VacantPracticeForm,
+} from "@/interfaces/vacant";
 import type { Generation } from "@/interfaces/generation";
 import type { LinkInterface } from "@/interfaces/link.interface";
 
@@ -94,7 +100,9 @@ export const useVacantPositionPageStore = defineStore(
       disabledDialog.value = true;
     };
 
-    const onDisabledVacant = async (form: unknown): Promise<void> => {
+    const onDisabledVacant = async (
+      form: VacantDisabledPayload,
+    ): Promise<void> => {
       if (!selectedVacantId.value) return;
       loadingDisabled.value = true;
       try {
@@ -115,11 +123,13 @@ export const useVacantPositionPageStore = defineStore(
       }
     };
 
-    const saveVacantPosition = async (form: unknown): Promise<void> => {
+    const saveVacantPosition = async (
+      form: VacantForm & { id: number },
+    ): Promise<void> => {
       if (!form) return;
       loadingCreate.value = true;
       try {
-        await createVacantLaboral((form as any).id, form);
+        await createVacantLaboral(form.id, form);
         vacantDialog.value = false;
       } catch (e) {
         console.error(e);
@@ -127,11 +137,13 @@ export const useVacantPositionPageStore = defineStore(
       loadingCreate.value = false;
     };
 
-    const saveVacantJunior = async (form: unknown): Promise<void> => {
+    const saveVacantJunior = async (
+      form: VacantJrForm & { id: number },
+    ): Promise<void> => {
       if (!form) return;
       loadingCreate.value = true;
       try {
-        await createVacantJunior((form as any).id, form);
+        await createVacantJunior(form.id, form);
         vacantJuniorDialog.value = false;
       } catch (e) {
         console.error(e);
@@ -139,11 +151,13 @@ export const useVacantPositionPageStore = defineStore(
       loadingCreate.value = false;
     };
 
-    const saveVacantPractice = async (form: unknown): Promise<void> => {
+    const saveVacantPractice = async (
+      form: VacantPracticeForm & { id: number },
+    ): Promise<void> => {
       if (!form) return;
       loadingCreate.value = true;
       try {
-        await createVacantPractice((form as any).id, form);
+        await createVacantPractice(form.id, form);
         practiceDialog.value = false;
       } catch (e) {
         console.error(e);

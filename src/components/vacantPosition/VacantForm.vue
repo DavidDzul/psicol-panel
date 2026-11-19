@@ -18,13 +18,13 @@
             {{
               props.vacant.category === "JOB_POSITION"
                 ? "Vacante laboral"
-                : vacantTypeMap.get(props.vacant.category).text
+                : vacantTypeMap.get(props.vacant.category)?.text ?? props.vacant.category
             }}
           </li>
           <li><b>Perfil de estudio:</b> {{ props.vacant.study_profile }}</li>
           <li>
             <b>Modalidad de trabajo:</b>
-            {{ modeVacantMap.get(props.vacant.mode).text }}
+            {{ modeVacantMap.get(props.vacant.mode)?.text ?? props.vacant.mode }}
           </li>
 
           <!-- Campos específicos según la categoría -->
@@ -211,7 +211,7 @@
       <v-divider></v-divider>
       <v-card-text>
         <p>
-          Motivo: {{ candidateTypeMap.get(props.vacant.candidate_type).text }}
+          Motivo: {{ candidateTypeMap.get(props.vacant.candidate_type)?.text ?? props.vacant.candidate_type }}
         </p>
         <p>Descripción: {{ props.vacant.candidate_other }}</p>
       </v-card-text>
@@ -221,10 +221,10 @@
 
 <script setup lang="ts">
 import { modeVacantMap, vacantTypeMap, candidateTypeMap } from "@/constants";
-import type { VacantPosition } from "@/interfaces/vacant";
+import type { VacantPositionDetail } from "@/interfaces/vacant";
 
 interface Props {
-  vacant: VacantPosition & Record<string, unknown>;
+  vacant: VacantPositionDetail;
 }
 
 const props = defineProps<Props>();
