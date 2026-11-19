@@ -160,7 +160,7 @@ const { defineField, meta, values, resetForm } = useForm<UserForm>({
       first_name: validations.first_name(),
       last_name: validations.last_name(),
       email: validations.email(),
-      password: validations.updatePassword(),
+      password: validations.password(),
       enrollment: validations.enrollment(),
       phone: validations.phone(),
       generation_id: validations.generation_id(),

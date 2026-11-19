@@ -15,8 +15,13 @@ export const last_name = () =>
   yup.string().required("Campo requerido").label("Apellido(s)");
 export const email = () =>
   yup.string().required("Campo requerido").label("Correo electrónico");
+// Create: API createRulesUser requires password|min:8.
 export const password = () =>
-  yup.string().required().min(6).label("Contraseña");
+  yup
+    .string()
+    .required("Campo requerido")
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .label("Contraseña");
 // A cleared field ("") means "keep the current password", same as never typed.
 export const updatePassword = () =>
   yup
